@@ -1,321 +1,404 @@
-# Pitfalls Research: v3.2 Rhythm Trail Rework
+# Pitfalls Research: v4.0 Parent-First Account Architecture (COPPA)
 
-**Domain:** Refactoring a random-generative rhythm trail to curated pedagogical patterns in a live children's piano PWA
-**Researched:** 2026-04-06
-**Confidence:** HIGH (direct codebase review of all 8 rhythm unit files, RhythmPatternGenerator.js, scoring/timing utils, subscriptionConfig.js, skillProgressService.js, validateTrail.mjs; supplemented by music education research on rhythm curriculum for elementary-age children and rhythm game UX)
+**Domain:** Live-data identity restructure (auth-user-is-student → parent-owns-child-profiles) + full deletion of a storage-backed feature (audio recordings), on a production React 18 + Supabase PWA with paying subscribers.
+**Researched:** 2026-07-21
+**Confidence:** HIGH (grounded directly in this repo's migrations, services, and PROJECT.md-measured surface area — not generic advice)
 
----
+## Grounding facts used below
 
-## Context
-
-This document covers common mistakes when executing **v3.2 Rhythm Trail Rework** on the existing PianoApp2 codebase (v3.1, real users with stored progress in Supabase). The milestone involves:
-
-1. **Replacing random-generative patterns with hand-crafted curated patterns** per node — changing `RhythmPatternGenerator.js` path from `getPattern(..., allowedPatterns)` generative fallback to explicit JSON pattern databases
-2. **Auditing and restructuring 50+ rhythm trail nodes** across 8 units — potentially changing node order, prerequisites, `order` values, or splitting/merging nodes
-3. **Reviewing game type assignments** per node — changing which of the 4 rhythm games (MetronomeTrainer / RhythmReadingGame / RhythmDictationGame / ArcadeRhythmGame) maps to each node
-4. **Tuning difficulty curves** — tempo ranges, `measuresPerPattern`, difficulty levels, and the transition speed between concepts
-5. **Renaming games** for child-friendliness (e.g. "MetronomeTrainer" → display name change)
-
-Codebase state verified at time of research:
-
-- 8 rhythm unit files: `rhythmUnit1-8Redesigned.js` — 50 rhythm nodes + 8 boss nodes = 58 total rhythm-category nodes
-- `RhythmPatternGenerator.js` — hybrid service: tries curated JSON at `/data/{ts}.json`; falls back to generative when `allowedPatterns` is set (current unit files all pass `rhythmPatterns` arrays → always takes generative path)
-- `rhythmTimingUtils.js` — `BASE_TIMING_THRESHOLDS: { PERFECT: 50ms, GOOD: 75ms, FAIR: 125ms }` at 120 BPM, scaled by `Math.pow(BASE_TEMPO / tempo, 0.3)`
-- `rhythmScoringUtils.js` — `scoreTap()` searches up to 3 ahead from `nextBeatIndex`; advance-only (no look-back)
-- `subscriptionConfig.js` — `FREE_RHYTHM_NODE_IDS` hardcoded as `['rhythm_1_1'...'rhythm_1_6']`; `boss_rhythm_1` paywalled
-- `skillProgressService.js` — `updateNodeProgress()` upserts; only updates if `score > best_score || stars > existingProgress.stars` (no exercise-level JSONB for single-exercise rhythm nodes)
-- `scripts/validateTrail.mjs` — validates prerequisite chains, duplicate IDs, XP, node types; does NOT validate `rhythmConfig` fields or curated pattern existence
-- Unit 5 introduces dotted notes AND 3/4 time in the same unit (7 nodes)
-- Unit 7 introduces 6/8 compound meter; Unit 8 introduces syncopation as capstone
+- `students.id` has no FK to `auth.users(id)` — deliberately dropped (`20250115000005`). Login-less profile rows already exist in production for teacher-created students. This is the proven pattern the milestone re-points at parents.
+- **This exact codebase has already shipped the FK-target-drift bug once**: `20250625120001_add_teacher_schema.sql` pointed `assignment_submissions.student_id`, `notifications.recipient_id/sender_id` at `auth.users(id)`; three later migrations (`20250708191942`, `20250708191946`, `20260327000002_fix_teacher_fk_references.sql`) had to retroactively repoint them at `students(id)`. That is direct historical evidence the FK-repointing pitfall (#2 below) is not hypothetical here.
+- `parent_subscriptions` RLS is `USING (student_id = (SELECT auth.uid()))` and `has_active_subscription(p_student_id UUID)` — subscription ownership is currently identical to auth identity. Confirmed in `20260404000001_ensure_subscription_rls.sql`.
+- 30 identity-bearing FK columns across 26 tables reference `students(id)` (mostly `ON DELETE CASCADE`); 62 of 80 RLS policies use `auth.uid()` across 32 tables (measured, per PROJECT.md).
+- `practice_sessions.has_recording` boolean already exists and is filtered correctly in `getRecordings()` (`practiceService.js`), but `achievementService.js`'s stats aggregation counts `practice_sessions` rows without that filter (per PROJECT.md, verified coupling) — deleting recording rows regresses achievement progress bars.
+- Storage deletion in this codebase today is _manual and code-driven_: `practiceService.js` calls `supabase.storage.from("practice-recordings").remove([...])` only inside `deleteRecording()`/`deleteAllRecordings()`. Nothing else ever removes storage objects. The bucket itself and its storage policies exist only in the remote Supabase project — **no migration file creates them**, so `supabase db reset` / a fresh environment cannot reproduce or audit them.
+- No i18n parity/orphan-key validation script exists in `scripts/` (only `validateTrail.mjs` and `patternVerifier.mjs`). EN/HE parity has historically been tracked manually per milestone (e.g. "89/89 EN↔HE" in v3.5). There is no build-time guard against a missing or orphaned translation key.
+- `FREE_NODE_IDS` (JS) must stay hand-synced with Postgres `is_free_node()` — an established, already-fragile dual-source-of-truth pattern in this codebase that the new ownership model will add a second instance of (parent-vs-child gating).
+- 34 files consume `useUser()` (42 call sites), 151 `user?.id` references in `src/`, 47 auth-id resolution call sites in services (`apiTeacher.js` alone has 25) — this is the blast radius for "current user id" no longer meaning "the student."
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause data loss, user progress breakage, or silent failures for live users.
-
-### Pitfall 1: Changing Node `order` Values Breaks Trail Layout and Prerequisite Chains for Live Users
+### Pitfall 1: RLS ownership subquery has USING but not WITH CHECK (or vice versa) on UPDATE
 
 **What goes wrong:**
-Each rhythm unit file hard-codes a `START_ORDER` constant and derives all node `order` values from it (`START_ORDER + 0`, `START_ORDER + 1`, ...). If the audit restructures units — splitting a node, adding a new node mid-unit, or reordering nodes within a unit — the `order` values shift. The TrailMap renders nodes in `order` sequence; if an existing node changes its `order` from 114 to 116, users who are mid-unit see their in-progress node appear to jump position on the trail. Worse: if a new node is inserted at `order: 114` and an existing node moves to `order: 115`, users who completed the original `order: 114` node have no stored progress for the new node at that position — the trail visual shows it as unlocked but not started, even though they may logically have covered its content.
+Converting `student_id = auth.uid()` to something like `student_id IN (SELECT id FROM child_profiles WHERE parent_id = auth.uid())` is usually written once and pasted onto `FOR UPDATE` policies, which silently defaults `WITH CHECK` to the same expression as `USING` **only if you don't specify one explicitly**. Developers who only write `USING (...)` on an `UPDATE` policy get away with it in manual testing (because they're testing with their own child), but the row-level check governing what the _new_ row values may look like ends up unconstrained, or a copy-paste error means `WITH CHECK` still reads `student_id = auth.uid()` from before the refactor while `USING` was updated — meaning a parent can read/select rows for their own children (USING passes) but silently succeed in writing a `child_profile_id` for a **different family's child** on UPDATE (WITH CHECK evaluates against the same subquery it should, but only if actually rewritten). The dangerous version: `USING` is the ownership subquery, `WITH CHECK` is left as `true` or omitted, which turns "update your own child's data" into "update your own child's data, but repoint it to anyone's `child_profile_id`."
 
 **Why it happens:**
-The `order` field is purely cosmetic for trail rendering — it does not participate in unlocking logic (prerequisites do that). Developers assume changing `order` is safe and only affects visual position. But users have mental models of "where they are" on the trail, and progress display is tied to node IDs, not positions. Inserting nodes mid-sequence just to fill a gap is tempting but breaks the visual continuity users expect.
+Postgres has this exact footgun: `FOR UPDATE` without an explicit `WITH CHECK` reuses `USING`, so it "seems fine" — but this repo's own `20260127000003_optimize_rls_auth_plan.sql` shows every UPDATE policy already explicitly repeats both clauses (good precedent). The risk isn't that the team doesn't know the pattern — it's that with 62 policies to rewrite, at least one gets rewritten with the subquery only in `USING` under time pressure, and nothing in CI catches it (no automated RLS test suite exists in this repo today beyond ad hoc migrations).
 
 **How to avoid:**
 
-- Treat existing `order` values as immutable for any node that already has live progress. New nodes can use fractional offsets (e.g., `115.5`) or — better — reserve order blocks at time of authoring. If a gap exists (`114`, skip to `116`), new nodes can fill `115` without displacing existing nodes.
-- Before adding or reordering nodes: run `SELECT DISTINCT node_id FROM student_skill_progress WHERE node_id LIKE 'rhythm_%' OR node_id LIKE 'boss_rhythm_%'` against production to get the set of IDs with live progress. Never change the `order` of any ID in that set.
-- For the v3.2 audit: add new nodes at the END of a unit or in the reserved gap above `boss_rhythm_N`; do not insert between existing nodes.
+- Every rewritten `FOR UPDATE` and `FOR INSERT` policy must have **both** `USING` and `WITH CHECK` written out explicitly, even when identical, exactly as the `20260127000003` migration already does for `user_preferences`.
+- Write a one-time SQL query against `pg_policies` that flags any `cmd = 'UPDATE'` policy where `with_check IS NULL` or `with_check <> qual` unexpectedly, across all 32 affected tables, and run it as a gate before merging the RLS migration.
+- Add a regression test (can be a Node script using the Supabase service-role + two seeded parent/child fixtures) that attempts a cross-family UPDATE and asserts it is rejected — this is cheap and this codebase already has precedent for audit-style migrations (`20260131000001_audit_rls_policies.sql`).
 
-**Warning signs:**
-Trail shows a user's most-recently-completed node as visually out of sequence. "Continue" button on Dashboard navigates to a node whose position looks wrong on the trail.
+**Warning signs:** A migration diff where an `UPDATE` policy's `WITH CHECK` block is missing, or is textually identical to a pre-refactor `student_id = auth.uid()` expression while `USING` was changed.
 
-**Phase to address:** Phase 1 (audit planning). The order-change policy must be established before any restructuring begins. Any PR adding nodes must include a migration validation query showing no existing user has progress on the affected positions.
+**Phase to address:** The RLS-rewrite phase, with its own verification step (this project already has a `/gsd-secure-phase` pattern used for the `note_mastery` JSONB column and can be reused here).
 
 ---
 
-### Pitfall 2: Replacing Generative Patterns with Curated Patterns Changes the Scoring Basis Mid-Progress for Existing Users
+### Pitfall 2: FK target drift during re-pointing (already happened once in this codebase)
 
 **What goes wrong:**
-Users who earned stars on rhythm nodes under the generative system scored against randomly-generated binary patterns. After migration to curated patterns, the same node now presents hand-crafted patterns that are — intentionally — more musically coherent and often harder (or easier). A user with `stars: 2` on `rhythm_3_1` earned those stars against a random pattern; replaying under curated patterns they might score `stars: 1` (if curated patterns are harder) or `stars: 3` immediately (if they're easier). Neither outcome is obviously wrong, but it creates confusion: "I already got 2 stars, why does this seem different?"
-
-More critically: if curated patterns use note durations that the generative system never used for that node — for example, a curated Unit 3 pattern includes dotted eighths but the generative system for `allowedPatterns: ['quarter', 'eighth']` never produced them — the VexFlow `binaryPatternToBeats()` converter may produce different beat structures, causing `scheduledBeatTimes` to have different lengths. The `scoreTap()` function's `nextBeatIndex` counter stored in React state carries over from the old pattern format into the new one, potentially causing `searchEnd = Math.min(length - 1, nextBeatIndex + 2)` to search beyond the array on the first tap after a refresh.
+30 FK columns across 26 tables need to move from `student_id → students(id)` to `child_profile_id → child_profiles(id)` (or owner columns distinguishing parent-level vs child-level data). Because this is done table-by-table across many migration files (this repo's history shows RLS/FK fixes routinely spread across 2-3 follow-up migrations), it's easy to repoint some tables and miss others, leaving a mixed state where some FKs point at the old `students(id)`, some at the new `child_profiles(id)`, and some are still typed `UUID` with no FK constraint at all (which this repo has: `students.id` itself has zero FK to `auth.users`, "deliberately dropped").
 
 **Why it happens:**
-Progress data (`stars`, `best_score`) is stored per-node, not per-pattern. The scoring system has no way to know whether a stored score was achieved under generative or curated rules. React state for `nextBeatIndex` resets at component mount so the array-bounds issue only affects within-session state, but pedagogically the scoring basis change is unannounced.
+This is not hypothetical — it is the exact bug class already fixed three times in this repo (`20250708191942`, `20250708191946`, `20260327000002_fix_teacher_fk_references.sql`, all retroactively repointing FKs originally aimed at `auth.users(id)` back to `students(id)`). The team has direct precedent that "repoint identity FK, do it live, iterate" produces multi-migration drift. With 26 tables this time (vs. 3-4 before), the risk is proportionally larger, and unlike the earlier case there is a paying-subscriber population who will notice broken progress/billing immediately.
 
 **How to avoid:**
 
-- Communicate the change to existing users: add a one-time "New patterns unlocked!" banner in TrailNodeModal for rhythm nodes on the user's first visit after the update (use a localStorage flag keyed by schema version, e.g., `rhythmPatternsV2Seen`).
-- Do NOT reset stored stars when switching from generative to curated. Accept that scores earned under the old system remain. The improvement is opt-in: users who want to "do it properly" will replay; others keep their progress.
-- Verify `binaryPatternToBeats()` and `rhythmVexflowHelpers` handle all durations used in curated patterns, not just the subset the generative fallback produced. Write unit tests for each new duration type before deploying curated patterns.
-- Curated patterns for each node must be duration-constrained to the node's `focusDurations` + `contextDurations` — do NOT introduce durations not yet taught.
+- Before writing any migration, generate the full authoritative list of all 30 FK columns (a single SQL query against `information_schema.table_constraints`/`key_column_usage` filtered to `students(id)` as the target) and treat it as a checklist — do not rely on memory or grep across the codebase.
+- Repoint FKs in **one migration transaction** where feasible (or a tightly sequenced set applied same-day), not spread across a milestone, specifically because this repo's history shows "spread across weeks" is when drift slipped through unnoticed.
+- After the migration, re-run the same `information_schema` query and diff against the checklist — assert zero remaining `students(id)` references outside of tables intentionally kept parent/teacher-scoped (e.g. `teacher_student_connections` may legitimately still reference something teacher-facing).
 
-**Warning signs:**
-VexFlow renders a measure with an unrecognized duration code → blank staff or console error in `rhythmVexflowHelpers`. `scheduledBeatTimes.length` in `RhythmReadingGame` is `undefined` or 0 after loading a curated pattern.
+**Warning signs:** Any table where writes succeed via the client but reads silently return zero rows (classic RLS-vs-wrong-FK symptom — no error, just missing data) — exactly how the original `assignment_submissions`/`notifications` bug likely first manifested.
 
-**Phase to address:** Phase 1 (pattern format design) and Phase 2 (curated pattern authoring). Each curated pattern file must be validated against the node's allowed duration set before merging.
+**Phase to address:** Schema/migration phase, first thing, before any RLS rewrite (RLS policies depend on the FK columns existing and being correctly targeted).
 
 ---
 
-### Pitfall 3: Introducing Dotted Notes (Unit 5) or 3/4 Time Before Enough Eighth Note Consolidation
+### Pitfall 3: Recursive/self-referential RLS policy errors from the ownership subquery
 
 **What goes wrong:**
-Unit 3 introduces eighth notes; Unit 4 introduces rests; Unit 5 introduces dotted half notes, dotted quarter notes, AND 3/4 time signature — all in 7 nodes. For 8-year-old learners, the dotted quarter-eighth combination is documented as one of the hardest elementary rhythm patterns. Research (Beth's Notes, MakingMusicFun) notes that students need at least 6 months of confident eighth note reading before dotted rhythms feel intuitive. The current unit sequence jumps from eighth notes (Unit 3) → rests (Unit 4) → dotted notes + new time signature (Unit 5) with no consolidation plateau between Units 3 and 5.
-
-If the curated patterns for Unit 5 include dotted quarter-eighth rhythms in the same node that introduces 3/4 time, learners face two new cognitive demands simultaneously (new time signature + dotted duration), which is a well-documented source of frustration and abandonment in children's music curricula.
+`child_profiles` policies need to check "does this parent own this child" (`parent_id = auth.uid()`), which is a direct check. But every _other_ table (progress, achievements, subscriptions) needs "does this row's `child_profile_id` belong to a child owned by me," which requires an `EXISTS`/`IN` subquery against `child_profiles`. If `child_profiles` itself has RLS enabled (it should) and its own SELECT policy is written naively, nested policy evaluation can produce `ERROR: infinite recursion detected in policy` — especially if a later convenience view or function tries to also check `teacher_student_connections` (teachers need to see child progress too, per the milestone's "Teachers stay, re-pointed at child_profiles" decision), creating a two-hop or three-hop policy chain (teacher → connection → child_profiles → parent).
 
 **Why it happens:**
-Adult developers overestimate children's rate of rhythm acquisition. Eighth notes feel trivial to a musician; they are not trivial to an 8-year-old who has not yet internalized subdivisions. The existing unit structure tries to pack too many concepts per unit because 50 nodes feels like a lot.
+Postgres RLS policies are themselves subject to RLS when referenced in a subquery, unless the referenced table's policy is `SECURITY DEFINER`-bypassed or the subquery explicitly targets a `SECURITY DEFINER` helper function. This repo already solved an equivalent problem for teacher access (`teacher_student_connections`) — but that pattern needs to be re-derived for the new three-way parent/child/teacher relationship, not copy-pasted, because the previous model was two-way (teacher→student directly).
 
 **How to avoid:**
 
-- Separate 3/4 time introduction from dotted note introduction. Either: (a) move 3/4 time to its own 2-node introduction earlier (e.g., after whole notes) with simple quarter patterns, or (b) introduce dotted half in 3/4 as the ONLY new concept in the first node, not dotted half + dotted quarter + new time sig together.
-- Before writing curated patterns for Unit 5, verify that Units 3-4 patterns provide at least 6-8 exercises of pure eighth+quarter mixing (no dotted). If they do not, add a consolidation practice node to Unit 3 or 4 before the v3.2 content ships.
-- Dotted quarter-eighth patterns should appear no earlier than Node 4 of Unit 5, after 3/4 time has been practiced with simple quarter-only patterns.
-- The `rhythmConfig.focusDurations` array for each node should contain **at most one new duration**. Any node where `focusDurations.length > 1` is a red flag for the curriculum audit.
+- Wrap the ownership check in a `SECURITY DEFINER` SQL function (e.g. `is_owner_of_child(child_id UUID) RETURNS BOOLEAN`) the same way `has_active_subscription()` and `is_free_node()` already exist as helper functions in this codebase — call the function from policies instead of inlining a subquery against a RLS-protected table. This sidesteps recursion and centralizes the ownership logic in one testable place instead of 26 duplicated subqueries.
+- For the teacher path, chain through the same helper pattern used for `teacher_student_connections` today, verified against a child rather than a student.
 
-**Warning signs:**
-Curated patterns for `rhythm_5_3` (Meet 3/4 Time node) contain dotted durations. Any Unit 5 node has `focusDurations: ['hd', 'qd']` (two new concepts in one node). Boss nodes for Unit 5 use dotted quarter-eighth patterns in the first measure.
+**Warning signs:** `42P17: infinite recursion detected in policy for relation "child_profiles"` in Supabase logs (`get_advisors`/`get_logs` via Supabase MCP) the first time any query touches a downstream table under the new policies.
 
-**Phase to address:** Phase 1 (curriculum audit). Before writing any curated patterns, document the "one new concept per node" rule and flag every existing node that violates it.
+**Phase to address:** RLS-rewrite phase — design the `is_owner_of_child()` helper function _before_ writing the 62 policy rewrites, not after hitting the recursion error.
 
 ---
 
-### Pitfall 4: Game Type Mismatch Kills Pedagogical Intent of Curated Patterns
+### Pitfall 4: Ownership-subquery RLS performance cliff on 26 tables
 
 **What goes wrong:**
-The v3.2 milestone involves assigning the "right game for the right learning stage." The four rhythm game types have fundamentally different learning modalities:
-
-- **MetronomeTrainer** (RHYTHM): Maintains a steady tempo via keyboard — tests motor accuracy against a metronome, not pattern reading
-- **RhythmReadingGame** (RHYTHM_TAP): Shows a VexFlow-rendered pattern + cursor; child taps along — tests ability to READ notation and reproduce it
-- **RhythmDictationGame** (RHYTHM_DICTATION): Plays a pattern aurally; child selects from visual choices — tests aural recognition
-- **ArcadeRhythmGame** (ARCADE_RHYTHM): Falling tiles with beat-by-beat tapping — tests reaction speed/rhythm feel
-
-Assigning MetronomeTrainer (steady beat) to a Discovery node that introduces a new duration sends children to a game that doesn't show them WHAT they're learning — they just tap a beat. Curated patterns in `exercises[].config.rhythmPatterns` passed to MetronomeTrainer are used to set up the metronome template but the game doesn't render notation, so the child never SEES the dotted quarter-eighth pattern they're supposed to be learning.
-
-More critically: RhythmReadingGame and RhythmDictationGame consume `nodeConfig.rhythmPatterns` from `location.state` to call `getPattern(timeSignature, difficulty, rhythmPatterns)`. If the game type is changed on a node but the curated pattern source is still the JSON database (ignoring `allowedPatterns`), the pattern displayed may contain durations not yet taught.
+A direct equality check (`student_id = auth.uid()`) is index-friendly and evaluated once. An ownership subquery (`child_profile_id IN (SELECT id FROM child_profiles WHERE parent_id = auth.uid())`), if not wrapped correctly, gets re-evaluated **per row** by the Postgres planner — this repo already had to fix exactly this class of problem once, for the simpler `auth.uid()` case, in `20260127000003_optimize_rls_auth_plan.sql` (wrapping every bare `auth.uid()` in `(SELECT auth.uid())` to force single evaluation). The ownership-subquery version is a strictly harder version of the same problem: even with `(SELECT auth.uid())` wrapped, the _inner_ `child_profiles` lookup itself may not be cached/indexed correctly, and `IN (subquery)` predicates are more expensive than `= scalar`.
 
 **Why it happens:**
-The game type → node mapping in v2.9 was done by remapping exercise types without a deep pedagogical audit. The intent was "variety," not "pedagogically appropriate game for this learning stage."
+The team has already paid down this exact tech debt once for a simpler predicate shape, which means it's a known risk class here — but the ownership-subquery rewrite reintroduces a harder version of the same problem across a larger surface (26 tables vs. the handful fixed previously), with real paying users (3 subscriptions) who will notice latency regressions on dashboard/trail loads.
 
 **How to avoid:**
 
-- Discovery nodes (new duration): always RhythmReadingGame (child sees the notation of the new thing) or RhythmDictationGame (child hears it first). Never MetronomeTrainer for Discovery.
-- Practice nodes (repetition): MetronomeTrainer is appropriate — child has seen the pattern, now building motor memory.
-- Speed Round nodes: ArcadeRhythmGame is appropriate — fast reflexes, known patterns.
-- Boss nodes: ArcadeRhythmGame or RhythmReadingGame with longer patterns — combination of skills.
-- When changing a node's exercise type, update the curated pattern source in the same commit so patterns stay duration-consistent.
+- Prefer the `SECURITY DEFINER` helper-function approach from Pitfall 3 (`is_owner_of_child(child_id)`), and mark it `STABLE` so Postgres can cache repeated calls within a statement.
+- Add an index on `child_profiles(parent_id)` (and keep the existing `child_profile_id` FK indexes on downstream tables) before rollout — this repo already has a dedicated `20260129000001_optimize_indexes.sql` precedent showing the team tracks this as a distinct concern.
+- Benchmark the trail/dashboard load query paths (the highest-read tables: `student_skill_progress`, `student_achievements`, `daily_goals`) before and after the RLS rewrite using `EXPLAIN ANALYZE`, not just "it loads fine for one test account" — the existing 20 live students plus test fixtures should be used to simulate realistic row counts.
 
-**Warning signs:**
-A Discovery node for "Meet Dotted Quarter Notes" uses `EXERCISE_TYPES.RHYTHM` (MetronomeTrainer). A Practice node uses `EXERCISE_TYPES.ARCADE_RHYTHM` before the concept is consolidated. Any node where `nodeType: NODE_TYPES.DISCOVERY` and `exercises[0].type === EXERCISE_TYPES.RHYTHM`.
+**Warning signs:** Trail/dashboard queries that were fast in dev (1-2 test rows) but slow in staging/production once run against the 20 real students' full progress history.
 
-**Phase to address:** Phase 1 (curriculum audit matrix). Create a mapping table: nodeId × nodeType × exerciseType × isAppropriate before touching any node files.
+**Phase to address:** RLS-rewrite phase, with a dedicated performance-verification step before the phase is marked done (this project already treats performance profiling as a distinct gate — see prior `PERF-01` requirements in earlier milestones).
 
 ---
 
-### Pitfall 5: Curated Pattern Files Not Found at Runtime → Silent Generative Fallback Replaces Curated Content
+### Pitfall 5: Live migration leaves users locked out silently, not with an error
 
 **What goes wrong:**
-`RhythmPatternGenerator.js`'s `HybridPatternService.loadPatterns()` fetches `/data/{timeSignature}.json` (e.g., `/data/4-4.json`) at runtime. If a curated pattern file is not deployed to `public/data/`, the `fetch()` fails silently — `loadPatterns()` catches the error and returns `null`, then `getCuratedPattern()` returns `null`, and `getPattern()` falls back to the generative `generatePattern()` path. The deployed app silently serves random patterns instead of the hand-crafted pedagogical sequences.
-
-There is no build-time check that `/public/data/*.json` files exist. The service worker's cache-first strategy on `/assets/*` does NOT apply to `/data/*` (the pattern files live in `/public/data/`, not hashed under `/assets/`). If the JSON file is missing from the deployment, network-first fails too, and the fallback activates on every load — the game "works" but serves exactly the system being replaced.
+Once `child_profiles.id` diverges from `auth.uid()`, any client code path that still does the old comparison (`user.id === studentId`, or queries filtered by `user.id` directly against a table now keyed by `child_profile_id`) does **not throw an error** — RLS just returns zero rows, or the client-side guard (`SEC-03: Client-side services verify user.id matches studentId`, already a shipped security feature in this codebase) actively _rejects_ the legitimate parent because their `auth.uid()` no longer equals the child's row id. This is a "quietly broken" failure mode, not a crash, so it survives casual smoke testing — the app loads, shows an empty dashboard, and looks like a data problem rather than an identity-model bug.
 
 **Why it happens:**
-
-- The curated JSON format uses `allowedPatterns: null` to trigger the curated path (see `getPattern()` logic: "only when no allowedPatterns constraint"). But current node files ALL set `rhythmPatterns: ['quarter', 'half', ...]` → they always pass a non-null `allowedPatterns` → they always take the generative path, bypassing curated JSON entirely. This means the curated JSON system in `RhythmPatternGenerator.js` has never been exercised in production.
-- Developers may write JSON files but forget to add them to `public/data/`, or they may add them but deploy before verifying the fetch URL.
+This codebase deliberately hardened exactly this kind of check as a security feature in v1.0 (`SEC-03`), which means the fix for the _old_ model (client verifies `user.id === studentId`) is now an active landmine for the _new_ model — the same code that used to prevent impersonation will prevent legitimate parent access unless every one of the 47 auth-id resolution call sites in services (25 in `apiTeacher.js` alone) is updated to resolve "the currently selected child profile" rather than "the auth user."
 
 **How to avoid:**
 
-- Decide the curated delivery strategy: either (a) embed patterns directly in the node config objects (no runtime fetch — simpler and cache-safe), or (b) deploy JSON files under `public/data/` and add them to the service worker's runtime cache strategy.
-- If using JSON files: add a build-time check in `validateTrail.mjs` that verifies every time signature referenced in rhythm node configs has a corresponding `/public/data/{ts}.json` file.
-- If embedding in node config: add a `curatedPatterns` array field to each node's `rhythmConfig` and update the games to use it directly, bypassing `RhythmPatternGenerator` for curated delivery.
-- Add a Sentry breadcrumb or error log when the curated path returns `null` and the fallback activates — this makes silent fallbacks visible in production.
+- Grep and enumerate every `user.id === ` / `user?.id ===` comparison against a `student_id`/progress-table id before writing the migration — treat `SEC-03`-style checks as a checklist, not incidental risk, precisely because they were built to be strict.
+- Introduce an explicit "active child profile" concept (context/hook) as the _only_ source of the id used against child-scoped tables, and audit that the 34 files/42 call sites of `useUser()` are triaged into "needs parent id" vs "needs active child id" — do not let call sites default to `user.id` out of inertia.
+- Roll the identity migration behind a feature flag or staged rollout (e.g. dual-write / shadow-read) rather than a single atomic cutover, given 15 live auth accounts with real subscriptions — this project has precedent for atomic cutovers (`v1.3` trail redesign: "Atomic cutover with progress reset and XP preservation") but that was for content data, not identity/auth, which has a much higher cost of getting wrong.
 
-**Warning signs:**
-In production, Sentry console warnings show `"Could not load patterns for 4/4"`. QA after deploy: the same exercise played 5 times shows 5 different patterns when the curated design intended the same ordered sequence.
+**Warning signs:** Post-migration, any of the 20 real students loading a dashboard with zero XP/streak/progress shown despite data existing in the DB — verify via Supabase SQL directly (bypassing RLS as service role) before assuming data loss.
 
-**Phase to address:** Phase 1 (architecture decision). The delivery mechanism must be decided before any patterns are authored. Embedding in node config is lower risk; runtime JSON fetch requires explicit deployment + caching + build validation.
+**Phase to address:** Migration-execution phase; the verification step must explicitly log into (or simulate) each of the 15 real auth accounts post-migration and confirm non-empty progress, not just check row counts server-side.
 
 ---
 
-### Pitfall 6: Timing Windows (50ms PERFECT at 120 BPM) Are Too Strict for 8-Year-Old Motor Skills
+### Pitfall 6: "Child registered with own email → becomes a parent account" silent reparenting
 
 **What goes wrong:**
-`BASE_TIMING_THRESHOLDS.PERFECT = 50ms` at 120 BPM. The scaling formula `Math.pow(BASE_TEMPO / tempo, 0.3)` widens this to ~59ms at 90 BPM and ~70ms at 65 BPM. Research on children's motor development and rhythm game design establishes that children aged 7-9 have reaction time variability of ±80-120ms even for well-learned patterns — roughly double that of adults. Rhythm games designed for adults (DDR, Guitar Hero) typically use PERFECT windows of 43-50ms; games designed for educational use with children use 100-150ms.
-
-The current PERFECT window means a child who taps rhythmically correct but 60ms off (normal for an 8-year-old) receives "GOOD" or "MISS", perceives themselves as failing, and disengages. This is the primary mechanism causing frustration in rhythm games for young learners — not content difficulty, but timing harshness.
+The owner decision already flags this: some of the 15 real auth accounts belong to children who signed up directly (pre-COPPA-refactor). Auto-migrating them to "own a parent account which owns one child profile" is _technically_ consistent with the new schema, but legally and UX-wise it means a child's account silently becomes the adult-controlled account with billing/settings access — with no adult having agreed to that role. If the migration script does this unconditionally (because it's the path of least resistance for "preserve logins and 3 active subscriptions"), it ships a COPPA problem baked directly into the fix for a COPPA problem.
 
 **Why it happens:**
-The thresholds were designed for the MetronomeTrainer which targets older students and teachers, then reused verbatim for `RhythmReadingGame` in v2.9. No calibration for 8-year-old motor variability was applied.
+Under time/deadline pressure (COPPA deadline April 22, 2026 per PROJECT.md constraints — though that date is in the past relative to "today," meaning the project may already be operating past its original compliance target, raising the urgency), the simplest migration script treats all pre-existing accounts uniformly. The owner decision text already explicitly calls this out as needing "a re-consent prompt, not a silent conversion" — the risk is the _implementation_ skipping that nuance under time pressure, not the plan lacking awareness of it.
 
 **How to avoid:**
 
-- For nodes in Units 1-4 (basic durations), widen thresholds to `PERFECT: 100ms, GOOD: 150ms` — double the current values. This does not require changing the scoring infrastructure; `BASE_TIMING_THRESHOLDS` can be made configurable per-game or per-node difficulty.
-- Add a `timingLeniency` field to `rhythmConfig` (`'relaxed' | 'standard' | 'strict'`) that maps to different threshold multipliers. Discovery and Practice nodes use `'relaxed'`; Speed Round and Boss nodes use `'standard'` or `'strict'`.
-- Never use "MISS" feedback wording for children — replace with "Almost!" or the equivalent. The word "MISS" is experienced as personal failure by 8-year-olds and triggers disproportionate frustration.
-- Cap the minimum scoring feedback at "GOOD" for the first 3 exercises of a new node (grace period) regardless of timing accuracy, to prevent early abandonment.
+- Segment the 15 auth accounts explicitly during migration planning: which were created via the "child self-registers" path (role-first signup wizard, birth year collected) vs. teacher-created placeholder rows. Only accounts flagged as self-registered-by-a-minor need the re-consent gate; accounts already known to be adults (teachers, or parents who registered via the existing "optional parent email" field from `v2.7`) can migrate silently.
+- Build the re-consent prompt as a **blocking** first-login screen post-migration for the flagged accounts specifically — "confirm you are 18+ to continue managing this account" — not a dismissible banner, and log the consent event with a timestamp (same audit-log discipline as the existing COPPA hard-delete Edge Function).
+- Do not ship this silently even if it's a small number of accounts — this is the single highest legal-risk item in the whole migration, since it's converting a minor's account into an "I am an adult" attestation without ever asking.
 
-**Warning signs:**
-QA on real 8-year-old users: average score below 50% on Unit 1 nodes (which contain only quarter notes at 65 BPM). If children are failing quarter-note exercises, the timing threshold, not content difficulty, is the culprit. A/B test: widen PERFECT to 100ms → if scores jump significantly, the original threshold was too strict.
+**Warning signs:** None will surface functionally — this pitfall causes no bugs, no errors, no test failures. It is purely a compliance/legal risk that must be caught by explicit design review, not QA.
 
-**Phase to address:** Phase 1 (timing policy) and Phase 2 (per-node configuration). Timing policy must be decided before curated patterns are authored, since the pattern's duration values affect how close adjacent beat times are (faster patterns → less margin between beats → stricter effective window regardless of threshold).
+**Legal dimension:** COPPA-relevant. Converting a child-registered account into the account-of-record for parental consent/billing without an explicit adult attestation could itself be read as circumventing COPPA's verifiable-parental-consent requirement, defeating the purpose of the milestone.
+
+**Phase to address:** Migration-planning phase, before any migration script is written — needs an explicit segmentation query against the 15 accounts and sign-off on the re-consent UX before implementation.
+
+---
+
+### Pitfall 7: Deleting the recording feature's code/table does not delete the storage objects
+
+**What goes wrong:**
+The `practice-recordings` bucket exists **only in the remote Supabase project** with no migration creating it. The only code paths that ever call `supabase.storage.from("practice-recordings").remove(...)` are inside `practiceService.js`'s `deleteRecording()`/`deleteAllRecordings()` functions. If the deletion work drops the `practice_sessions` table (or the columns `recording_url`/`has_recording`) and deletes the UI/service files without **first** running an explicit bulk-remove of every object in the bucket, every uploaded recording remains in storage indefinitely — orphaned, unreferenced by any DB row, un-deletable through any remaining UI (because the UI is gone), and still billed for storage. Since children's voices are the entire reason this feature is being removed, this is the single worst possible outcome: the feature is "deleted" from the app while the sensitive data it collected is still sitting in a bucket nobody can see or manage anymore.
+
+**Why it happens:**
+"Delete the feature" naturally reads as "delete the code," and the storage bucket is invisible in the local dev environment (no migration represents it, `supabase db reset` never shows it) — it's easy for someone doing the deletion work to never even see the bucket exists unless they specifically check the remote dashboard or use the Supabase MCP's storage tools.
+
+**How to avoid:**
+
+- Before deleting any code, enumerate every object currently in `practice-recordings` (via Supabase MCP or the dashboard) and export/log the count and total size — this becomes the evidence record for the legal requirement below.
+- Write a one-time cleanup script/Edge Function that bulk-deletes all objects in the bucket, run and confirmed **before** the code deletion PR merges, not after — do it while the code that can enumerate `recording_url` values (for cross-referencing/logging) still exists.
+- After objects are deleted, delete the bucket itself and its storage policies (not just empty it) via the Supabase dashboard/MCP, and — since nothing in the repo represents the bucket today — add a migration or `supabase/config.toml` note recording that the bucket was deleted, so this doesn't look like an oversight to a future engineer (or auditor) reading the migration history.
+
+**Warning signs:** After the "deletion" ships, storage usage in the Supabase dashboard does not drop to zero.
+
+**Legal dimension:** COPPA. Retaining children's voice recordings — audio is explicitly called out as personal information under the 2013 COPPA amendment, which is the stated reason for removing this feature at all — after the feature is nominally "removed" is the exact failure mode the milestone exists to prevent. This is not a technical debt item; it is the core compliance risk of Phase 2.
+
+**Phase to address:** The feature-deletion phase, and it must be sequenced **first** within that phase (storage cleanup before code deletion), not last.
+
+---
+
+### Pitfall 8: No audit trail / evidence of deletion for storage objects
+
+**What goes wrong:**
+Even after Pitfall 7 is correctly avoided and the bucket is emptied, a bare `storage.remove([...])` bulk call produces no durable record of _what_ was deleted, _when_, or _for which students_ — no count, no manifest, no confirmation log. If a parent, regulator, or Google Play Families reviewer later asks "prove you deleted the audio you collected from my child," there is nothing to produce beyond "we believe we ran a script once."
+
+**Why it happens:**
+This codebase already solved this exact problem for account-level COPPA hard-deletion — `20260321000001_account_deletion_log.sql` plus the cron-triggered hard-delete Edge Function that writes an HMAC-signed audit log entry per deletion. It's easy to treat the storage-bucket cleanup as a one-off maintenance task rather than routing it through the same audited-deletion discipline the team already built and trusts for the harder case (full account erasure).
+
+**How to avoid:**
+
+- Reuse the existing `account_deletion_log` pattern (or a sibling table) to record: object count deleted, total bytes, which `student_id`s/`child_profile_id`s were affected, a timestamp, and the operator/script identity — mirroring the audit rigor already applied to `v2.5`'s COPPA hard-delete work (DEL-01-07).
+- Keep this log itself PII-minimal (student ids, not names; no need to log recording content or filenames beyond what's needed for the count).
+
+**Warning signs:** None technical — this is purely a "can we answer an audit question" gap, which won't surface until someone asks.
+
+**Legal dimension:** COPPA/GDPR-K data-deletion evidence requirement — "we deleted it" needs to be demonstrable, not just true.
+
+**Phase to address:** Same phase as Pitfall 7 (storage cleanup), same script.
+
+---
+
+### Pitfall 9: Deleting `practice_sessions` rows regresses achievements silently (known coupling, must be sequenced correctly)
+
+**What goes wrong:**
+This coupling is already identified: `achievementService.js`'s stats aggregation counts `practice_sessions` rows without filtering on `has_recording`. If the recording-deletion work deletes rows where `has_recording = true` (or drops the whole table), any achievement whose condition depends on total practice-session counts will regress for real students — a student who legitimately earned an achievement based on a mix of recorded and non-recorded sessions could see it un-earn (if achievement state is recalculated, not just cached) or the progress bar shown on next load could look wrong even if the earned-achievement row itself persists.
+
+**Why it happens:**
+`practice_sessions` currently serves two purposes: recorded practice logging (with audio) and lightweight per-game session logging (`has_recording: false`, used by `saveGameSession`-style calls). Removing "the recording feature" conceptually should only remove the _audio_ half, but if the deletion work treats `practice_sessions` as _the_ recordings table and drops/truncates it wholesale, the non-recording rows (which power streaks, achievement counts, and possibly teacher analytics via `apiTeacher.js`'s 6+ query sites) go with it.
+
+**How to avoid:**
+
+- Do not drop or truncate `practice_sessions`. Only remove rows/columns specific to the audio path: `recording_url`, storage-bucket references, and rows where `has_recording = true` (after confirming, via the achievement stats query, whether those rows should be preserved as session history with the audio link nulled rather than the row deleted outright — preserving history avoids the regression entirely).
+- Fix `achievementService.js`'s stats query to be explicit about what it's counting regardless of the recording deletion (add the missing scoping) — this is a pre-existing bug independent of this milestone, but it becomes user-visible the moment recording rows disappear, so it must be fixed in the same phase, not left for later.
+- Grep every consumer of `practice_sessions` (14 files/33+ call sites found in this repo, including `apiTeacher.js`, `apiDatabase.js`, `dataExportService.js`, `useTeacherRecordingNotifications.js`, `useStudentFeedbackNotifications.js`) before deciding row-delete vs. column-null, since teacher notification hooks and the data-export (COPPA data export) flow both key off this table too.
+
+**Warning signs:** A student's achievement progress bar (e.g. "practice X sessions") drops after the recording-deletion migration runs, or `dataExportService.js`'s COPPA data-export output changes shape/count for existing users.
+
+**Phase to address:** Feature-deletion phase; needs its own sub-step distinct from the storage-bucket cleanup (Pitfall 7/8), because this is a data-modeling decision (null the column vs. delete the row) that has to be made before any bulk delete runs.
+
+---
+
+### Pitfall 10: `teacher_feedback` badge dies silently (known coupling)
+
+**What goes wrong:**
+`teacher_feedback` is written exclusively by the `RecordingsReview` screen (teacher reviewing a student's recording). Removing the recordings feature removes the only writer of this table, but the _reader_ — the student-facing "you have feedback" notification badge (`useStudentFeedbackNotifications.js`) — still queries it. The badge doesn't error; it just permanently shows nothing, and any existing unread-feedback state for students becomes unreachable UI dead weight (rows exist, nothing surfaces them, nothing tells the student they existed).
+
+**Why it happens:**
+The feedback mechanism was built as a side effect of the recording-review workflow specifically, not as a standalone teacher→student messaging feature, so removing the parent workflow silently orphans the child workflow — a common "feature deletion" trap where two features share a table but only one is being deleted.
+
+**How to avoid:**
+
+- Explicitly decide, as part of scoping the deletion phase, whether `teacher_feedback` is in scope for removal too (likely yes, since it has no other writer) or whether it should be preserved as a hook point for a future non-recording-based teacher feedback mechanism.
+- If removing: also remove/hide `useStudentFeedbackNotifications.js` and its badge UI, and check `AssignmentManagement.jsx` (which references `submission.practice_sessions`) for any indirect display of feedback state.
+- If preserving: explicitly note this as a known future gap (a teacher-feedback writer needs to be rebuilt independent of recordings) rather than leaving it ambiguous.
+
+**Warning signs:** A teacher-facing "leave feedback" UI element with no student-facing surface for it post-deletion (dead one-way data).
+
+**Phase to address:** Feature-deletion phase, decided explicitly rather than left as an accidental side effect.
+
+---
+
+### Pitfall 11: Child escapes to the parent surface (parental gate is a route guard, not a data guard)
+
+**What goes wrong:**
+The existing `ParentGateMath` pattern (already used for Parent Portal/settings/billing) is explicitly a client-side math-problem gate on specific _routes_. In a profile-switcher model, a child using the shared device only needs to navigate directly to a parent-only URL (or trigger a component that's supposed to be gated but isn't wired to check gate-state on mount, only on the entry button) to reach billing/subscription-cancel/child-profile-delete screens. An 8-year-old defeating a two-digit-addition gate is trivial (guess-and-check, or asking a sibling), and the milestone's own PRD explicitly plans this exact mechanism (`8 x 7 = ?`) as _the_ security guard for account settings/subscription/billing.
+
+**Why it happens:**
+This app is a PWA with client-side routing; "gate the button that navigates to the route" is much easier to implement than "gate the route itself regardless of entry point," and it's easy to gate the obvious entry point (profile-switcher's "Parent Zone" button) while missing direct URL access, browser back-button/forward-cache bypass, or a deep link from a push notification.
+
+**How to avoid:**
+
+- Gate at the route level (a wrapper component checked on every mount of parent-scoped routes, re-verifying gate-passed state, not just a one-time click-through) — this repo already has `ProtectedRoute` precedent for auth; extend the same pattern for a `ParentGateProtectedRoute`.
+- Treat the gate state as short-lived (re-prompt after N minutes of inactivity or on route re-entry) rather than a permanent "gate passed" flag stored for the session — otherwise the first child to pass the gate leaves it open for whichever sibling picks up the device next.
+- Explicitly test the "type the URL directly" and "browser back button after gate-pass, then forward" paths, not just the primary click-through flow, during QA for this phase.
+
+**Warning signs:** None will show up in a straight-line manual test — this specifically requires an adversarial test pass (try to reach `/parent-portal` or subscription-cancel without clicking the gated entry point).
+
+**Phase to address:** The child-profile/parental-gate phase, with an explicit adversarial-testing checklist item (not just the happy-path gate demo).
+
+---
+
+### Pitfall 12: Profile switch doesn't rescope cached state — sibling data bleed
+
+**What goes wrong:**
+This app already uses React Query with per-user keys (e.g. `["streak-state", userId]`, per this repo's `streakService.js` convention) plus various Context providers (`SessionTimeoutContext`, audio, settings) that are instantiated once per app session. Under the old model, "session" and "student" were the same thing, so query keys scoped to `userId` were correct. Under the new model, one auth session (`userId` = parent) serves N children; if query keys stay scoped to `userId` instead of the _active child profile id_, switching from Child A to Child B will either (a) show Child A's cached XP/streak/HUD state briefly or persistently, or (b) worse, allow a write (e.g. saving a game score) to land against the wrong child if the "current student id" resolution lags the profile-switch UI state.
+
+**Why it happens:**
+This is the same blast-radius problem as Pitfall 5 but for client-side cache/state rather than server-side RLS — every one of the 34 files/42 `useUser()` call sites and every React Query key built from `userId` needs to be re-audited to use "active child profile id" instead, and it's easy to fix the obvious top-level state but miss a memoized hook or a component that grabbed `userId` once on mount and never re-reads it on switch.
+
+**How to avoid:**
+
+- Introduce a single `activeChildProfileId` piece of state (Context) that is the _only_ thing passed down for child-scoped data fetching, and make the profile-switcher action explicitly invalidate/clear all React Query caches keyed by the old child id (`queryClient.removeQueries` or a full `queryClient.clear()` on switch is safer than trying to enumerate every key).
+- Force full component remount on switch (e.g. a `key={activeChildProfileId}` on the top-level authenticated app shell) rather than relying on every consumer to correctly react to a context change — this is a blunter but much safer instrument given the size of the call-site surface.
+- Specifically re-test session-timeout behavior (`SessionTimeoutContext`) across a profile switch — the existing 30min/2hr role-based timers were built around "session = one student," and need to be re-verified to reset (not silently carry over) on switch.
+
+**Warning signs:** Combo/streak/XP numbers that flash the wrong child's values for a frame after switching, or (far worse, needs explicit test) a game score save landing on the wrong `child_profile_id` immediately after a fast profile switch.
+
+**Phase to address:** Profile-switcher implementation phase; needs a dedicated multi-child device test (create 2+ child profiles, switch rapidly, verify no bleed) as an explicit acceptance criterion, not just a demo of the switch UI itself.
+
+---
+
+### Pitfall 13: Lemon Squeezy subscription ownership doesn't map cleanly onto child profiles
+
+**What goes wrong:**
+`parent_subscriptions.student_id` is currently `= auth.uid()` — i.e., the subscribing identity and the gated identity are the same row. The LS webhook handler (`lib/upsertSubscription.ts`) writes `student_id: payload.student_id` directly from checkout custom data. Once identity splits into parent (auth.uid()) vs. child_profile (a separate row a parent may have several of), there are two very different possible models — "subscription gates one specific child" vs. "subscription gates the whole family/parent account" — and the PRD/milestone text doesn't specify which. If the webhook keeps writing to a `student_id`-shaped column without an explicit decision, one of two silent failures happens: (a) the subscription re-attaches to whichever child happened to be "active" during the original checkout flow and doesn't extend to siblings the parent reasonably expects to also be covered, or (b) the checkout custom-data payload still encodes an old `student_id` value (from before migration) that no longer resolves to any live `child_profile_id`, and the webhook silently upserts an orphaned subscription row that never gates anything.
+
+**Why it happens:**
+Billing/subscription code paths are the least likely to be touched during a UI-focused profile-switcher redesign, and Lemon Squeezy's checkout custom-data is opaque until a webhook fires — a mismatch here won't be caught by any local testing, only by a real webhook event against production, exactly where the 3 live paying subscriptions are.
+
+**How to avoid:**
+
+- Explicitly decide during design (not implementation): does a subscription attach to `parent_id` (family-wide access, all current and future children of that parent gated identically) or to a specific `child_profile_id` (per-child paywall, requiring re-purchase per sibling)? Given this is a piano-learning app likely used by siblings in one household, family-wide (`parent_id`-scoped) is very likely the intended and expected model — but this must be an explicit decision recorded in the roadmap, not inferred from old code.
+- If moving to `parent_id`-scoped, migrate the 3 live `parent_subscriptions` rows explicitly (map each existing `student_id` to its new owning `parent_id`) as a dedicated, verified migration step — do not let this happen implicitly via a generic FK repoint that wasn't designed with billing semantics in mind.
+- Update `has_active_subscription()` and the LS webhook's `upsertSubscription.ts` together, in the same phase, and test against LS's sandbox/test-mode webhook before touching the 3 live subscriptions — a broken webhook silently failing to grant/renew access on a real paying customer is a support/refund incident, not just a bug.
+
+**Warning signs:** A real subscription renewal webhook firing post-migration and either erroring (visible in Edge Function logs) or succeeding but not actually unlocking content for the correct child (much harder to notice — needs an explicit post-migration manual check against all 3 live subscriptions).
+
+**Phase to address:** Needs its own explicit sub-phase or at minimum a dedicated verification step gated on real LS sandbox testing before the identity-migration phase touches `parent_subscriptions` — billing correctness for 3 live paying customers is a distinct risk class from general data correctness.
+
+---
+
+### Pitfall 14: Bulk i18n key deletion fails silently, both ways
+
+**What goes wrong:**
+i18next's default behavior on a missing key is to fall back to the key string itself or a configured default — it does not throw, and this repo has no automated i18n validation script (`scripts/` only has `validateTrail.mjs` and `patternVerifier.mjs`, nothing for locales). Bulk-deleting ~70 recording-related keys × 2 locales (EN/HE) has two independent silent-failure modes: (1) a key gets deleted from `en.json` but a stray `t("recordings.xyz")` call survives somewhere non-obvious (e.g. inside `AssignmentManagement.jsx`'s reference to `submission.practice_sessions`, or a shared component that also handles other session types) and now renders the raw key string or a blank to real users; (2) a key gets deleted from `en.json` but not `he.json` (or vice versa), silently breaking the EN/HE parity this project has otherwise maintained rigorously per-milestone (manually, e.g. "89/89 EN↔HE" tracked in v3.5) — and nothing catches it because that parity check has always been a manual, milestone-specific effort, never an automated gate.
+
+**Why it happens:**
+i18next is designed to degrade gracefully in production (better a visible-but-ugly fallback string than a crash), which is exactly what makes over-deletion and under-deletion both invisible without deliberate tooling — the graceful-degradation feature that protects against typos in normal development actively works against catching a large deliberate deletion correctly.
+
+**How to avoid:**
+
+- Before deleting any locale keys, run a repo-wide search for every `t("...")`/`i18n.t("...")` call whose key namespace touches recordings/practice-session-audio, cross-reference against the ~70 keys planned for deletion, and confirm zero remaining call sites reference them (this is a mechanical, scriptable check — worth writing even as a one-off script, following this repo's existing precedent of writing verification scripts for structural invariants like `validateTrail.mjs`).
+- Delete keys from EN and HE in the **same commit**, and diff the two locale files' key sets before/after to confirm they still match exactly (a simple `Object.keys` set-diff script) — do not rely on manual side-by-side review for ~140 key removals.
+- Consider this the moment to add a lightweight automated i18n-parity script to `scripts/` (mirroring `validateTrail.mjs`'s role as a build-time invariant checker) given this milestone is deleting at a scale (~70×2) well beyond what manual per-milestone tracking has handled before — this closes a pre-existing gap that this specific deletion makes newly risky.
+
+**Warning signs:** Post-deletion, a raw i18n key string (e.g. `recordings.title`) visibly rendered in the UI anywhere, or a `console.warn` from i18next about missing keys (if `saveMissing`/debug logging is enabled) that's currently being ignored.
+
+**Phase to address:** Feature-deletion phase, as a dedicated verification step run before the phase is marked complete — should be one of the last things checked (after code/route/component deletion) since new orphaned references can only be found once the deletion is otherwise finished.
 
 ---
 
 ## Technical Debt Patterns
 
-Shortcuts that seem reasonable but create long-term problems.
-
-| Shortcut                                                                             | Immediate Benefit                                   | Long-term Cost                                                                                                             | When Acceptable                                                                                                                    |
-| ------------------------------------------------------------------------------------ | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Embedding curated patterns inline in node config arrays                              | No runtime fetch, no deployment risk, works offline | Node files become large (50-100 patterns per unit file); hard to edit patterns separately from node metadata               | Acceptable for v3.2 if pattern counts are low (5-10 per node). Revisit if patterns grow beyond 20/node.                            |
-| Reusing `BASE_TIMING_THRESHOLDS` from MetronomeTrainer for tap games                 | No code duplication                                 | Thresholds were designed for adults; 8-year-old motor variability requires wider windows                                   | Never acceptable for Discovery/Practice nodes. Only acceptable for Speed Round/Boss nodes targeting older or skilled users.        |
-| Setting `focusDurations: ['qd', 'hd']` (two new concepts) in one Discovery node      | Fewer total nodes, shorter trail                    | Children face two cognitive demands simultaneously; higher drop-off rate                                                   | Never acceptable for Discovery nodes. Allowed only for Mix-Up or Review nodes where both concepts are already known.               |
-| Using MetronomeTrainer for all Discovery nodes (single exercise type for simplicity) | Simplest implementation path                        | Metronome doesn't show notation; children never learn to READ rhythm, only feel it                                         | Never acceptable for notation-based learning objectives.                                                                           |
-| Skipping the DB migration when restructuring prerequisites                           | Faster shipping                                     | Existing users may be locked behind prerequisites they can no longer satisfy if a prerequisite node was removed or renamed | Never acceptable if a prerequisite node ID changes. Always provide a migration that re-satisfies prerequisites for affected users. |
-
----
+| Shortcut                                                                                   | Immediate Benefit                                                     | Long-term Cost                                                                                                                      | When Acceptable                                                                                                                                             |
+| ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repointing FKs table-by-table across several small migrations instead of one audited batch | Easier to review each diff                                            | Exactly the drift bug this repo already shipped once (`auth.users` vs `students`)                                                   | Never for this milestone — batch it, given the precedent                                                                                                    |
+| Client-side-only parental gate (no server-side re-check on sensitive mutations)            | Fast to ship, matches PRD's literal wording ("math problem like 8×7") | An 8-year-old or a compromised client can bypass client-only gates entirely for billing/settings mutations                          | Acceptable only for pure-UI reveal (e.g. showing/hiding a menu item), never for actual mutation authorization — those must also be RLS/service-role checked |
+| Nulling `recording_url` instead of deleting `practice_sessions` rows                       | Preserves achievement/streak history, avoids Pitfall 9                | Leaves a `has_recording`/`recording_url` vestige in the schema that has to be explained later                                       | Acceptable and recommended as the actual approach here — the "cost" is just a documented deprecated column, not a data-integrity risk                       |
+| Treating `teacher_feedback` cleanup as out of scope ("nobody will notice")                 | Less work in this milestone                                           | A dead one-way UI element (badge with nothing behind it) ships to production and looks like a bug to any future engineer or QA pass | Never — explicitly decide keep-and-repurpose vs. remove (Pitfall 10)                                                                                        |
 
 ## Integration Gotchas
 
-Common mistakes when connecting to the existing trail and game systems.
-
-| Integration                                       | Common Mistake                                                                                                                                                                                                                                                                                    | Correct Approach                                                                                                                                                                                                                      |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `RhythmPatternGenerator.getPattern()`             | Passing `allowedPatterns: ['quarter']` bypasses the curated JSON database entirely (see `getPattern()` line 691: `if (!useAllowedPatterns) { result = await generator.getCuratedPattern(...) }`)                                                                                                  | When switching a node to curated patterns, set `rhythmPatterns: null` in the exercise config OR restructure delivery to embed patterns directly — the current API cannot both constrain durations AND use curated JSON simultaneously |
-| `validateTrail.mjs` prebuild hook                 | Assumes all rhythm node IDs follow `rhythm_N_M` or `boss_rhythm_N` pattern; adding nodes with different ID schemes (e.g., `rhythm_review_1`) may not be caught by existing ID format checks                                                                                                       | Verify the validator's regex or list-based checks cover any new ID patterns before authoring new node files                                                                                                                           |
-| `subscriptionConfig.js` `FREE_RHYTHM_NODE_IDS`    | Adding new Unit 1 or Unit 2 nodes (e.g., a new introductory node before `rhythm_1_1`) without updating the free tier set silently paywalls content that should be free                                                                                                                            | Any new node in the first rhythm unit must be explicitly added to `FREE_RHYTHM_NODE_IDS` AND a Supabase migration must update `is_free_node()` function in the same PR                                                                |
-| TrailNodeModal `navigateToExercise()` switch-case | Renaming an EXERCISE_TYPE constant (e.g., `RHYTHM` → `METRONOME`) breaks the switch without compile-time error                                                                                                                                                                                    | Never rename existing EXERCISE_TYPE values; only add new ones. If renaming is necessary, add the new constant, update all consumers, then deprecate the old one                                                                       |
-| `rhythmVexflowHelpers.binaryPatternToBeats()`     | The binary pattern array length must match `TIME_SIGNATURES[ts].measureLength` (16 for 4/4, 12 for 3/4, 12 for 6/8). Curated patterns embedded as JSONB objects (schema format with `{duration, note}` objects) must be converted to binary via `convertSchemaToBinary()` before passing to games | Run `convertSchemaToBinary()` on all curated patterns at node-load time, not at pattern-generation time, and validate the output length before passing to `scheduledBeatTimes` builder                                                |
-
----
+| Integration            | Common Mistake                                                                                                                | Correct Approach                                                                                                                                                             |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase RLS           | Rewriting `USING` without also rewriting `WITH CHECK` on UPDATE/INSERT policies                                               | Always write both explicitly for every rewritten policy; verify via `pg_policies` query (Pitfall 1)                                                                          |
+| Supabase Storage       | Assuming a bucket that only exists in the remote project is safe to ignore during code deletion                               | Enumerate and bulk-delete bucket contents as an explicit, logged step before or alongside code deletion (Pitfall 7/8)                                                        |
+| Lemon Squeezy webhooks | Leaving `upsertSubscription.ts` writing to a `student_id`-shaped column without redefining what identity it should now target | Explicitly decide parent-scoped vs. child-scoped billing and update the webhook handler + `has_active_subscription()` together, tested against LS sandbox first (Pitfall 13) |
+| i18next                | Assuming a missing/orphaned key will surface as a visible error during QA                                                     | It degrades silently; requires an explicit key-usage cross-reference script, not manual QA (Pitfall 14)                                                                      |
 
 ## Performance Traps
 
-Patterns that work at small scale but fail as usage grows.
+| Trap                                                                                         | Symptoms                                                                                      | Prevention                                                                                                                                                   | When It Breaks                                                                                             |
+| -------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| Ownership subquery evaluated per-row instead of once per statement                           | Dashboard/trail load times regress after RLS rewrite, not before                              | Use a `STABLE SECURITY DEFINER` helper function + index on `child_profiles(parent_id)`; benchmark with `EXPLAIN ANALYZE` against real row counts (Pitfall 4) | Noticeable once the 20 live students' full progress history is queried, not with 1-2 dev fixtures          |
+| `queryClient.clear()`-free profile switching leaves stale cached queries around indefinitely | Memory growth / stale-data flashes accumulate the more profile switches happen in one session | Invalidate or clear query cache explicitly on every profile switch (Pitfall 12)                                                                              | Multi-child households doing several switches per session — will not show up in single-child test accounts |
 
-| Trap                                                                                                                                                           | Symptoms                                                                                                                                       | Prevention                                                                                                           | When It Breaks                                                                                    |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Runtime fetch of curated JSON pattern files on each exercise                                                                                                   | 100-300ms network latency per exercise start on slow connections (common in Israeli schools); causes visible "waiting" before notation renders | Embed patterns in node config OR preload the JSON file once on component mount, not per exercise                     | Always — even on fast connections the latency is noticeable compared to instant local data access |
-| Creating a new `HybridPatternService` instance on every `getPattern()` call (current code: `const generator = createPatternGenerator()` inside `getPattern()`) | Fresh `patternCache` Map on every call — cache never warms up, all `loadedPatterns` lookups miss                                               | Move `HybridPatternService` instance to module scope (singleton) so the cache persists across calls within a session | At the first exercise of each session — visible lag before first pattern renders                  |
-| Storing 50-100 curated patterns per node inline in JS unit files                                                                                               | Bundle size grows; 8 unit files × 7 nodes × 20 patterns × ~100 bytes/pattern ≈ 112 KB added to the JS bundle                                   | Keep inline patterns to 5-8 per node; use lazy-loaded JSON for richer pattern libraries                              | At ~30+ patterns per node — Vite chunk analysis will show unit files > 50KB each                  |
+## Security Mistakes
 
----
+| Mistake                                                                                                      | Risk                                                                                                                                        | Prevention                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Route-only parental gate with no re-verification on direct navigation or route re-entry                      | Child reaches billing/subscription-cancel/account-delete surfaces                                                                           | Gate at the route-wrapper level, re-checked per mount, short-lived gate-passed state (Pitfall 11)                                   |
+| RLS policy rewritten with recursive self-reference across `child_profiles` ↔ `teacher_student_connections`  | Query-time `infinite recursion` errors in production, or (worse) a recursion workaround that over-broadly grants access to bypass the error | Use `SECURITY DEFINER` helper functions for ownership checks, not inline subqueries against RLS-protected tables (Pitfall 3)        |
+| Assuming code-level deletion of the recordings feature also deletes the underlying storage data              | Continued unauthorized retention of children's voice recordings — the exact harm the milestone exists to eliminate                          | Enumerate + bulk-delete + log bucket contents as its own explicit, verified step (Pitfall 7/8) — legal/COPPA risk, not just cleanup |
+| Silent reinterpretation of a child's pre-existing account as an adult "parent" account during auto-migration | Bypasses the verifiable-parental-consent purpose of the whole milestone                                                                     | Segment accounts, blocking re-consent prompt for flagged ones (Pitfall 6) — legal/COPPA risk                                        |
 
 ## UX Pitfalls
 
-Common user experience mistakes in this domain.
-
-| Pitfall                                                                                | User Impact                                                                                                                                                               | Better Approach                                                                                                                                                                                                    |
-| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| "MISS" feedback text for children who tap slightly late                                | 8-year-olds interpret "MISS" as personal failure, not timing feedback; high drop-off after 2-3 misses                                                                     | Replace with "Almost!", "Keep Going!", or a visual shake-without-text; reserve negative text for streak breaks only                                                                                                |
-| Speed Round tempo (85-95 BPM in current unit files) applied to nodes with eighth notes | At 90 BPM, eighth notes arrive every 333ms — within the natural motor variability range for 8-year-olds, causing frequent misses on Speed nodes that should feel exciting | Speed Round nodes in Units 3-5 should use tempos 5-10 BPM SLOWER than the equivalent Practice node, not faster; "speed" should mean "sustained pace," not "sprint"                                                 |
-| No count-in before the pattern starts                                                  | Children don't know when to start; first beat is always a miss, setting the session off on a failure                                                                      | RhythmReadingGame already implements count-in; ensure ALL 4 rhythm games have a consistent count-in before the pattern begins, including MetronomeTrainer's non-trail mode                                         |
-| Introducing rests (Unit 4) without an explicit "silence is music" framing              | Children instinctively tap during rests because they associate rhythm games with continuous tapping                                                                       | RhythmReadingGame needs a rest-highlighting visual (e.g., a distinct color or rest symbol pulse) when the cursor passes over a rest position; purely punishing rest-taps without visual guidance creates confusion |
-| Game name "MetronomeTrainer" shown to 8-year-olds                                      | "Trainer" implies work/drill; "Metronome" is unfamiliar jargon                                                                                                            | Display name change (a pure i18n change, not a code change) is safe. Proposed: "Beat Keeper", "Steady Beats", or "Keep the Beat"                                                                                   |
-
----
+| Pitfall                                                                             | User Impact                                                                                                           | Better Approach                                                                                                           |
+| ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Sibling data bleed on profile switch (stale cache)                                  | A child briefly or persistently sees another child's XP/streak/HUD, or (worst case) a save lands on the wrong sibling | Full remount + query-cache clear on switch, explicit multi-child device test (Pitfall 12)                                 |
+| Achievement progress bars regress after recording rows disappear                    | Real students perceive their earned progress as lost/reset, eroding trust in a gamified retention app                 | Fix the `achievementService.js` stats query scoping in the same phase as the deletion, not as an afterthought (Pitfall 9) |
+| A teacher-facing "give feedback" affordance persists with no student-facing outcome | Teacher effort is wasted invisibly                                                                                    | Explicitly remove or repurpose `teacher_feedback` alongside the deletion, not left dangling (Pitfall 10)                  |
 
 ## "Looks Done But Isn't" Checklist
 
-Things that appear complete but are missing critical pieces.
-
-- [ ] **Curated pattern delivery:** Pattern files exist in `/public/data/` but `getPattern()` still bypasses them because `rhythmPatterns` in node config is non-null — verify by logging `result.source` in dev; must show `"curated"` not `"generated"` for curated nodes
-- [ ] **Duration constraint validation:** Curated patterns authored for Unit 3 nodes don't accidentally contain dotted or sixteenth durations — verify each pattern file's `durations` array against the node's `contextDurations + focusDurations`
-- [ ] **Timing threshold update:** `BASE_TIMING_THRESHOLDS` in `rhythmTimingUtils.js` has been updated for Discovery/Practice nodes OR a per-node `timingLeniency` config is wired end-to-end — do NOT leave it at 50ms PERFECT for child-facing nodes
-- [ ] **i18n game names:** The display-name change for MetronomeTrainer has been applied to ALL locations: TrailNodeModal exercise type label, game header, VictoryScreen game name, i18n EN + HE keys — not just the component's title JSX
-- [ ] **Progress preservation:** No existing user's `stars` or `best_score` has been reset by the migration — confirm by checking prod DB before and after: `SELECT COUNT(*) FROM student_skill_progress WHERE stars > 0 AND node_id LIKE 'rhythm_%'`
-- [ ] **Subscription gate audit:** Any new node IDs added to Unit 1 or Unit 2 during restructuring are in `FREE_RHYTHM_NODE_IDS` AND the `is_free_node()` Postgres function is updated in the same migration
-- [ ] **validateTrail.mjs extended:** The validator checks that every rhythm node's `rhythmConfig.patterns` array contains only values that are valid duration names (no typos like `'eigth'` instead of `'eighth'`); this currently is NOT checked
-
----
+- [ ] **RLS policies rewritten:** Often missing an explicit `WITH CHECK` on UPDATE/INSERT that matches the new `USING` clause — verify via a direct `pg_policies` query across all 32 affected tables, not just a visual diff review.
+- [ ] **FK columns repointed to `child_profiles(id)`:** Often incomplete across the full 26-table/30-column surface — verify via a fresh `information_schema` query confirming zero unintended remaining references to `students(id)`.
+- [ ] **Recordings feature "removed":** Often means code/UI removed only — verify the `practice-recordings` Storage bucket is actually empty (or deleted) in the Supabase dashboard, not just that no route reaches it anymore.
+- [ ] **Achievement/streak/teacher-notification counts unaffected by recording deletion:** Often assumed fine because it "wasn't touched" — verify `achievementService.js`'s practice-session counting logic explicitly, since it already has the known `has_recording`-filter gap.
+- [ ] **EN/HE i18n parity after bulk key deletion:** Often verified by spot-checking a few screens — verify via an actual key-set diff between `en` and `he` locale files, and a repo-wide search confirming zero remaining `t()` references to deleted keys.
+- [ ] **Lemon Squeezy subscriptions still functional for the 3 live paying customers:** Often assumed fine because the webhook code "still runs" — verify against LS sandbox test-mode first, then confirm all 3 real subscriptions still correctly gate content post-migration.
+- [ ] **Parental gate blocks all paths to a protected surface, not just the button that links to it:** Often demoed via the happy-path entry point only — verify direct URL navigation and browser back/forward are also gated.
 
 ## Recovery Strategies
 
-When pitfalls occur despite prevention, how to recover.
-
-| Pitfall                                                                       | Recovery Cost | Recovery Steps                                                                                                                                                                                                                                                            |
-| ----------------------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Order values collide and trail renders incorrectly                            | MEDIUM        | Add new `order` values that do not collide with existing; re-deploy data files only (no DB migration needed since order is cosmetic)                                                                                                                                      |
-| Curated patterns bypass produces generative fallback in prod                  | LOW           | Set `rhythmPatterns: null` in exercise config for affected nodes to force curated path, OR deploy the missing JSON file; hot-fix deploy, no DB migration                                                                                                                  |
-| Timing window too strict discovered post-launch                               | LOW           | Update `BASE_TIMING_THRESHOLDS` constants in `rhythmTimingUtils.js`; no DB migration, redeploy JS only                                                                                                                                                                    |
-| Game type changed but patterns now contain out-of-scope durations             | MEDIUM        | Audit curated pattern JSON for affected nodes; re-author patterns constrained to allowed durations; redeploy pattern files or node config                                                                                                                                 |
-| Prerequisite chain broken (user cannot progress past a removed node)          | HIGH          | Write a Supabase migration: `UPDATE student_skill_progress SET stars = 1 WHERE node_id = 'old_prereq_id' AND student_id IN (SELECT id FROM students WHERE ...)` to satisfy the old prerequisite for affected users; deploy the migration before the code change goes live |
-| `is_free_node()` desync — free users cannot save progress on new Unit 1 nodes | HIGH          | Emergency Supabase migration to add new node IDs to `is_free_node()`; deploy within the same release window; cannot be fixed by front-end change alone                                                                                                                    |
-
----
+| Pitfall                                                                                  | Recovery Cost                                                    | Recovery Steps                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FK target drift discovered post-deploy                                                   | MEDIUM                                                           | Follow this repo's own precedent (three prior "fix\_\*\_fk_references" migrations) — write a corrective migration repointing the specific drifted columns; low risk since the pattern is proven to work here                                |
+| Orphaned storage objects discovered after the fact                                       | LOW-MEDIUM (technical), HIGH (legal exposure window)             | Run the bulk-delete + audit-log script late rather than never — technically simple, but the legal exposure (retained children's data) existed for however long the gap lasted, which should be disclosed/documented, not just quietly fixed |
+| Sibling data bleed reported by a real family                                             | MEDIUM                                                           | Force `queryClient.clear()` + full remount on switch as a hotfix; audit which specific cached queries caused the bleed and add them to a regression test                                                                                    |
+| A real LS subscription silently stopped gating content post-migration                    | HIGH (support/trust cost even though technically low-effort fix) | Manually verify and correct the specific `parent_subscriptions` row for the affected customer; proactively reach out rather than waiting for a support ticket, given only 3 customers total — each one matters disproportionately           |
+| Child-registered account silently converted to "parent" without consent, discovered late | HIGH (legal)                                                     | Retroactively surface the blocking re-consent prompt to the affected account(s) on next login; document the gap and remediation for compliance record-keeping                                                                               |
 
 ## Pitfall-to-Phase Mapping
 
-How roadmap phases should address these pitfalls.
-
-| Pitfall                                                             | Prevention Phase                                                                    | Verification                                                                                                                        |
-| ------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| Node order value collision (Critical #1)                            | Phase 1: Curriculum audit — establish immutability policy for existing order values | Query prod DB for all rhythm progress IDs; confirm no planned restructuring changes their order values                              |
-| Scoring basis change mid-progress (Critical #2)                     | Phase 1 (architecture), Phase 2 (pattern authoring)                                 | QA: complete a rhythm node, note stars, update to curated, verify stars preserved and patterns show correct durations               |
-| Dotted notes too early / two new concepts in one node (Critical #3) | Phase 1: Curriculum audit                                                           | Flag every node where `focusDurations.length > 1`; verify Units 3-5 transition has sufficient consolidation nodes                   |
-| Game type mismatch kills pedagogy (Critical #4)                     | Phase 1: Audit matrix before node file edits                                        | Review matrix: every Discovery node uses a notation-showing game; MetronomeTrainer only on Practice/Speed nodes                     |
-| Curated patterns not found at runtime (Critical #5)                 | Phase 1 (architecture decision)                                                     | In dev, confirm `result.source === 'curated'` for all curated nodes after deploy; in CI, add build check for pattern file existence |
-| Timing windows too strict for children (Critical #6)                | Phase 1 (policy) + Phase 2 (implementation)                                         | QA with actual 8-year-olds: average score on Unit 1 quarter-note nodes should be > 70% with new thresholds                          |
-| `FREE_RHYTHM_NODE_IDS` desync                                       | Any phase adding new Unit 1/2 nodes                                                 | Supabase SQL: `SELECT is_free_node('new_node_id')` must return `true` before deploy goes live                                       |
-| MetronomeTrainer naming                                             | Phase with game name changes                                                        | Verify i18n keys updated in both `en/` and `he/` locale files; TrailNodeModal shows correct display name                            |
-
----
+| Pitfall                             | Prevention Phase                                                 | Verification                                                                                                              |
+| ----------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 1. USING/WITH CHECK mismatch        | RLS-rewrite phase                                                | `pg_policies` query across all 32 tables confirms explicit, correct `WITH CHECK` on every UPDATE/INSERT policy            |
+| 2. FK target drift                  | Schema/migration phase (first)                                   | `information_schema` diff against the authoritative 30-column checklist, zero unintended `students(id)` references remain |
+| 3. Recursive RLS                    | RLS-rewrite phase (design step)                                  | `SECURITY DEFINER` helper function exists and is used; no `42P17` errors in Supabase logs after rollout                   |
+| 4. RLS performance cliff            | RLS-rewrite phase (perf gate)                                    | `EXPLAIN ANALYZE` on trail/dashboard queries against real (20-student) row counts before phase sign-off                   |
+| 5. Silent lockout mid-migration     | Migration-execution phase                                        | Manual post-migration check of all 15 real auth accounts' dashboard non-emptiness, not just row-count checks              |
+| 6. Silent child→parent reparenting  | Migration-planning phase (before implementation)                 | Explicit account segmentation query + signed-off re-consent UX design before any migration script is written              |
+| 7. Orphaned storage objects         | Feature-deletion phase (sequenced first)                         | Bucket object count = 0 (or bucket deleted) confirmed via Supabase dashboard/MCP before code-deletion PR merges           |
+| 8. No deletion audit trail          | Feature-deletion phase (same step as #7)                         | Audit-log table has a row recording the bulk deletion event (count, timestamp, affected ids)                              |
+| 9. Achievement regression           | Feature-deletion phase (own sub-step)                            | Achievement progress bars for existing students unchanged before/after, spot-checked against real accounts                |
+| 10. `teacher_feedback` dead badge   | Feature-deletion phase (explicit decision)                       | Either the badge UI is removed alongside the table, or a decision to preserve it is documented with a follow-up plan      |
+| 11. Parental gate bypass            | Child-profile/gate phase                                         | Adversarial test: direct URL nav and back/forward-cache both blocked, not just the primary entry button                   |
+| 12. Sibling data bleed              | Profile-switcher phase                                           | Multi-child device test: create 2+ profiles, rapid-switch, confirm zero stale/cross-child data or writes                  |
+| 13. Billing ownership mismatch      | Dedicated billing sub-phase (before touching live subscriptions) | LS sandbox webhook test passes; all 3 real subscriptions manually confirmed still gating correctly post-migration         |
+| 14. Silent i18n over/under-deletion | Feature-deletion phase (final verification step)                 | Key-set diff EN vs HE matches exactly; zero repo-wide `t()` references to deleted keys remain                             |
 
 ## Sources
 
-**Rhythm pedagogy for elementary-age children:**
-
-- [Solving Rhythm and Timing Issues as a Music Teacher — Magic of Music Ed](https://magicofmusiced.com/2024/12/22/solving-rhythm-and-timing-issues-as-a-music-teacher/) — beat vs rhythm confusion, steady beat issues
-- [Teaching Quarter and Eighth Notes — A Different Musician](https://www.adifferentmusician.com/post/scaffolding-quarters-and-eighths-with-your-kiddos) — scaffolding approach for 8-year-olds
-- [Rhythm Made Easy for Kids: The Dotted Quarter Note-Eighth Note Lesson — MakingMusicFun](https://makingmusicfun.net/htm/music_academy/counting-dotted-quarter-eighth-note) — dotted rhythms documented as hardest elementary pattern
-- [Teaching dotted note rhythms — Simpedia](https://simpedia.info/teaching-dotted-note-rhythms/) — 6-month minimum consolidation before dotted notes
-- [Music and Rhythm as Promising Tools to Assess and Improve Cognitive Development in Children — PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC12420879/) — rhythm games and cognitive development in children
-- [Rhythm Instruction Teachers Guide — RhythmBee, Inc.](https://www.rhythmbee.com/teachers-guide-for-rhythm-instruction) — curriculum sequencing
-
-**Flow state and difficulty curves in rhythm games:**
-
-- [Music Games: Potential Application and Considerations for Rhythmic Training — PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC5447290/) — difficulty calibration in rhythm training
-- [Effects of Music Tempo on Flow in Rhythm-Fighting Game — Northeastern](https://repository.library.northeastern.edu/files/neu:4f18cw58x/fulltext.pdf) — too-hard difficulty → frustration, not flow
-- [Can You Beat the Music? Validation of a Gamified Rhythmic Training in Children with ADHD — medRxiv 2024](https://www.medrxiv.org/content/10.1101/2024.03.19.24304539v1.full) — timing windows and children's motor variability
-
-**Rhythm game timing and latency:**
-
-- [Rhythm Quest Devlog 10 — Latency Calibration — DDRKirby(ISQ)](https://ddrkirbyisq.medium.com/rhythm-quest-devlog-10-latency-calibration-fb6f1a56395c) — three types of latency, calibration UX
-- [Rhythm Game Crash Course — Native Audio / Exceed7](https://exceed7.com/native-audio/rhythm-game-crash-course/index.html) — Android latency, must-have calibration
-
-**UX design for children:**
-
-- [A Practical Guide To Designing For Children — Smashing Magazine 2024](https://www.smashingmagazine.com/2024/02/practical-guide-design-children/) — feedback on every action, bottom button avoidance
-
-**Duolingo progress migration:**
-
-- [Duolingo path update and user progress — duome.eu forum](https://forum.duome.eu/viewtopic.php?t=27068) — real-world precedent: curriculum restructure without migration causes user confusion and reported "progress lost" even when technically preserved
+- Direct repository evidence: `supabase/migrations/20250625120001_add_teacher_schema.sql`, `20250708191942_fix_notifications_foreign_keys.sql`, `20250708191946_fix_assignment_foreign_keys.sql`, `20260327000002_fix_teacher_fk_references.sql` (proof of prior FK-drift bug in this exact codebase)
+- `supabase/migrations/20260127000003_optimize_rls_auth_plan.sql` (proof of prior RLS performance fix pattern, `(SELECT auth.uid())` wrapping)
+- `supabase/migrations/20260404000001_ensure_subscription_rls.sql` (current `parent_subscriptions` ownership model, `student_id = auth.uid()`)
+- `supabase/functions/lemon-squeezy-webhook/lib/upsertSubscription.ts` (webhook writes `student_id` directly from checkout payload)
+- `src/services/practiceService.js` (only code paths that touch the `practice-recordings` Storage bucket)
+- `src/services/achievementService.js`, `src/services/apiDatabase.js`, `src/services/apiTeacher.js`, `src/services/dataExportService.js`, `src/hooks/useTeacherRecordingNotifications.js`, `src/hooks/useStudentFeedbackNotifications.js` (practice_sessions/teacher_feedback consumer surface)
+- `src/config/subscriptionConfig.js` (existing dual-source-of-truth pattern between JS `FREE_NODE_IDS` and Postgres `is_free_node()`, precedent for the parent/child gating equivalent)
+- `scripts/` directory contents (absence of an i18n parity/validation script, confirming Pitfall 14's "no build-time guard" claim)
+- `.planning/PROJECT.md` (measured migration surface: 30 FK columns/26 tables, 62/80 RLS policies/32 tables, 34 files/42 `useUser()` call sites, 151 `user?.id` references, 47 service-layer auth-id call sites, 20 students/15 auth accounts/3 subscriptions, known `achievementService.js:234` and `teacher_feedback` couplings)
+- `COPPA_REFACTOR_PRD.md` (target schema and parental-gate requirements this milestone implements)
 
 ---
 
-_Pitfalls research for: v3.2 Rhythm Trail Rework — curated pedagogy migration_
-_Researched: 2026-04-06_
+_Pitfalls research for: Parent-first identity restructure + audio-recording feature deletion on a live COPPA-driven Supabase PWA_
+_Researched: 2026-07-21_

@@ -1,255 +1,167 @@
-# Technology Stack: v3.2 Rhythm Trail Rework
+# Stack Research
 
-**Project:** PianoApp2 (PianoMaster)
-**Researched:** 2026-04-06
-**Milestone:** v3.2 — Curated rhythm pattern database + pedagogically sound difficulty curve
-**Overall confidence:** HIGH
+**Domain:** Parent-owned accounts + login-less child profiles on Supabase (brownfield: 62 live RLS policies, 3 paying subscribers, 20 students/15 with auth accounts)
+**Researched:** 2026-07-21
+**Confidence:** HIGH (core pattern verified against this repo's own production migrations + official Supabase docs); MEDIUM on the "what changed in 2026" question (no material new first-party feature found)
 
----
+## Answering the four research questions up front
 
-## What This Document Covers
+**1. Does Supabase have a first-party "one auth user owns N non-auth profile rows" pattern?**
+No dedicated feature — but there is one idiomatic approach, and this codebase is already running a structural twin of it in production. `teacher_student_connections` + `students.id` (no FK to `auth.users`, dropped deliberately in migration `20250115000005`) is exactly "N owned rows with no auth account, linked to one auth.uid() owner via a join/FK and RLS subquery." The parent/child-profile model should **re-point this exact pattern at parents**, not invent a new one. This is not a guess — it's what `.planning/PROJECT.md` itself concludes ("Login-less profile rows already work in production").
 
-Only NEW or CHANGED capabilities required by v3.2. The following are confirmed working and must NOT be re-researched or re-added:
+**2. How do people represent "active profile" when RLS is keyed on `auth.uid()`?**
+Client-side selection only. There is no server-side "current profile" primitive in Supabase Auth. The correct mental model: `auth.uid()` identifies the **account** (the parent), never the **profile in use** (the child). Every query must carry an explicit `child_profile_id`, and RLS proves _ownership_ of that id (`child_profile_id` belongs to a `child_profiles` row where `parent_id = auth.uid()`) rather than proving it's "the active one." "Active profile" is pure UI state — same tier as which sidebar tab is open — and belongs in a React Context + `localStorage`, matching this app's existing pattern (`SubscriptionContext`, `SessionTimeoutContext`, `AccessibilityContext` in `src/contexts/`). Do not try to make "active profile" a security boundary.
 
-- React 18, Vite 6, React Router v7
-- Supabase (auth, database, RLS)
-- VexFlow v5 — SVG rhythm notation (`RhythmStaffDisplay.jsx`, `rhythmVexflowHelpers.js`)
-- Web Audio API — `useAudioEngine`, `AudioContextProvider`, `useSounds`
-- `smplr` — piano instrument samples
-- `RhythmPatternGenerator.js` — `HybridPatternService` with `loadPatterns()`, `generatePattern()`, `getCuratedPattern()`, binary pattern format (array of 0/1 per sixteenth-note slot)
-- Existing pattern JSON files: `public/data/4-4.json`, `public/data/3-4.json`, `public/data/6-8.json`
-- 4 rhythm game components: `MetronomeTrainer`, `RhythmReadingGame`, `RhythmDictationGame`, `ArcadeRhythmGame`
-- 50 rhythm trail nodes across 8 units in `src/data/units/rhythmUnit*Redesigned.js`
-- `rhythmScoringUtils.js` — `scoreTap()` pure function with PERFECT/GOOD/MISS thresholds
-- `validateTrail.mjs` — pre-build validation for trail node integrity
-- Tailwind CSS 3, i18next (EN/HE), `framer-motion` v12, `lucide-react`
+**3. Any Supabase feature that materially changes how this is built in 2026?**
+No. The **Custom Access Token Hook** (SQL or HTTP function invoked at token issuance, GA since mid-2024) is the only Auth-adjacent feature that touches this problem, and it is the wrong tool here — see "What NOT to Use" below. `@supabase/supabase-js` is unchanged architecturally; current npm `latest` is `2.110.7` against this repo's pinned `^2.48.1` (`3.0.0` exists only as `-next` prereleases — do not adopt). No `@supabase/ssr` is installed or needed (this is a Vite SPA, not Next.js). The relevant "2026" artifact is Supabase's own RLS performance guidance (`SECURITY DEFINER STABLE` helper functions, `(select auth.uid())` wrapping, indexing policy columns) — which this repo already follows (`is_free_node()`, `has_active_subscription()`, `20260127000003_optimize_rls_auth_plan.sql`). The 62-policy rewrite should extend that existing convention, not introduce a new one.
 
----
+**4. What should NOT be added?**
+See dedicated section below — short version: no new client library, no Supabase Anonymous Auth for children, no per-child JWTs/sessions, no embedding "active profile" in `app_metadata` via the Custom Access Token Hook, no ORM.
 
-## Core Finding: No New npm Dependencies Needed
+## Recommended Stack
 
-The existing stack is sufficient for the v3.2 rework. The gap is NOT missing libraries — it is missing **curated data** and **missing structural conventions** in the existing data layer.
+### Core Technologies — no additions, only usage-pattern changes
 
-Every component needed for a structured, pedagogically sound rhythm system already exists:
+| Technology                                   | Version                                                | Purpose                                                            | Why Recommended                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@supabase/supabase-js`                      | `^2.48.1` (already installed; latest stable `2.110.7`) | Auth session for parent, Postgres client for `child_profiles` CRUD | Zero new library needed. Bump to latest `2.x` as routine maintenance (bugfixes only — no breaking API relevant to this milestone), **not** `3.0.0-next.*` (unreleased prerelease track, do not adopt for a brownfield app with paying subscribers).                                                                                   |
+| Postgres `SECURITY DEFINER` helper functions | Postgres (Supabase-managed)                            | RLS ownership checks for the 62-policy rewrite                     | This repo already uses this exact pattern (`is_free_node()`, `has_active_subscription()`, both `SECURITY DEFINER STABLE SET search_path = public`). Add `public.owns_child_profile(p_child_id uuid) RETURNS boolean` as the single source of truth every rewritten policy calls, instead of inlining the ownership subquery 62 times. |
+| React Context (existing pattern)             | React 18 (already installed)                           | "Active child profile" client state                                | Matches `SubscriptionContext`/`SessionTimeoutContext`/`AccessibilityContext` already in `src/contexts/`. No new state library needed — this is deliberately NOT a Redux concern (CLAUDE.md restricts Redux Toolkit to rhythm only).                                                                                                   |
 
-- Pattern data format: the JSON schema in `public/data/4-4.json` (`{ duration, note: boolean }` objects) is correct and already consumed by `HybridPatternService.getCuratedPattern()`
-- Complexity scoring: `calculatePatternComplexity()` is already exported from `RhythmPatternGenerator.js`
-- Tempo progression: the `tempo: { min, max, default }` field already exists on every `rhythmConfig` in node files
-- VexFlow rendering: `RhythmStaffDisplay.jsx` already converts the binary pattern to notation
-- Game routing: all 4 rhythm exercise types are wired end-to-end
+### Supporting Libraries — none required
 
-What's missing is the **content**: the node files specify `rhythmPatterns: ['quarter', 'half']` (name arrays) but the curated JSON files do not contain per-node pattern sets — they contain flat per-difficulty lists that the generator draws from randomly. There is no mechanism to assign a specific hand-crafted pattern set to a specific node.
+No new npm packages are needed for this milestone. The entire feature is: (a) a new Postgres schema (`parents`/reuse `auth.users`, `child_profiles`), (b) rewritten RLS policies using the existing SECURITY DEFINER convention, (c) a React Context for active-profile selection, (d) existing `ParentGateMath` component reused for the parental gate (already built per CLAUDE.md — "Parental gate on account settings, subscription, and billing" is a UI-routing change, not a new dependency).
 
----
+### Development Tools
 
-## Recommended Stack Additions
+| Tool                                             | Purpose                                                                        | Notes                                                                                                                                                                                                                                                  |
+| ------------------------------------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Supabase CLI / MCP `list_tables`, `get_advisors` | Verify schema + RLS state before/after each migration                          | Already used in this project's workflow (see MCP server instructions). Run `get_advisors` (security) after every RLS rewrite batch — with 62 policies changing, this is the fastest way to catch a policy that silently fell back to permissive/no-op. |
+| `scripts/validateTrail.mjs` (existing)           | Unaffected, but confirm no trail-node data assumes `student_id === auth.uid()` | Pattern-check only; no tool change.                                                                                                                                                                                                                    |
 
-### None — zero new npm packages required.
+## Installation
 
-Rationale for each category investigated:
-
----
-
-## Pattern Authoring Format: Extend Existing JSON Schema (No New Library)
-
-**Decision:** Extend the existing `public/data/4-4.json` schema. No new format (ABC, MusicXML, LilyPond) needed.
-
-**Why the existing schema is the right choice:**
-
-The current format — an array of `{ duration: string, note: boolean }` objects — is already:
-
-- Consumed by `HybridPatternService.validatePattern()` and `convertSchemaToBinary()`
-- Rendered correctly by `RhythmStaffDisplay.jsx` via `rhythmVexflowHelpers.js`
-- Validated by `validatePatternDuration()` (measure-length check)
-- Simple enough for a developer to author by hand without tooling
-
-ABC notation and MusicXML were evaluated. Both are designed for full multi-voice pieces with lyrics, key signatures, and clef information — far heavier than needed for single-measure rhythm cells. They would require a parsing library and a custom converter to binary format. Overhead is not justified.
-
-**What to add to the schema:** A `nodePatterns` map, keyed by node ID, inside each time-signature file. This lets each node reference a named pattern set without touching any game component code.
-
-**Proposed schema extension (illustrative, not a new library):**
-
-```json
-{
-  "timeSignature": "4/4",
-  "patterns": {
-    "beginner": [...],
-    "intermediate": [...],
-    "advanced": [...]
-  },
-  "nodePatterns": {
-    "rhythm_1_1": [
-      [
-        { "duration": "quarter", "note": true },
-        { "duration": "quarter", "note": true },
-        { "duration": "quarter", "note": true },
-        { "duration": "quarter", "note": true }
-      ]
-    ],
-    "rhythm_1_2": [
-      [
-        { "duration": "quarter", "note": true },
-        { "duration": "quarter", "note": false },
-        { "duration": "quarter", "note": true },
-        { "duration": "quarter", "note": false }
-      ]
-    ]
-  },
-  "metadata": { "version": "2.0" }
-}
+```bash
+# Nothing new to install for the core pattern.
+# Optional routine maintenance bump:
+npm install @supabase/supabase-js@^2.110.0
 ```
 
-`HybridPatternService.getCuratedPattern()` gains an optional `nodeId` parameter. When provided, it looks up `nodePatterns[nodeId]` before falling back to the flat `patterns[difficulty]` array. No breaking changes to any game component.
+## The Idiomatic Pattern (verified against this repo + official docs)
 
----
+### Schema
 
-## Rhythm Complexity Scoring: Existing `calculatePatternComplexity()` is Sufficient
+```sql
+-- parents: reuse auth.users directly. Do NOT create a separate `parents` table
+-- unless you need parent-specific columns beyond what auth.users + a thin
+-- profile row already gives you (the COPPA PRD's `parents(id, email, created_at)`
+-- is redundant with auth.users — id and email already live there).
+-- If you want a parents-facing profile row for app-specific fields (locale,
+-- consent timestamp), keep it 1:1 with auth.users.id, not a new identity.
 
-**Decision:** Extend the existing function rather than adopting an external library.
+CREATE TABLE child_profiles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  parent_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  nickname TEXT NOT NULL,
+  avatar_id TEXT NOT NULL,
+  birth_year INT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
-**Why:**
-
-`calculatePatternComplexity()` already computes a 0–10 score from density and syncopation. For v3.2's purpose — verifying that a pattern authored for a beginner node is not accidentally more complex than an intermediate node — this is sufficient.
-
-The academic literature on rhythm complexity (Toussaint, Thul/Godfrey McGill thesis, Musiplectics) defines complexity as a function of: note density, syncopation (events on metrically weak positions), interval variance between onset times, and Lempel-Ziv compression ratio. The existing implementation covers the two highest-impact factors (density + syncopation).
-
-If automated complexity gating during pattern authoring is desired, add one validation step to `validateTrail.mjs` that calls `calculatePatternComplexity()` on each node's patterns and asserts the score falls within bounds appropriate to the node's `difficulty` field. This is a pure JavaScript addition, no library needed.
-
-**Confidence:** HIGH — the complexity algorithm is domain logic, not a dependency problem.
-
----
-
-## Music Education Data Model: Augment Existing Node Schema (No New Library)
-
-**Decision:** Add three fields to `rhythmConfig` in the unit files. No external data model library needed.
-
-**Why:**
-
-The Kodaly/Orff pedagogical research (HIGH confidence, based on decades of classroom practice) establishes that rhythm progression for 8-year-olds should follow:
-
-1. Quarter notes first ("ta") — steady pulse, walking speed
-2. Paired eighth notes ("ti-ti") — running speed, introduced only after quarter mastery
-3. Half notes — holding, requires counting through silence
-4. Quarter rest — explicit silence awareness (harder than note rests for children)
-5. Dotted patterns — taught as a feeling before notation
-6. Syncopation — last, requires internalized beat grid
-
-The existing node files already honor this sequence. The gap is that `rhythmConfig` lacks two fields that the game components need to implement curated behavior:
-
-```javascript
-rhythmConfig: {
-  // Existing fields (keep as-is):
-  complexity: RHYTHM_COMPLEXITY.SIMPLE,
-  durations: ['q'],
-  tempo: { min: 60, max: 70, default: 65 },
-  timeSignature: '4/4',
-
-  // NEW fields for v3.2:
-  curatedPatternIds: ['rhythm_1_1'],  // References nodePatterns key in JSON file
-  tempoRamp: 'fixed',                 // 'fixed' | 'progressive' | 'unlocked'
-  //   fixed = always use tempo.default (beginner nodes)
-  //   progressive = start at tempo.min, unlock to tempo.max after 3-star score
-  //   unlocked = player-controlled (free play / speed round nodes)
-}
+CREATE INDEX idx_child_profiles_parent_id ON child_profiles(parent_id);
 ```
 
-The `curatedPatternIds` field is the bridge between node data and the extended JSON schema above. It replaces the current `rhythmPatterns: ['quarter', 'half']` name-array approach (which only constrained generative logic) with direct lookup of hand-authored patterns.
+The FK direction mirrors `teacher_student_connections.teacher_id -> teachers.id`, and the "no login, no auth.users row" property mirrors `students.id` having no FK to `auth.users` (deliberately dropped, migration `20250115000005`). This is not a new architectural decision for the codebase — it's applying an already-proven pattern to a new owner.
 
-**Confidence:** HIGH — this is a data-layer refactor with no external surface area.
+### RLS ownership helper (extends the existing convention)
 
----
+```sql
+CREATE OR REPLACE FUNCTION public.owns_child_profile(p_child_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM child_profiles
+    WHERE id = p_child_id
+      AND parent_id = (SELECT auth.uid())
+  );
+$$;
+```
 
-## Tempo Progression: No Library Needed
+Every one of the 62 policies being rewritten becomes:
 
-**Decision:** Express tempo progression as data on the node, not as an algorithmic library.
+```sql
+USING (owns_child_profile(child_profile_id))
+```
 
-**Why:**
+instead of duplicating the `EXISTS (... parent_id = auth.uid())` subquery 62 times. This is exactly the "move joins into a SECURITY DEFINER function" optimization Supabase's own RLS performance guide recommends (documented 100x+ speedups vs. inline joins in their benchmarks) — and it's the same shape as this repo's `has_active_subscription(p_student_id)`.
 
-Evaluated whether a BPM-curve library (e.g. Tone.js `Transport.rampTo()`) would be useful. It would not: the tempo in rhythm games is set once at exercise start and held constant for the duration. The `useAudioEngine` beat scheduler already reads a BPM value and schedules beats ahead with a lookahead buffer. What's needed is a rule for which BPM to use per play-through, which is a three-state enum (`fixed`, `progressive`, `unlocked`) on the node, not a runtime animation.
+### Client-side active profile
 
-Tone.js itself was evaluated as a wholesale replacement for `useAudioEngine`. Rejected. The existing scheduler is already battle-tested on iOS (a known Tone.js pain point), handles AudioContext interruption recovery, and has no additional bundle cost. Tone.js would add ~40kB gzipped for capabilities already built.
+A `ActiveProfileContext` (new file, same shape as `SubscriptionContext.jsx`) holding `{ activeChildId, setActiveChildId }`, persisted to `localStorage` keyed per-parent (`activeProfile:${parentId}`), read on app boot and after login. Every service call that currently does `.eq('student_id', user.id)` (151 call sites per PROJECT.md) becomes `.eq('child_profile_id', activeChildId)`, with RLS as the actual enforcement layer — the client passing the wrong id simply returns zero rows, it does not leak data, because `owns_child_profile()` is checked server-side regardless of what the client claims is "active."
 
-**Confidence:** HIGH — Tone.js integration was validated as unnecessary in v1.7 when the custom scheduler was built.
+## Alternatives Considered
 
----
+| Recommended                                                                                            | Alternative                                                                                              | When to Use Alternative                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `child_profiles` table + `owns_child_profile()` SECURITY DEFINER helper                                | Custom Access Token Hook embedding owned `child_profile_ids[]` in JWT `app_metadata`                     | Only at a scale where per-row DB lookups genuinely bottleneck (thousands of rows per query, high QPS). At this app's scale (20 students today, low tens of families post-migration) the JWT-embedding approach trades a solved-and-fresh problem for a staleness bug class (JWT only refreshes ~hourly by default; creating/deleting a child profile wouldn't take effect until then unless the client force-refreshes the session on every profile CRUD). Revisit only if `get_advisors`/query timing shows this table genuinely needs it. |
+| Postgres FK + RLS for ownership                                                                        | Supabase Anonymous Auth per child (`signInAnonymously()`)                                                | Never for this feature — see "What NOT to Use."                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| React Context for active profile                                                                       | Redux Toolkit slice                                                                                      | If the app's Redux usage expands beyond rhythm-only in a future milestone. Not justified for one piece of UI-only state today, and CLAUDE.md explicitly scopes Redux to rhythm.                                                                                                                                                                                                                                                                                                                                                             |
+| Keep `auth.users` as the parent identity table (no separate `parents` table beyond a thin 1:1 profile) | A full `parents` table duplicating `id`/`email`/`created_at` (as sketched in `COPPA_REFACTOR_PRD.md` §4) | Only if parent-specific columns genuinely don't belong on a profile-style 1:1 table (e.g., if you need a table you can grant broader read access to without touching `auth.users`, which Supabase locks down by convention). For most fields (consent timestamp, locale, marketing opt-in) a `parent_profiles(id UUID PK REFERENCES auth.users, ...)` 1:1 table is cleaner than a redundant identity table — avoid duplicating `email`, which drifts from the auth source of truth.                                                         |
 
-## Pattern Validation at Build Time: Extend `validateTrail.mjs` (No New Library)
+## What NOT to Use
 
-**Decision:** Add rhythm pattern validation to the existing pre-build script.
+| Avoid                                                                                                | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Use Instead                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Supabase Anonymous Sign-ins (`signInAnonymously()`) per child profile                                | Each anonymous sign-in is a **separate, device-bound auth session** with its own `auth.uid()` — the docs are explicit that "the user can't access their account if they sign out, clear browsing data, or use another device." That's the opposite of what's needed: children must be reachable from _any_ device the parent is logged in on, switched instantly, with zero session juggling. It would also 3x the RLS surface (child now has its own `auth.uid()` that needs to be reconciled with the parent's), directly working against the "rewrite 62 policies to a single owned-children subquery" goal. | The `child_profiles` FK+RLS pattern above. One auth session (the parent's), N profile rows, ownership proven server-side per request.                                                                                                                 |
+| Embedding "active profile" in the Custom Access Token Hook / `app_metadata`                          | JWTs are only re-minted on refresh (default access-token TTL, not per-request). "Active profile" changes on every UI tap of the profile switcher — far more frequently than a token refreshes. Supabase's own docs single out this exact anti-pattern: token claims are for slow-changing state (roles, org membership), not app state that changes within a session.                                                                                                                                                                                                                                           | Client-side Context/localStorage (see above) + server-side ownership check that doesn't care what's "active," only what's _owned_.                                                                                                                    |
+| A new ORM/query builder (Drizzle, Prisma, Kysely) to manage the RLS rewrite                          | Nothing about this milestone needs a query builder — it's plain SQL migrations (as every prior migration in `supabase/migrations/` already is) plus `@supabase/supabase-js`'s existing `.from()` calls on the client. Introducing an ORM mid-milestone, on a brownfield app with 62 policies and live paying users, adds a second source of truth for schema and a new failure surface with zero benefit to this specific problem.                                                                                                                                                                              | Keep using hand-written SQL migrations + `supabase-js`, exactly as the other ~65 existing migration files do.                                                                                                                                         |
+| A separate `parents` table that duplicates `email`/`id` from `auth.users` (as the PRD's §4 sketches) | Two places claiming to be the source of truth for parent identity is a drift risk the moment a parent changes their email via Supabase Auth's built-in flow (already used — `useResetPassword`/`useUpdatePassword` exist) and the shadow table doesn't get updated.                                                                                                                                                                                                                                                                                                                                             | Treat `auth.users` as the parent identity table. Add a thin `parent_profiles(id UUID PK REFERENCES auth.users(id))` only for genuinely new columns (consent timestamp, etc.), never duplicating what auth.users already owns.                         |
+| Blocking under-18 signup only on the email/password form                                             | This app already has Google/social OAuth (`useSocialAuth.js`, `services/apiAuth.js`) — an age gate placed only in front of the email/password form is bypassable via "Sign in with Google." The PRD's Step 1 (age gate before Step 2 registration) must gate the _entry point to all signup paths_, including the OAuth button, not just the form fields after it.                                                                                                                                                                                                                                              | Gate at the router/page level before any signup CTA renders (OAuth buttons included), and treat post-OAuth account creation as still needing the age confirmation before the account is marked "parent"-eligible, since OAuth provides no birth year. |
+| `raw_user_meta_data`/`user_metadata` as the authority for "is this a parent account"                 | This project's own `SEC-01` requirement (v1.0, already shipped) states RLS must use **database state, not `user_metadata`**, for authorization — `user_metadata` is client-editable via the Auth API. The same rule applies here: "is this auth.uid() a parent who owns child X" must be answered by the `child_profiles` table, never by a JWT/metadata flag.                                                                                                                                                                                                                                                  | `owns_child_profile()` SECURITY DEFINER function reading `child_profiles`, per above.                                                                                                                                                                 |
 
-**What to add:**
+## Stack Patterns by Variant
 
-1. For each rhythm node, if `curatedPatternIds` is set, verify that each ID exists in the corresponding time-signature JSON file's `nodePatterns` map.
-2. For each hand-authored pattern in `nodePatterns`, call `validatePatternDuration()` to assert measure-length correctness.
-3. For each node, call `calculatePatternComplexity()` on its patterns and assert the score is within bounds for its declared `difficulty`:
-   - `beginner`: complexity ≤ 3.5
-   - `intermediate`: complexity ≤ 6.0
-   - `advanced`: complexity ≤ 10.0
+**If a future milestone needs true genuine multi-guardian access to one child (e.g., both parents, or a parent + grandparent):**
 
-This catches authoring errors at `npm run build` time, consistent with how prerequisite cycles and invalid node types are caught today.
+- Add a `child_profile_guardians(child_profile_id, guardian_id, role)` join table instead of changing `parent_id` on `child_profiles` to an array.
+- Because it keeps `owns_child_profile()` a simple `EXISTS` over a join table (same shape as `teacher_student_connections`), rather than needing array-contains logic in every policy.
 
-**Confidence:** HIGH — follows existing validation architecture exactly.
+**If RLS query volume against `child_profiles`/`owns_child_profile()` ever becomes a measured bottleneck (not before):**
 
----
+- Reach for the Custom Access Token Hook to embed owned child IDs in `app_metadata`, with an explicit `supabase.auth.refreshSession()` call after every child-profile CRUD to avoid staleness.
+- Because it's the only lever beyond function/index tuning Supabase Auth offers — but treat it as a last resort given the staleness tradeoff, and this app's current data volume (dozens of families, not thousands) does not warrant it now.
 
-## Alternatives Considered and Rejected
+## Version Compatibility
 
-| Category           | Considered                  | Decision                  | Reason Rejected                                                                                                                                                                                                                                                                                                                                                   |
-| ------------------ | --------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pattern format     | ABC notation                | Rejected                  | Parser overhead; single-measure cells need none of ABC's multi-voice/lyrics features                                                                                                                                                                                                                                                                              |
-| Pattern format     | MusicXML                    | Rejected                  | Heavy XML schema; no JS parser with VexFlow output that doesn't duplicate what `rhythmVexflowHelpers.js` already does                                                                                                                                                                                                                                             |
-| Complexity scoring | `@tonaljs/rhythm-pattern`   | Rejected (for complexity) | Its `euclid()`, `binary()`, `hex()` methods generate patterns; they don't score complexity. `RhythmPattern.onsets()` counts density but not syncopation. The existing `calculatePatternComplexity()` is equivalent and zero-dependency.                                                                                                                           |
-| Duration utilities | `@tonaljs/duration-value`   | Rejected                  | Already have `DURATION_CONSTANTS` in `RhythmPatternGenerator.js` with the same mapping. Adding a 4kB package to replace a 10-line constant object is unnecessary.                                                                                                                                                                                                 |
-| Tempo scheduling   | Tone.js                     | Rejected                  | `useAudioEngine` already handles iOS-safe scheduling with lookahead; Tone.js ~40kB gzipped for no net capability gain                                                                                                                                                                                                                                             |
-| Tempo scheduling   | `@tonaljs/time-signature`   | Rejected                  | Time signature parsing is already handled by `TIME_SIGNATURES` constants in `RhythmPatternGenerator.js`                                                                                                                                                                                                                                                           |
-| Schema validation  | Zod                         | Considered                | Would be useful for runtime validation of the extended JSON schema in dev. However, the existing `validatePatternDatabase()` in `HybridPatternService` already validates structure at load time. Adding Zod is low-priority; the build-time validator in `validateTrail.mjs` catches authoring errors before deploy. Revisit if the pattern authoring team grows. |
-| Data model         | External music education DB | N/A                       | There is no npm package for a curated elementary rhythm exercise database. This content must be hand-authored by the developer using Kodaly/Orff pedagogical principles.                                                                                                                                                                                          |
-
----
-
-## What `@tonaljs/rhythm-pattern` Is Useful For (If Needed Later)
-
-The library is worth knowing about for one specific future use case: **Euclidean rhythm generation** for procedural "Endless Practice" mode (listed as a future candidate in PROJECT.md). `RhythmPattern.euclid(steps, beats)` distributes `beats` evenly across `steps` positions — a musically coherent generative technique validated in ethnomusicology (Toussaint 2005). If/when procedural infinite content is built, import this package then.
-
-- Package: `@tonaljs/rhythm-pattern`
-- Version: part of `tonal` monorepo, currently `tonal@6.4.3` (last published ~3 months before research date)
-- Install: `npm install @tonaljs/rhythm-pattern`
-- Integration: its binary array output is directly compatible with the existing binary pattern format
-
-**Do not add this now.** v3.2 is about curated content, not generative content.
-
----
-
-## Implementation Checklist for v3.2 (No New Dependencies)
-
-1. **Extend JSON pattern files** — add `nodePatterns` map to `public/data/4-4.json`, `3-4.json`, `6-8.json`
-2. **Author patterns** — hand-craft 3–8 patterns per rhythm node following Kodaly progression (quarter → eighth pairs → half → rests → dotted → syncopation)
-3. **Update `HybridPatternService`** — add `nodeId` optional parameter to `getCuratedPattern()`; resolve from `nodePatterns[nodeId]` when present
-4. **Update node files** — replace `rhythmPatterns: ['quarter', 'half']` with `curatedPatternIds: ['rhythm_1_1']` and add `tempoRamp` field
-5. **Update game components** — pass `nodeId` from `location.state` into `getPattern()` calls (already flows through as part of trail state)
-6. **Extend `validateTrail.mjs`** — validate `curatedPatternIds` references exist and patterns pass complexity bounds
-7. **Rename game UI labels** — "MetronomeTrainer" → child-friendly name (e.g. "Keep the Beat") in i18n locale files only; no component rename needed
-
----
+| Package A                                 | Compatible With                                                                                         | Notes                                                                                                                                                                                                                      |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@supabase/supabase-js@^2.48.1` (current) | Postgres RLS `SECURITY DEFINER` + `(select auth.uid())` patterns used throughout `supabase/migrations/` | No client-library version dependency — these are server-side SQL constructs, work with any 2.x client. Safe to leave pinned at `^2.48.1` for this milestone; bump to `^2.110.0`+ is a separate, low-risk maintenance task. |
+| `@supabase/supabase-js@3.0.0-next.*`      | —                                                                                                       | Do not adopt. Prerelease-only as of this research date; no stable `3.0.0` exists on npm. Revisit after GA and only in its own maintenance milestone, never bundled into a schema/RLS rewrite.                              |
+| React 18 Context API                      | No version constraint                                                                                   | Already the app's established pattern for exactly this kind of cross-cutting, infrequently-changing client state.                                                                                                          |
 
 ## Sources
 
-- `RhythmPatternGenerator.js` (direct code read) — pattern format, `HybridPatternService`, `calculatePatternComplexity()` confirmed
-- `public/data/4-4.json` (direct code read) — existing pattern schema confirmed, `nodePatterns` map absent
-- `src/data/units/rhythmUnit1Redesigned.js` through `rhythmUnit8Redesigned.js` (direct code read) — 50 node structure, `rhythmConfig` shape confirmed
-- `src/data/nodeTypes.js` (direct code read) — `RHYTHM_COMPLEXITY` enum confirmed
-- [tonaljs/tonal GitHub README](https://github.com/tonaljs/tonal/blob/main/README.md) — packages confirmed: `@tonaljs/rhythm-pattern`, `@tonaljs/duration-value`, `@tonaljs/time-signature`
-- [@tonaljs/rhythm-pattern README](https://github.com/tonaljs/tonal/blob/main/packages/rhythm-pattern/README.md) — `euclid()`, `binary()`, `onsets()`, `random()`, `probability()`, `rotate()` confirmed; Toussaint Euclidean reference confirmed
-- [@tonaljs/duration-value README](https://github.com/tonaljs/tonal/blob/main/packages/duration-value/README.md) — duration names, shorthand codes confirmed (MEDIUM — WebFetch summary, not raw file)
-- [WebSearch: tonal npm](https://www.npmjs.com/package/tonal) — version 6.4.3 confirmed (MEDIUM — from search result snippet)
-- [Kodaly method Wikipedia](https://en.wikipedia.org/wiki/Kod%C3%A1ly_method) — ta/ti-ti syllable sequence, quarter-first progression confirmed (HIGH — established pedagogical record)
-- [Plum Rose Publishing: Kodaly vs Orff rhythm syllables](https://plumrosepublishing.com/kodaly-versus-orff-rhythm-syllable-system/) — syllable system comparison (MEDIUM)
-- [McGill thesis: Measuring Complexity of Musical Rhythm](https://cgm.cs.mcgill.ca/~godfried/teaching/mir-reading-assignments/Eric-Thul-Thesis.pdf) — density + syncopation as dominant complexity factors (HIGH — academic primary source)
-- [Musiplectics paper](https://people.cs.vt.edu/tilevich/papers/musiplectics.pdf) — computational complexity model (HIGH — peer-reviewed)
-- [Midnight Music: Top 11 Rhythm Reading Apps 2024](https://midnightmusic.com/2024/05/top-11-rhythm-reading-apps-for-music-teachers/) — competitive landscape for rhythm apps (LOW — editorial, not primary)
-- [Good Music Academy: How to Teach Kids to Read Rhythms](https://goodmusicacademy.com/how-to-teach-kids-to-read-rhythms/) — practical pedagogy for children (MEDIUM — practitioner-sourced)
+- Repo evidence (HIGH confidence — ground truth for this specific codebase):
+  - `C:\Development\PianoApp2\supabase\migrations\20251129000001_teacher_student_linking.sql` — existing "owner + login-less owned rows" pattern (`teacher_id = auth.uid()` subqueries, placeholder students with no `auth.users` FK)
+  - `C:\Development\PianoApp2\supabase\migrations\20260404000001_ensure_subscription_rls.sql` — `has_active_subscription()` SECURITY DEFINER convention
+  - `C:\Development\PianoApp2\supabase\migrations\20260708120000_is_free_node_null_safe.sql`, `20260601000001_phase1_rhythm_pedagogy.sql` — `is_free_node()` SECURITY DEFINER convention
+  - `C:\Development\PianoApp2\supabase\migrations\20260127000003_optimize_rls_auth_plan.sql` — `(select auth.uid())` wrapping already standard in this repo
+  - `C:\Development\PianoApp2\src\contexts\` (`SubscriptionContext.jsx`, `SessionTimeoutContext.jsx`, `AccessibilityContext.jsx`) — established client-state pattern for the "active profile" recommendation
+  - `C:\Development\PianoApp2\src\features\authentication\useSocialAuth.js` — confirms OAuth signup path exists, informing the age-gate placement warning
+  - `C:\Development\PianoApp2\.planning\PROJECT.md` (v4.0 Current Milestone section) — "login-less profile rows already work in production" conclusion, 62-policy/26-table/30-FK scope figures
+  - `npm view @supabase/supabase-js version[s]` — confirmed latest stable `2.110.7`, `3.0.0` prerelease-only as of research date
+- Official Supabase docs (HIGH confidence):
+  - https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook — Custom Access Token Hook capabilities/limits (claims frozen at issuance; not for frequently-changing state)
+  - https://supabase.com/docs/guides/troubleshooting/rls-performance-and-best-practices-Z5Jjwv — index policy columns, wrap `auth.uid()` in `(select ...)`, `SECURITY DEFINER` helper functions for joins, restrict `TO authenticated`
+  - https://supabase.com/docs/guides/auth/auth-anonymous — anonymous sign-ins are device/session-bound, not designed for multi-profile-per-owner use
+- WebSearch, verified against official docs above (MEDIUM confidence, used only for framing/terminology, not as a standalone source of fact):
+  - "Supabase RLS Best Practices" (makerkit.dev), "Supabase multi-tenancy" community writeups — corroborate the SECURITY DEFINER + JWT-claims-for-slow-changing-state framing but were not treated as authoritative on their own
 
 ---
 
-_Stack research for: v3.2 Rhythm Trail Rework (curated patterns + pedagogy)_
-_Researched: 2026-04-06_
+_Stack research for: Parent-first account architecture (COPPA), PianoApp2 v4.0_
+_Researched: 2026-07-21_

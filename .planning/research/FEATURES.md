@@ -1,235 +1,220 @@
-# Feature Research
+# Feature Research: Parent-Managed Child Profiles
 
-**Domain:** Rhythm trail pedagogy rework for children's piano learning PWA (age 8)
-**Researched:** 2026-04-06
-**Confidence:** MEDIUM-HIGH (pedagogy sequence verified against Kodaly/Orff sources and competitor apps; curated-pattern design from Rhythm Lab and Complete Rhythm Trainer analysis; engagement factors cross-referenced against multiple edtech and music education research sources)
+**Domain:** Parent-owned account architecture for a children's edtech PWA (COPPA-regulated)
+**Researched:** 2026-07-21
+**Confidence:** MEDIUM-HIGH (COPPA statutory text and Google Play policy verified against primary/official sources; competitor UX patterns verified via multiple secondary sources, not first-party API docs)
 
----
+## Scope Note
 
-## Context: What This Research Answers
+This research covers only the NEW capability for v4.0: parent accounts owning child profiles, profile switching, and parental gating. It intentionally excludes the trail/games/XP system, teacher dashboard, subscriptions, and push notifications, which already exist and are out of scope per the milestone brief. Where a new feature touches an existing system (e.g., the parental gate reuses `ParentGateMath`), that dependency is called out explicitly.
 
-This is research for a **rhythm trail pedagogical rework** — not adding new game types, but making the existing 50-node, 8-unit rhythm path (already built) genuinely teach rhythm progression to 8-year-olds. The four existing games are: echo/call-response, sight-read-and-tap, hear-and-pick, and falling-tiles arcade.
-
-The core question: what does a pedagogically sound, non-frustrating rhythm curriculum look like for a beginner child, and what does "curated patterns" mean in practice?
+**Note:** This file replaces a prior FEATURES.md that covered an unrelated earlier milestone (rhythm trail pedagogy rework, researched 2026-04-06). That content is superseded — the rhythm curriculum work already shipped as v3.2/v3.5 per PROJECT.md.
 
 ---
 
-## Table Stakes (Users Expect These)
+## Feature Landscape
 
-Features a rhythm trail for children must have. Missing any of these makes the curriculum feel broken or arbitrary.
+### Table Stakes (Users Expect These)
 
-| Feature                                                                 | Why Expected                                                                                                                                                                                           | Complexity | Notes                                                                                                                                                               |
-| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **One new note value per unit**                                         | Children cannot process multiple new duration concepts simultaneously; adding two at once causes confusion and failure spirals                                                                         | LOW        | Existing units already do this — must stay enforced by design rule, not just convention                                                                             |
-| **Quarter and eighth notes introduced first (before half/whole)**       | Kodaly method: quarter = "walking beat" and eighth = "running beat" — the rhythms children already feel in their bodies. Starting with whole notes (long, abstract) violates developmental sequence    | MEDIUM     | Current unit ordering introduces quarter → half → whole → eighth, which contradicts Kodaly/Orff consensus. Eighth notes should come before or alongside half notes  |
-| **Rests taught as active skill, not absence**                           | Children who skip rest counting develop timing errors that persist. Quarter rest must be explicitly practiced, not assumed                                                                             | LOW        | Existing Unit 4 "Quiet Moments" does this correctly — preserve it                                                                                                   |
-| **Patterns graded by allowed duration set (not just difficulty label)** | A "beginner" label on a pattern containing dotted-quarter and eighth notes is meaningless to a child who only knows quarter notes. Each exercise must only use durations the child has already learned | MEDIUM     | Current `allowedDurations` filter in HybridPatternService provides the mechanism — needs to be wired to each node's `focusDurations` + `contextDurations`           |
-| **Steady beat must be established before note values are taught**       | Orff/Kodaly consensus: children internalize pulse through movement/clapping before abstract notation. A child who hasn't felt steady pulse will fail all subsequent rhythm games                       | LOW        | App currently skips this entirely — echo game and falling tiles assume pulse is internalized. At minimum, Unit 1 Node 1 should have an aural/tapping pulse exercise |
-| **Immediate yes/no feedback per tap**                                   | Children need to know within 100-200ms whether their tap was correct; delayed or absent feedback breaks the cause-effect loop that rhythm learning depends on                                          | MEDIUM     | Existing games provide this; must remain gated to stay correct                                                                                                      |
-| **Tempo that matches a child's comfortable pace at each stage**         | Too fast = panic; too slow = boredom. Beginner nodes: 60-70 BPM. Intermediate: 75-90 BPM. Advanced: 90-110 BPM                                                                                         | LOW        | Existing `rhythmConfig.tempo` ranges are correctly specified; must be respected by game engines                                                                     |
-| **Visual notation accompanies every pattern**                           | Rhythm games where a child taps blind (audio only) are frustrating for beginners; they need to see the note symbol while they hear and tap it                                                          | MEDIUM     | Falling-tiles shows symbols; echo game may not. All games should show VexFlow notation of the target pattern during or before the attempt                           |
-| **Retry without punishment**                                            | Children who fail a pattern need immediate retry with no navigation overhead; session-level "lose a life" is acceptable but node-level hard failure is not                                             | LOW        | Existing lives system (3 per session) handles this                                                                                                                  |
+Features every comparable app (Netflix Kids, Duolingo, Khan Academy Kids, Prodigy, ABCmouse) implements in some form. Missing these makes the product feel broken or non-compliant.
 
-## Differentiators (Competitive Advantage)
+| Feature                                                                                                    | Why Expected                                                                                                                                                                                        | Complexity            | Notes                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Parent-owned top-level account (email/password)                                                            | Every comparable app requires an adult to create the account; children never self-register with real credentials                                                                                    | LOW                   | PianoApp2 already has Supabase email/password auth — this is a _re-pointing_ of the existing signup, not new auth infra                                                                                                                                                                                                                                           |
+| Age gate blocking under-18 self-signup                                                                     | Google Play Families + FTC neutral-age-screen guidance; industry norm (Duolingo, Khan Academy Kids, ABCmouse all funnel non-adults to "ask a parent")                                               | LOW-MEDIUM            | **Must be a neutral, open-field DOB/year entry — NOT a checkbox, NOT a math problem, NOT feature-differential messaging.** FTC explicitly rejected math-problem age gates as insufficient (see Anti-Features below). App already collects birth year at signup (v2.7 "birth year simplification") — needs re-purposing into a true neutral gate, not a data field |
+| Child profile creation (nickname + avatar + optional birth year) inside the parent's authenticated session | Every app in this category (Khan Academy Kids, ABCmouse, Duolingo, Netflix) does this exact pattern: parent logs in once, adds N child profiles                                                     | LOW-MEDIUM            | Directly matches PRD §3 Step 3. Existing `students` table already has no FK to `auth.users` (deliberately dropped) — login-less profile rows are a proven pattern here, just re-pointed from teacher-owned to parent-owned                                                                                                                                        |
+| Preset-avatar-only selection (no photo upload)                                                             | Universal across Duolingo (letter/cartoon avatar), Khan Academy Kids (animal avatar), ABCmouse (avatar icon), Netflix Kids (profile icon) — no comparable app allows real photos for child profiles | LOW                   | App already has an avatar system (`XP-AVATARS` shipped in v2.0) — likely reusable asset library, just needs upload path removed/never-added                                                                                                                                                                                                                       |
+| Profile switcher on a shared device                                                                        | Netflix Kids picker, Khan Academy Kids "New User" flow, ABCmouse up-to-3-profiles pattern — a family with 2+ kids on one tablet is the default use case, not an edge case                           | MEDIUM                | New UI surface; PRD §3 Step 4 calls this "Switch to [Name]'s Practice Mode". No password/PIN needed to _enter_ a child profile (only to leave it toward parent-only areas)                                                                                                                                                                                        |
+| Parental gate before Account Settings / Subscription / Billing                                             | Netflix Kids (PIN), Apple/Google IAP parental gate convention, PRD §3 Step 4 Security Guard                                                                                                         | LOW                   | **Direct reuse of existing `ParentGateMath` component** — already built, tested, and used for Parent Portal + push-notification consent (v2.8). Zero new component needed, just re-scope which routes it guards                                                                                                                                                   |
+| Parent right to review child's data                                                                        | **LEGAL DUTY — COPPA 16 CFR §312.6(a)(1)**: "a means of reviewing any personal information collected from the child"                                                                                | LOW (already shipped) | `COPPA-01` (v1.0) already implements full JSON data export. Needs re-pointing from `student` to `child_profile`                                                                                                                                                                                                                                                   |
+| Parent right to delete child's data                                                                        | **LEGAL DUTY — COPPA 16 CFR §312.6(a)(2)**: parent may "direct the operator to delete the child's personal information"                                                                             | LOW (already shipped) | `COPPA-02` (v1.0) + the v2.5 cron-triggered hard-delete Edge Function (30-day grace, CASCADE) already exist. Needs re-pointing to `child_profile_id` cascade                                                                                                                                                                                                      |
+| Parent right to refuse further collection / stop use                                                       | **LEGAL DUTY — COPPA 16 CFR §312.6(a)(1)**: parent may "refuse to permit the operator's further use or future online collection of personal information from that child"                            | LOW-MEDIUM            | Functionally = deactivating/deleting a child profile without deleting the parent account. Needs a distinct "pause/deactivate this child" action separate from full account deletion — not yet modeled                                                                                                                                                             |
+| Data minimization at collection (no unnecessary fields)                                                    | **LEGAL DUTY** — COPPA's general purpose (§312.7 prohibition on conditioning participation on collecting more than reasonably necessary)                                                            | LOW                   | PRD §3 already scopes fields correctly: nickname, avatar_id, optional birth year/grade only. This is a design constraint more than a "feature" — but must be enforced at the DB schema level (no `email`, `phone`, `full_name` columns on `child_profiles`)                                                                                                       |
+| Neutral, non-identifying display name enforcement                                                          | Duolingo and Khan Academy Kids both explicitly instruct against real names in UI copy                                                                                                               | LOW                   | UI microcopy only ("Don't use your child's full name") — not enforceable server-side without a name-detection heuristic, which is out of scope/unreliable. Treat as a UX nudge, not a hard gate                                                                                                                                                                   |
 
-Features that make this rhythm trail notably better than generative-only approaches or undifferentiated "tap to the beat" apps.
+### Differentiators (Competitive Advantage)
 
-| Feature                                                           | Value Proposition                                                                                                                                                                                                                                                                                            | Complexity | Notes                                                                                                                                       |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Per-node curated pattern library keyed to `allowedDurations`**  | A hand-authored 4-4.json pattern library indexed by duration-set ensures every pattern a child sees is pedagogically appropriate for their current knowledge. Rhythmic Village and Complete Rhythm Trainer both use this approach; generative systems produce duration combinations the child hasn't learned | HIGH       | Schema already exists: `{ "duration": "quarter", "note": true }[]`. Needs expansion from ~6 beginner patterns to ~20+ per duration-set tier |
-| **Difficulty progression within a node (adaptive tempo)**         | Start each node session at the floor tempo; if 3 consecutive correct, nudge tempo up by 5 BPM. If 2 consecutive wrong, drop 5 BPM. Keeps each child in their personal optimal challenge zone regardless of prior experience                                                                                  | MEDIUM     | Requires game engines to accept mutable tempo state; VictoryScreen already tracks accuracy — can derive tempo nudge from session score      |
-| **"Name that rhythm" aural dictation mode in hear-and-pick game** | Child hears a pattern and picks the matching notation from 3 options — directly mirrors Rhythmic Village's strongest pedagogical feature, which research shows produces faster internalization than sight-reading alone                                                                                      | MEDIUM     | Hear-and-pick game already has this structure; pedagogical value unlocked by pairing with curated patterns at the right difficulty          |
-| **Syllable reinforcement (ta/ti-ti) alongside notation**          | Displaying Kodaly rhythm syllables (ta = quarter, ti-ti = two eighths, ta-a = half) underneath VexFlow notation gives children a verbal anchor for each duration. Measurably reduces confusion for 6-9 year olds per Kodaly research                                                                         | MEDIUM     | New visual layer in notation display; syllables map deterministically from duration → string; no backend needed                             |
-| **"New vs. known" visual cue per exercise**                       | Highlight the newly-introduced duration in a distinct color for the first 3 nodes of a unit (focusDuration glows), then fade to uniform display. Children process novelty faster when it is visually flagged                                                                                                 | LOW        | Existing `newContent` / `focusDurations` fields on node config carry this intent; needs CSS rendering in notation component                 |
-| **Echo game as the first encounter for every new duration**       | Before sight-reading or hear-and-pick, the echo game (listen and tap back immediately) is the safest introduction: no notation pressure, no wrong-answer shame, pure embodied repetition. Orff call-and-response is foundational                                                                             | LOW        | Scheduling echo as the exercise type for all Discovery nodes is a data change only                                                          |
-| **Progressive measure length (1 bar → 2 bars → 4 bars)**          | Complete Rhythm Trainer structures its 252 drills on increasing pattern length, not just increasing duration complexity. A child who masters 1-bar quarter-note patterns should face 2-bar patterns before new durations are introduced                                                                      | MEDIUM     | `measuresPerPattern` field already exists on exercise configs; needs to be systematically scheduled across node sequence                    |
+Not required by law or convention, but meaningfully improve the parent/family experience. None of these are COPPA-mandated — they are product choices.
 
-## Anti-Features (Commonly Requested, Often Problematic)
+| Feature                                                                                                                                                        | Value Proposition                                                                                                                                                                                                              | Complexity | Notes                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Per-child progress summary at the profile picker (streak flame, level badge visible before entering)                                                           | Reduces parent friction — Netflix shows maturity-rating context per profile; PianoApp2 could show "Lv.12, 5-day streak" per avatar tile, letting a parent glance-check without entering the parental gate                      | LOW-MEDIUM | Pure read from already-existing `student_skill_progress` / streak tables, just needs a lightweight per-child aggregate query at the picker screen                                                                                                                                                                                                                           |
+| Re-consent prompt for migrated child-owned emails                                                                                                              | No comparable app has this exact scenario (migrating an existing child-run account into a parent-owned model) — this is unique to PianoApp2's migration, not a market pattern                                                  | MEDIUM     | Explicitly named in PROJECT.md "Owner decisions" — where a child's own email currently owns the account, converting it silently into a "parent" account is wrong; needs an explicit interstitial ("Is this account run by a parent/guardian? Please confirm.")                                                                                                              |
+| Multi-child dashboard for the parent (all children's stats in one view before picking a gate-protected deep dive)                                              | Prodigy's Parent Dashboard and Khan Academy's parent view do this; saves a parent from entering-and-exiting each child's math-gated Parent Zone repeatedly                                                                     | MEDIUM     | Extends the existing Parent Portal (v2.8) rather than replacing it; still gated by `ParentGateMath` since it surfaces per-child comparative data                                                                                                                                                                                                                            |
+| "Which child is playing?" smart-default (auto-select last-used profile with an explicit "not you? tap here" affordance)                                        | Reduces friction for the common single-child household while still supporting multi-child households                                                                                                                           | LOW        | LocalStorage-based UX nicety; must never bypass the fact that entering a _different_ child's profile requires no gate (children switching among themselves is fine — only parent-zone entry needs the gate)                                                                                                                                                                 |
+| COPPA-safe "email-plus" second touch for parent verification (e.g., confirmation email sent describing privacy practices before first child profile is usable) | Strengthens the account-creation-implies-consent argument beyond the PRD's stated "implicit via account creation" model — Khan Academy Kids does exactly this (confirmation email describing privacy practices sent to parent) | LOW-MEDIUM | Supabase auth already requires email confirmation for signup in most configurations — this may already be satisfied structurally; verify current Supabase auth settings rather than build new. **Flagged as a legal-strength enhancement, not a hard requirement**, since the PRD asserts implicit consent is sufficient when zero PII is collected from the child directly |
 
-| Feature                                               | Why Requested                                           | Why Problematic                                                                                                                                                                                                                                                                                                       | Alternative                                                                                                                            |
-| ----------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **Fully random generative patterns**                  | Infinite variety, no content authoring cost             | A purely probabilistic generator can produce duration combinations the child has not learned yet (e.g., dotted-eighth before sixteenth notes are taught), causing confusion with no pedagogical justification. Research on curated vs generative: combining curated structures with generative fill is most effective | Use curated patterns as primary source, fall back to generative only when curated pool is exhausted, constrained to `allowedDurations` |
-| **Multiple new concepts in one node**                 | Seems efficient — teach quarter + eighth simultaneously | Cognitive load theory: each new duration concept requires its own consolidation window. Introducing two at once doubles error rate and reduces confidence. Kodaly sequenced concepts are taught one per lesson over weeks                                                                                             | Strict one-new-element rule per Discovery node; use Mix-Up nodes to combine known elements                                             |
-| **Skipping steady beat entirely**                     | Saves a node; seems obvious                             | Children who cannot feel a steady pulse fail ALL rhythm games. Jumping to notation without pulse work creates a hidden failure mode that appears as "the game is broken"                                                                                                                                              | Unit 1 Node 1 must establish pulse. Echo game with a pure metronome click (no notation) for 30 seconds is sufficient                   |
-| **Introducing sixteenth notes before dotted rhythms** | Seems like natural order (shortest subdivision next)    | Sixteenth notes at beginner tempo (60-70 BPM) produce extremely fast taps (4 per beat) that overwhelm motor control in 8-year-olds. Dotted patterns (dotted-quarter + eighth) appear in familiar songs and are more musically meaningful at this age                                                                  | Dotted rhythms in Unit 5-6, sixteenth notes in Unit 6 at controlled slow tempo                                                         |
-| **3/4 time before 4/4 is mastered**                   | Waltz feels fun                                         | 3/4 meter requires correct placement of 3 beats, which is harder to feel than 4/4's strong-weak-strong-weak. Kodaly defers 3/4 until after 4/4 and 2/4 are secure                                                                                                                                                     | Keep 3/4 as optional "bonus" content, not a required trail node for beginners                                                          |
-| **Syncopation in the main beginner trail**            | Sounds cool, is in popular music                        | Syncopation (accent on weak beat) requires a child to first have a strongly internalized sense of where the strong beats are. Introducing it before Units 6-7 undermines pattern internalization                                                                                                                      | Syncopation belongs only in Unit 8 (existing) after compound meter is established                                                      |
-| **Audio-only echo (no visual)**                       | Simpler to build                                        | Children aged 6-10 benefit dramatically from multimodal learning — hearing + seeing + doing simultaneously. Audio-only echo has no visual anchor, which makes the pattern evaporate from working memory faster                                                                                                        | Echo game should always show the VexFlow notation of the pattern being echoed, displayed during the listen phase                       |
+### Anti-Features (Commonly Requested, Often Problematic)
+
+Patterns that look appealing but create legal risk, engineering debt, or violate the "zero PII" design principle this milestone exists to enforce.
+
+| Feature                                                                                                                 | Why Requested                                                                    | Why Problematic                                                                                                                                                                                                                                                       | Alternative                                                                                                                                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Custom/uploaded child avatar photos                                                                                     | Feels more personal, "make it yours"                                             | A child's photograph is itself PII under COPPA's 2013 definition amendment — this is the _exact_ category of risk the milestone is designed to eliminate (same category as the voice-recording removal driving this milestone)                                        | Preset avatar library only (already shipped in v2.0)                                                                                                                                                                                              |
+| Child email/phone as a login credential (Prodigy's pattern: child logs in with parent's email reused as their username) | Simplifies password-recovery UX for the child                                    | Reuses a real, identifying credential as a login handle; also re-introduces exactly the "student.id tied to auth.users" coupling this milestone is removing                                                                                                           | Nickname-only, no-login child profiles selected from a picker inside an already-authenticated parent session (the pattern this milestone is building)                                                                                             |
+| Math-problem-only age gate at signup                                                                                    | It's already built (`ParentGateMath`) and reusing it feels efficient             | FTC has explicitly stated a math problem a child is unlikely to answer is **not** a valid age screen on its own — it must be a neutral, open date-of-birth/year field; a knowledge question can only _supplement_ a neutral field, never replace it                   | Neutral month/year-of-birth open entry field for the initial age gate; keep `ParentGateMath` for its _correct_ use — gating entry to settings/billing from within an already-adult-owned session, which is a different problem than age-screening |
+| Social features between child profiles (friend requests, chat, visible leaderboards with real usernames)                | Increases engagement, common in gaming apps                                      | COPPA prohibits collection/display of personal info in social contexts without verifiable parental consent; already listed as Out of Scope in PROJECT.md for unrelated reasons — same logic applies here even more strongly once child profiles have zero PII to leak | Anonymous/aggregate classroom challenges (already a documented future candidate) — no cross-family social surface                                                                                                                                 |
+| Per-child PIN/password (child sets their own login secret)                                                              | Feels like "give the child ownership"                                            | Adds a credential surface for an under-13 user, a support burden (forgotten PINs), and undermines the "children have no login" architecture goal stated explicitly in the milestone brief                                                                             | No child-facing credential at all — profile selection lives entirely inside the parent's authenticated session; only the parent has a password                                                                                                    |
+| Third-party analytics/ad SDKs attached to `child_profile_id`                                                            | PRD §5 flags this as a generic boilerplate risk (Firebase/PostHog/Mixpanel/IDFA) | None of these SDKs are actually integrated in PianoApp2 (confirmed: Supabase + Umami + Sentry only) — building guardrails against a non-existent risk wastes effort                                                                                                   | Explicitly rewrite PRD §5 to scope to the real stack: confirm Umami and Sentry are configured to never receive `child_profile_id` or any nickname/avatar field (Sentry COPPA-safe config already exists per v2.3)                                 |
+| Exporting/deleting data mid-conversation via chat/support ticket only (no self-service UI)                              | Lower engineering lift than building UI                                          | COPPA §312.6 requires a parent be given "a means" of review/deletion — case-by-case support tickets technically satisfy the letter of the rule but create a slow, inconsistent, and hard-to-audit process; also a regression from what's already shipped              | Keep self-service export/delete UI (already shipped `COPPA-01`/`COPPA-02`), just re-scope to `child_profile_id`                                                                                                                                   |
 
 ---
 
 ## Feature Dependencies
 
 ```
-Steady Beat Internalization (Unit 1, Node 1)
-    └──required by──> All subsequent rhythm games (cannot count without pulse)
+Parent-owned top-level account (auth re-point)
+    └──requires──> Age gate (neutral DOB entry) blocking under-18 signup
+                       └──enhances──> Google Play Families compliance (single account-creation path)
 
-Curated Pattern Library (per duration-set tier)
-    └──required by──> Per-node allowedDurations filtering
-                          └──required by──> Pedagogically safe exercise selection
+child_profiles table + parent_id FK
+    └──requires──> Parent-owned top-level account
+    └──requires──> Migration: 30-identity-FK-column repoint (per PROJECT.md measured scope)
 
-Quarter Note mastery (Units 1-2)
-    └──required by──> Eighth Note introduction (Unit 3, per Kodaly)
-                          └──required by──> Dotted Quarter patterns (Unit 5-6)
-                                               └──required by──> Syncopation (Unit 8)
+Child profile creation UI (nickname + avatar + optional birth year)
+    └──requires──> child_profiles table
+    └──enhances──> Profile switcher (nothing to switch between without ≥1 profile)
 
-Quarter Rest (Unit 4)
-    └──required by──> Half Rest (Unit 4)
-                          └──required by──> Whole Rest (Unit 4)
+Profile switcher (shared-device picker)
+    └──requires──> child_profiles table
+    └──requires──> Per-child progress summary (differentiator) [optional enhancement, not blocking]
 
-Echo game (Discovery nodes)
-    └──precedes──> Sight-read-and-tap (Practice nodes)
-                       └──precedes──> Hear-and-pick (Mix-Up nodes)
-                                          └──precedes──> Falling-tiles Arcade (Speed/Boss nodes)
+Parental gate on Settings/Subscription/Billing
+    └──requires──> Existing ParentGateMath component (already built)
+    └──requires──> Parent-owned top-level account (gate is meaningless if child owns the account)
 
-VexFlow notation display during exercise
-    └──required by──> Syllable overlay (ta/ti-ti rendering)
-    └──required by──> focusDuration highlight
+Data review/export (COPPA §312.6 duty)
+    └──requires──> child_profiles table (re-point target)
+    └──enhances──> existing COPPA-01 export feature (already shipped, needs field re-map)
+
+Data deletion (COPPA §312.6 duty)
+    └──requires──> child_profiles table (re-point target)
+    └──requires──> existing 30-day-grace hard-delete cron (already shipped, needs CASCADE re-point)
+
+Data minimization (no PII columns on child_profiles)
+    └──conflicts──> Custom avatar upload (anti-feature)
+    └──conflicts──> Child email/phone login (anti-feature)
+
+Re-consent prompt for migrated child-owned emails
+    └──requires──> Data migration (existing users → parent + child_profile)
+    └──enhances──> Legal defensibility of "implicit consent via account creation" (PRD §2)
 ```
 
 ### Dependency Notes
 
-- **Eighth notes require quarter mastery:** The Kodaly and Orff consensus is that quarter ("walking") and eighth ("running") notes are taught together as a pair — walking vs. running — because children already embody these in daily movement. Half notes (held, sustained) are a different cognitive category and can come after eighth notes without loss.
-- **Curated pattern library is a prerequisite for safe generative fallback:** The `allowedDurations` filter in `HybridPatternService.getCuratedPattern()` already exists; the gap is insufficient pattern count per duration-tier (currently ~6 beginner patterns total vs. the ~20+ needed for a node to avoid repetition before star-3 is reached).
-- **Echo game ordering is a data dependency, not a code change:** Scheduling echo as the exercise type for all `nodeType: DISCOVERY` nodes is a content edit to the unit files, not a new game feature.
+- **child_profiles table requires parent-owned account:** A child profile with no owning adult account is meaningless in this model — the parent row must exist first, both logically and as an FK constraint (`ON DELETE CASCADE`).
+- **Parental gate requires parent-owned account:** Gating settings behind a math problem only makes sense once you know the _account owner_ is an adult. Before this milestone, gating a student-owned account's own settings behind a "parent" math gate was already a slight mismatch (the PianoApp2 CLAUDE.md notes `ParentGateMath` is "an age screen on a different table, NOT consent" — this milestone finally aligns the gate with a true parent-owned account).
+- **Data review/export and deletion enhance (don't duplicate) existing COPPA-01/02:** These are not new builds — they're re-pointing exercises. Treat them as LOW complexity precisely because the hard part (export logic, 30-day grace cron, CASCADE deletes, Brevo confirmation emails) already shipped in v1.0/v2.5.
+- **Custom avatar upload conflicts with data minimization:** These are structurally incompatible — a photo-upload field cannot coexist with a "zero PII" design goal. This is the sharpest anti-feature in this set precisely because it's the same category of risk (child biometric/image data) as the audio-recording removal driving this whole milestone.
+- **Re-consent prompt enhances legal defensibility:** The PRD's premise ("parent creates the account, therefore consent is implicit") is on solid ground for _brand-new_ signups. It is on much shakier ground for a _migrated_ account that used to belong to a child directly — the re-consent interstitial is what closes that specific gap, per the PROJECT.md owner decision already made 2026-07-21.
 
 ---
 
-## Recommended Duration Progression (Evidence-Based)
+## MVP Definition
 
-This is the key pedagogical finding. The Kodaly/Orff consensus, cross-validated against Complete Rhythm Trainer's 30-chapter structure and Rhythmic Village's level progression:
+### Launch With (v1 — this milestone)
 
-| Unit | New Element                  | Rationale                                                   | Rest Introduced        |
-| ---- | ---------------------------- | ----------------------------------------------------------- | ---------------------- |
-| 1    | Pulse → Quarter note (ta)    | Body movement before notation; walking beat                 | —                      |
-| 2    | Eighth notes (ti-ti)         | Running beat — children embody this before notation         | Eighth rest (optional) |
-| 3    | Half note (ta-a)             | "Stretch" — holding longer now that short notes are secure  | Half rest              |
-| 4    | Whole note (ta-a-a-a)        | Maximum held duration; contrasts with eighth pairs          | Whole rest             |
-| 5    | Quarter rest                 | Silence is a skill; quarter rest first per grade-1 pedagogy | Quarter rest           |
-| 6    | Dotted quarter + eighth pair | Musical feel of "long-short"; appears in folk/pop songs     | Dotted half            |
-| 7    | Sixteenth notes              | Very fast at slow tempo (60 BPM = 4/beat manageable)        | Sixteenth rest         |
-| 8    | 6/8 compound meter           | Two big beats; dotted-quarter as the beat unit              | —                      |
+Minimum viable product for v4.0 Parent-First Account Architecture.
 
-**Current app ordering** (quarter → half → whole → eighth → rests → dotted → sixteenth → 6/8 → syncopation) contradicts this by introducing whole notes before eighth notes. This is the primary pedagogical issue to fix.
-
-**Source authority:** Kodaly K-5 sequence (quarter + eighth first, half and whole after), Becca's Music Room grade-level breakdown (quarter rest grade 1, half/whole notes grade 2, sixteenth grade 3, dotted grade 4), Complete Rhythm Trainer's 30-chapter ordering.
-
----
-
-## Curated Patterns in Practice
-
-### What "curated" means here
-
-A curated pattern library is a hand-authored JSON array of measures, each tagged with the duration set it requires. The child only sees patterns whose duration set is a subset of what they have already learned.
-
-**Existing schema (4-4.json) — correct approach:**
-
-```json
-{ "duration": "quarter", "note": true }
-```
-
-**What's missing:** The existing library has ~6 beginner patterns (quarters only), ~8 intermediate patterns (mixed), ~6 advanced patterns. For a trail with 7 nodes per unit and 3 exercises minimum per node, the child will see repeat patterns before reaching 1-star mastery. The pattern pool needs expansion.
-
-### Recommended pattern counts per duration-tier
-
-| Duration Set Available            | Minimum Patterns | Rationale                                                         |
-| --------------------------------- | ---------------- | ----------------------------------------------------------------- |
-| quarter only                      | 20               | 7 nodes × 3 attempts before repetition feels boring               |
-| quarter + eighth                  | 25               | Eighth combinations are numerous; variety prevents predictability |
-| quarter + eighth + half           | 20               | Half note patterns are structurally simpler                       |
-| quarter + half + whole            | 15               | Whole-note patterns are very limited in variety                   |
-| quarter + rest (any)              | 20               | Rest placement creates meaningful variety                         |
-| quarter + eighth + dotted-quarter | 20               | Dotted patterns are distinct enough each feels new                |
-| sixteenth combinations            | 15               | Sufficient for speed round variety                                |
-| 6/8 patterns                      | 15               | Separate JSON file already exists (6-8.json)                      |
-
-### Difficulty scoring within a tier
-
-Patterns within a duration-set tier can be difficulty-ranked by two axes:
-
-1. **Density:** Ratio of notes to rests (higher density = harder; silence requires counting)
-2. **Beat placement:** Strong-beat-only patterns are easier; weak-beat placement increases difficulty
-
-A pattern tagged `{ density: 0.75, syncopation: false, durations: ["quarter","eighth"] }` gives the engine enough signal to select easy-first, hard-last ordering within a node session without requiring a separate difficulty label per pattern.
-
----
-
-## MVP Definition for This Milestone
-
-This is not a new feature build — it is a content and wiring rework of existing systems.
-
-### Rework With (v1 of this milestone)
-
-- [ ] **Reorder duration sequence** in unit files to match Kodaly progression (quarter → eighth → half → whole → rests → dotted → sixteenth → compound)
-- [ ] **Expand curated pattern library** (4-4.json) from ~20 total patterns to ~120+, organized by duration-set not by difficulty label
-- [ ] **Wire allowedDurations to node config** — every node's `focusDurations` + `contextDurations` must constrain which curated patterns are served; fix any nodes where this wiring is missing
-- [ ] **Schedule echo game for all Discovery nodes** — change exercise `type` to echo for all `nodeType: DISCOVERY` nodes (data-only change)
-- [ ] **Add pulse exercise to Unit 1 Node 1** — simplest possible: metronome click + "tap with the beat" for 30 seconds before any notation appears
-- [ ] **Add syllable overlay to VexFlow notation** — ta/ti-ti/ta-a text below each note head; single render pass, deterministic from duration
+- [ ] Neutral age gate (open month/year DOB entry) blocking under-18 self-signup — **legal duty adjacent** (Google Play Families + FTC neutral-screen expectation)
+- [ ] Parent registration (email/password) — re-point of existing Supabase auth, no new auth infra
+- [ ] `parents` + `child_profiles` schema with `parent_id` FK, `ON DELETE CASCADE`
+- [ ] Child profile CRUD: create/edit/delete with nickname + preset avatar + optional birth year only (no PII columns)
+- [ ] Profile switcher UI for a shared device — no login/PIN required to select among a family's own children
+- [ ] Parental gate (`ParentGateMath`, reused) in front of Account Settings, Subscription, Billing
+- [ ] Data review (export) re-pointed to `child_profile_id` — **LEGAL DUTY, COPPA §312.6(a)(1)**
+- [ ] Data deletion re-pointed to `child_profile_id`, preserving the 30-day grace CASCADE — **LEGAL DUTY, COPPA §312.6(a)(2)**
+- [ ] "Refuse further collection" action — deactivate one child profile independent of full parent-account deletion — **LEGAL DUTY, COPPA §312.6(a)(1)**
+- [ ] Migration path for existing 20 students (15 with auth accounts, 3 paying subs) into parent+child_profile rows
+- [ ] Re-consent interstitial for accounts where a child's own email currently owns the account
 
 ### Add After Validation (v1.x)
 
-- [ ] **Adaptive tempo within session** — nudge BPM ±5 based on consecutive correct/wrong taps; validate that it doesn't confuse children
-- [ ] **"New vs known" focus highlighting** — glow effect on focusDuration notes for first 3 Discovery nodes of each unit
-- [ ] **Progressive measure length** — 1-bar exercises in Discovery nodes, 2-bar in Practice, 4-bar in Speed/Boss nodes
+- [ ] Per-child progress summary tile at the profile-switcher screen (streak/level glance)
+- [ ] Multi-child aggregate view inside Parent Portal (compare across children in one gated screen)
+- [ ] Email-plus confirmation step reinforcing parent verification at signup (if Supabase's existing email-confirmation flow is found insufficient on legal review)
 
 ### Future Consideration (v2+)
 
-- [ ] **3/4 meter trail branch** — optional unlock after Unit 8 for learners who complete the full path
-- [ ] **Triplet feel intro** — tied to Unit 8+ or a future jazz/swing unit; too cognitively complex for beginner path
-- [ ] **Student-generated patterns** — composition mode where child creates a rhythm and the app plays it back; high engagement but requires notation input UI
+- [ ] Smart-default "last used profile" with explicit switch affordance — pure UX polish, defer until the core switcher ships and real usage patterns are observed
+- [ ] Screen-time / daily-limit controls per child (Google Family Link / Apple Screen Time pattern) — a genuine parent want, but it's a scope-expanding feature (needs its own settings surface, enforcement logic, and notification hooks) unrelated to the identity-architecture goal of this milestone
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature                                  | User Value | Implementation Cost     | Priority |
-| ---------------------------------------- | ---------- | ----------------------- | -------- |
-| Reorder duration sequence (data edit)    | HIGH       | LOW                     | P1       |
-| Expand curated pattern library           | HIGH       | MEDIUM (authoring time) | P1       |
-| Wire allowedDurations to node config     | HIGH       | LOW (already exists)    | P1       |
-| Echo game for Discovery nodes            | HIGH       | LOW (data change)       | P1       |
-| Pulse exercise Unit 1 Node 1             | MEDIUM     | LOW                     | P1       |
-| Syllable overlay (ta/ti-ti)              | MEDIUM     | MEDIUM                  | P2       |
-| focusDuration highlight ("new vs known") | MEDIUM     | LOW                     | P2       |
-| Progressive measure length               | MEDIUM     | LOW (field exists)      | P2       |
-| Adaptive tempo within session            | MEDIUM     | MEDIUM                  | P2       |
-| 3/4 meter branch                         | LOW        | HIGH                    | P3       |
-| Triplets                                 | LOW        | HIGH                    | P3       |
-| Student composition mode                 | MEDIUM     | HIGH                    | P3       |
+| Feature                                            | User Value                                                                          | Implementation Cost                                      | Priority |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------- | -------- |
+| Parent-owned account + age gate                    | HIGH                                                                                | LOW                                                      | P1       |
+| child_profiles schema + CRUD                       | HIGH                                                                                | MEDIUM (migration is the real cost, not the CRUD)        | P1       |
+| Profile switcher                                   | HIGH                                                                                | MEDIUM                                                   | P1       |
+| Parental gate re-scope (reuse existing component)  | HIGH (legal/product)                                                                | LOW                                                      | P1       |
+| Data review/export re-point                        | HIGH (legal duty)                                                                   | LOW                                                      | P1       |
+| Data deletion re-point                             | HIGH (legal duty)                                                                   | LOW                                                      | P1       |
+| "Refuse further collection" (deactivate one child) | MEDIUM (legal duty, currently unmodeled)                                            | LOW-MEDIUM                                               | P1       |
+| Existing-user migration + re-consent interstitial  | HIGH (blocks launch, live paying users)                                             | HIGH (30 FK columns, 62 RLS policies per measured scope) | P1       |
+| Per-child progress tile at switcher                | MEDIUM                                                                              | LOW                                                      | P2       |
+| Multi-child parent dashboard                       | MEDIUM                                                                              | MEDIUM                                                   | P2       |
+| Email-plus reinforcement                           | LOW-MEDIUM (defensive, not required if legal review accepts implicit-consent model) | LOW                                                      | P2       |
+| Screen-time limits                                 | MEDIUM                                                                              | HIGH (new subsystem)                                     | P3       |
+| Smart-default profile selection                    | LOW                                                                                 | LOW                                                      | P3       |
+
+**Priority key:**
+
+- P1: Must have for this milestone (legal duty or structurally required by the new identity model)
+- P2: Should have, natural next milestone once the identity model has shipped
+- P3: Nice to have, unrelated enough to identity architecture to defer indefinitely
 
 ---
 
 ## Competitor Feature Analysis
 
-| Feature                        | Rhythmic Village                 | Complete Rhythm Trainer             | Simply Piano                            | This App (current)                                     |
-| ------------------------------ | -------------------------------- | ----------------------------------- | --------------------------------------- | ------------------------------------------------------ |
-| Duration progression order     | Quarter+eighth first (Kodaly)    | Half → quarter → eighth → sixteenth | Song-first (duration exposure implicit) | Quarter → half → whole → eighth (diverges from Kodaly) |
-| Curated pattern library        | Yes, 1000+ patterns in 10 levels | 252 drills, hand-authored           | Song-based (not abstract patterns)      | 20 total patterns; insufficient                        |
-| Echo game available            | Yes (core mode)                  | Yes (imitation drills)              | No                                      | Yes (exists)                                           |
-| Syllable system                | No                               | No                                  | No                                      | No                                                     |
-| Notation shown during exercise | Yes                              | Yes                                 | Yes                                     | Partial (falling tiles yes, echo unclear)              |
-| Adaptive tempo                 | No                               | No                                  | No                                      | No                                                     |
-| Rest as dedicated unit         | No — rests embedded in patterns  | No                                  | No                                      | Yes (Unit 4 "Quiet Moments")                           |
-| 6/8 compound meter             | Yes                              | Yes                                 | No                                      | Yes (Unit 7)                                           |
-| Pulse exercise before notation | Yes (clicking with metronome)    | No                                  | No                                      | No                                                     |
+| Feature                       | Netflix Kids                                              | Duolingo                                                                          | Khan Academy Kids                                            | Prodigy                                                             | ABCmouse                                                        | PianoApp2 v4.0 Plan                                                                                                                                                                                                                                     |
+| ----------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Top-level account owner       | Adult (billing account)                                   | Adult (parent) for Child Users                                                    | Adult (parent)                                               | Adult (parent)                                                      | Adult (single email/password)                                   | Adult (parent) — **matches**                                                                                                                                                                                                                            |
+| Child login credential        | None — profile picker only                                | Username, no email/PII collected directly from child                              | None — profile picker only                                   | **Parent's email reused as child's username** (anti-pattern)        | None — profile picker, up to 3 per account                      | None — profile picker only — **matches best-in-class, avoids Prodigy's anti-pattern**                                                                                                                                                                   |
+| Avatar                        | Preset profile icons                                      | Letter avatar or preset cartoon avatar builder                                    | Preset animal avatars                                        | Customizable in-game avatar (game-cosmetic, not identity)           | Preset avatar icon                                              | Preset avatar library only (already shipped) — **matches**                                                                                                                                                                                              |
+| Real name collected           | No (profile name only)                                    | No — explicitly disallowed                                                        | Strongly discouraged, first-name-only in practice            | Not required for child                                              | First name/nickname requested (looser than best-practice peers) | Nickname only, UI warns against real names — **matches Duolingo/Khan Academy Kids, stricter than ABCmouse**                                                                                                                                             |
+| Gate before purchase/settings | 4-digit PIN, profile-lock                                 | Adult account required to change billing (no child-facing billing surface at all) | Parent section requires re-entering steps ("Grown-Ups Only") | Parent Dashboard is a separate login                                | Parent Settings section                                         | `ParentGateMath` (existing component) — **on par**, arguably friendlier than a memorized PIN since nothing to forget                                                                                                                                    |
+| Parent data review/delete     | N/A (not an edtech data-collection app in the same sense) | Parent can request access/change/delete via email request                         | Implied via account settings                                 | Parent Dashboard shows child progress; deletion via support         | Parent Settings                                                 | Self-service export + delete already shipped (`COPPA-01`/`02`), re-pointing to child_profiles — **ahead of most peers**, who rely on support-ticket flows for deletion                                                                                  |
+| Consent mechanism at signup   | N/A                                                       | Email sent to parent describing data practices (email-plus lite)                  | Confirmation email to parent describing privacy practices    | Standard signup, no explicit consent-flow described in support docs | Standard signup                                                 | Implicit-via-account-creation (PRD §2) + optional re-consent interstitial for migrated accounts — **weaker than Duolingo/Khan Academy Kids' confirmation-email step; flagged as a differentiator to add in v1.x if legal review wants it strengthened** |
+
+---
+
+## Legal Duties vs. Product Choices — Quick Reference
+
+| Item                                                                                                                                   | Status                                                                                                                                                                                                     | Citation                                                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Parent can review child's collected personal information                                                                               | **LEGAL DUTY**                                                                                                                                                                                             | 16 CFR §312.6(a)(1)                                                              |
+| Parent can direct deletion of child's personal information                                                                             | **LEGAL DUTY**                                                                                                                                                                                             | 16 CFR §312.6(a)(2)                                                              |
+| Parent can refuse further use/future collection (i.e., can stop the operator from continuing to collect, independent of full deletion) | **LEGAL DUTY**                                                                                                                                                                                             | 16 CFR §312.6(a)(1)                                                              |
+| Operator must verify the requester is actually the parent, "taking into account available technology"                                  | **LEGAL DUTY** (procedural)                                                                                                                                                                                | 16 CFR §312.6(a)                                                                 |
+| No collection of more information than reasonably necessary for participation                                                          | **LEGAL DUTY** (data minimization)                                                                                                                                                                         | 16 CFR §312.7 (prohibition on conditioning participation), general COPPA purpose |
+| Neutral, non-coercive age screening (no math-problem-only gates, no feature-differential messaging, no default-to-13+)                 | **Regulatory expectation** (FTC guidance/enforcement posture, not a single numbered CFR provision)                                                                                                         | FTC COPPA FAQs; Google Play Families Policy age-screen guidance                  |
+| Single account-creation path (no separate "kid mode" signup)                                                                           | **Platform policy duty**, not federal statute                                                                                                                                                              | Google Play Families Policy                                                      |
+| Data export in a self-service, machine-readable (JSON) format                                                                          | **Product choice / best practice**, not explicitly mandated by COPPA text (COPPA requires "a means of reviewing," not a specific format)                                                                   | N/A — exceeds the letter of §312.6                                               |
+| Per-child progress dashboards, screen-time limits, multi-child comparison views                                                        | **Product choice**                                                                                                                                                                                         | N/A                                                                              |
+| Preset-avatar-only, no-photo-upload                                                                                                    | **Product choice that also functions as a PII-avoidance control** — not itself named in the CFR, but is the practical way to satisfy the "zero PII" design goal this milestone states as its own objective | N/A (self-imposed design constraint per PRD §2)                                  |
+| Re-consent interstitial for migrated accounts                                                                                          | **Product/legal-risk-mitigation choice**, not an explicit CFR requirement for this specific migration scenario (COPPA doesn't address "profile ownership conversion" directly)                             | N/A — owner decision, PROJECT.md 2026-07-21                                      |
 
 ---
 
 ## Sources
 
-- Kodaly method pedagogy: [Wikipedia: Kodály method](https://en.wikipedia.org/wiki/Kod%C3%A1ly_method) — rhythm sequence, ta/ti-ti syllables, developmental ordering
-- Grade-level rhythm progression: [Becca's Music Room: How to Teach Rhythm in Elementary Music](https://beccasmusicroom.com/teach-rhythm/) — 7-step sequence, grade 1-4 note value introduction order
-- Teaching strategies: [Jooya Teaching Resources: 10 Simple Strategies to Teach Note Values](https://juliajooya.com/2024/02/14/10-simple-strategies-to-teach-note-values-in-music-with-rhythm-patterns/) — pattern building, complexity scaffolding, engagement vs frustration factors
-- Competitor: [Complete Rhythm Trainer](https://completerhythmtrainer.com/) — 252 drills, 4 levels, 30 chapters; game-based + strong pedagogy
-- Competitor: [Rhythmic Village App Store](https://apps.apple.com/us/app/learn-music-rhythmic-village/id1351762757) — echo, dictation, aural differentiation; ages 6+
-- Competitor: [Rhythm Lab JSON Documentation](https://www.rhythmlab-app.com/knowledge-base/file-and-user-mgt/file-management/json-documentation-for-custom-patterns/) — curated patterns in JSON, hand-authored, importable
-- Research: [Music and Rhythm as Promising Tools to Assess and Improve Cognitive Development in Children (PMC 2025)](https://pmc.ncbi.nlm.nih.gov/articles/PMC12420879/) — cognitive impact of rhythm training; importance of challenge calibration
-- Pedagogy comparison: [Comparative Analysis of Kodaly, Suzuki, Dalcroze, Orff, Gordon (ResearchGate 2024)](https://www.researchgate.net/profile/Jay-Mabini/publication/381457025_Comparative_Analysis_of_Kodaly_Suzuki_Dalcroze_Orff_and_Gordon_Music_Learning_Theory_in_Early_Childhood_Music_Education_A_Literature_Review/links/666dc89ab769e76919386856/)
-- Rhythm syllable systems: [Rhythm Syllable Systems — Make Moments Matter](https://makemomentsmatter.org/classroom-ideas/rhythm-syllable-systems-what-to-use-and-why/)
-- App review: [Top 11 Rhythm Reading Apps for Music Teachers — Midnight Music (2024)](https://midnightmusic.com/2024/05/top-11-rhythm-reading-apps-for-music-teachers/)
+- [16 CFR §312.6 — Right of parent to review personal information provided by a child (Cornell LII / eCFR)](https://www.law.cornell.edu/cfr/text/16/312.6) — HIGH confidence, primary legal source
+- [FTC — Complying with COPPA: Frequently Asked Questions](https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions) — HIGH confidence, primary regulator source (referenced via search summary; direct fetch blocked by 403, cross-verified via secondary summaries)
+- [Math Question As Age-Gate — InfoLawGroup](https://www.infolawgroup.com/insights/2016/04/articles/uncategorized/math-question-as-age-gate-and-invite-a-friend-under-fire) — MEDIUM confidence, legal commentary confirming FTC's rejection of math-problem-only age gates
+- [Google Play Console — Families Policy Requirements](https://support.google.com/googleplay/android-developer/answer/9893335) — MEDIUM-HIGH confidence, official platform policy (via search summary)
+- [Google Play Console — Preview: Families Policies 2026](https://support.google.com/googleplay/android-developer/answer/17122218) — MEDIUM confidence
+- Netflix parental controls / Kids profile PIN pattern — MEDIUM confidence, multiple 2026 secondary sources agreeing (Canopy, TechEngage, SafetyDetectives, Childnet)
+- Duolingo Child User privacy practices (username-only, letter/cartoon avatar, parent email notification) — MEDIUM confidence, cross-referenced against Duolingo's own privacy page plus Internet Matters / ExpressVPN summaries
+- Khan Academy Kids "Grown-Ups Only" profile setup, no-PII-in-username guidance — MEDIUM confidence, Khan Academy's own Zendesk help articles
+- Prodigy Education parent account / child-username-via-parent-email pattern — MEDIUM confidence, Prodigy's own Zendesk help articles (flagged as an anti-pattern in this research, not a recommendation)
+- ABCmouse child profile creation (first name, birth month/year, avatar, kidSAFE Safe Harbor certification) — MEDIUM confidence, ABCmouse's own support articles
+- "Apps Parental Gate" — Uscreen Help; GitHub `HTKUltimateParentalGate` / `HYParentalGate` — MEDIUM confidence, confirms the math/dexterity parental-gate pattern as an established, distinct-from-age-gate industry convention
+- PianoApp2 internal: `C:\Development\PianoApp2\.planning\PROJECT.md`, `C:\Development\PianoApp2\COPPA_REFACTOR_PRD.md`, `CLAUDE.md` — HIGH confidence, first-party source of truth for existing shipped capabilities and owner decisions
 
 ---
 
-_Feature research for: Rhythm trail pedagogy rework (8-year-old piano learners)_
-_Researched: 2026-04-06_
+_Feature research for: Parent-managed child-profile accounts (COPPA-regulated kids' edtech)_
+_Researched: 2026-07-21_
