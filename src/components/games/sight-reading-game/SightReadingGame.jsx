@@ -4564,16 +4564,20 @@ export function SightReadingGame() {
         comparisonPass={comparisonPass}
       />
 
+      {/* short-landscape: this block sits inside the 18rem feedback side column, where it
+          does not fit alongside FeedbackSummary at full size. Compaction gets it close;
+          the column's own overflow-y-auto covers the remainder so the notation column
+          stays pinned rather than the whole page scrolling. */}
       {isSessionComplete && (
-        <div className="mt-4 space-y-3 text-center">
+        <div className="mt-4 space-y-3 text-center short-landscape:mt-2 short-landscape:space-y-2">
           <div
-            className={`rounded-2xl border px-4 py-3 ${
+            className={`rounded-2xl border px-4 py-3 short-landscape:px-3 short-landscape:py-2 ${
               isVictory
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                 : "border-rose-200 bg-rose-50 text-rose-700"
             }`}
           >
-            <p className="text-lg font-bold">
+            <p className="text-lg font-bold short-landscape:text-sm">
               {isVictory
                 ? t("sightReading.session.victoryTitle")
                 : t("sightReading.session.completeTitle")}
