@@ -37,13 +37,26 @@
     "logIn": "Log in",
     "logOut": "Log out",
     "loggingOut": "Logging out...",
+    "brand": {
+      "tagline": "Where practice feels like play"
+    },
     "login": {
       "subtitle": "Begin your musical adventure!",
+      "heading": "Welcome back!",
+      "headingSub": "Log in to keep your streak going",
       "emailLabel": "Email",
-      "emailPlaceholder": "Enter your email",
+      "emailPlaceholder": "you@example.com",
       "passwordLabel": "Password",
       "passwordPlaceholder": "Enter your password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
       "submit": "Sign In",
+      "cta": "Let's play! 🎹",
+      "or": "or",
+      "google": "Continue with Google",
+      "newHere": "New here?",
+      "createAccount": "Create an account",
+      "desktopSubcopy": "Log in to keep your streak alive, master new skills, and level up on the trail.",
       "orSocial": "Or continue with",
       "noAccountPrompt": "New to PianoMaster?",
       "signupLink": "Create Account",
@@ -52,12 +65,17 @@
     "forgotPassword": {
       "link": "Forgot password?",
       "title": "Reset Password",
-      "emailLabel": "Email address",
-      "emailPlaceholder": "Enter your email",
-      "submitButton": "Send Reset Link",
+      "heading": "Forgot your password?",
+      "body": "No worries! Enter your email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "submitButton": "Send reset link",
       "sending": "Sending...",
-      "backToLogin": "Back to login",
+      "backToLogin": "Back to log in",
       "successTitle": "Check your email",
+      "sentTitle": "Check your inbox!",
+      "sentBody": "We sent a reset link to <strong>{{email}}</strong>. Tap it to choose a new password.",
+      "resendIn": "Didn't get it? Resend in <time>{{time}}</time>",
       "successMessage": "We sent a password reset link to your email. Check your inbox and follow the link to set a new password.",
       "cooldownMessage": "You can send another link in {{seconds}}s",
       "errorGeneric": "Something went wrong. Please try again."
@@ -93,10 +111,12 @@
         "student": "Student",
         "studentDesc": "Learn and practice piano",
         "teacher": "Teacher",
-        "teacherDesc": "Teach and track students"
+        "teacherDesc": "Teach and track students",
+        "continue": "Continue"
       },
       "ageGate": {
         "question": "What year were you born?",
+        "label": "Birth year",
         "selectYear": "Select year",
         "continue": "Continue",
         "errorRequired": "Please select your birth year",
@@ -125,7 +145,15 @@
         "submitTeacher": "Create Teacher Account"
       },
       "social": {
-        "divider": "Or join with"
+        "divider": "Or join with",
+        "google": "Sign up with Google"
+      },
+      "desktopHeadline": "Start your journey today",
+      "desktopSubcopy": "Create a free account and take your first lesson in under a minute.",
+      "benefits": {
+        "games": "Learn with games, not drills",
+        "progress": "Track your streak & progress",
+        "free": "Start free — no card needed"
       },
       "back": "Back",
       "alreadyHaveAccount": "Already have an account?",
@@ -135,7 +163,31 @@
         "termsLink": "Terms of Service",
         "privacyLink": "Privacy Policy",
         "and": "and"
-      }
+      },
+      "successStudent": "Your account is ready — let's play!",
+      "successTeacher": "Your teacher account is ready!"
+    },
+    "roleSelection": {
+      "title": "Welcome to PianoMaster!",
+      "subtitle": "Pick how you'll be using the app",
+      "student": "Student",
+      "studentDesc": "Learn piano with games and lessons",
+      "teacher": "Teacher",
+      "teacherDesc": "Manage students and track their progress",
+      "continue": "Continue",
+      "successMessage": "You're all set!",
+      "errorGeneric": "Oops, we couldn't set up your profile. Try again?"
+    },
+    "errors": {
+      "invalidCredentials": "That email and password don't match. Want to try again?",
+      "emailNotConfirmed": "Almost there! Check your email for the confirmation link first.",
+      "tooManyRequests": "Too many tries just now. Wait a moment, then try again.",
+      "network": "Can't reach the internet right now. Check your connection and try again.",
+      "accountExists": "An account with this email already exists. Try logging in instead.",
+      "signInFailed": "Oops, we couldn't sign you in. Try again?",
+      "signupFailed": "Oops, we couldn't create your account. Try again?",
+      "generic": "Oops, something went wrong. Try again?",
+      "socialSuccess": "You're in!"
     }
   },
   "navigation": {
@@ -1756,7 +1808,7 @@
       "dobLabel": "Date of birth",
       "dobDesc": "used to determine age and apply COPPA protections for users under 13.",
       "parentEmailLabel": "Parent email address",
-      "parentEmailDesc": "collected for users under 13 to obtain verifiable parental consent before account activation.",
+      "parentEmailDesc": "optionally collected for users under 13, used to send weekly progress reports and notification reminders to a parent or guardian.",
       "progressLabel": "Learning progress",
       "progressDesc": "scores, exercises completed, skill levels, and star ratings across all game modes.",
       "activityLabel": "Practice activity",
@@ -1779,14 +1831,14 @@
       "title": "3. Third-Party Services",
       "intro": "We use the following third-party services to operate PianoMaster:",
       "supabaseDesc": "database hosting, user authentication, and real-time data sync.",
-      "brevoDesc": "transactional emails including parental consent verification and weekly progress reports.",
+      "brevoDesc": "transactional emails including weekly progress reports and account notifications.",
       "lemonDesc": "payment processing for subscription plans. We do not store payment card details.",
       "noSell": "We do NOT sell, rent, or share personal data with advertisers or data brokers."
     },
     "parentalRights": {
       "title": "4. Parental Rights (COPPA)",
       "intro": "PianoMaster complies with the Children's Online Privacy Protection Act (COPPA). For users under 13:",
-      "consent": "Accounts require verifiable parental consent via email before activation.",
+      "consent": "Parent-controlled features such as notifications and email reports require a parent gate before they can be enabled.",
       "review": "Parents can review all data collected about their child at any time via the Settings page.",
       "export": "Parents can export their child's learning data in a portable format.",
       "deletion": "Parents can request deletion of their child's account and all associated data via Settings or by contacting us directly.",
@@ -1825,7 +1877,7 @@
       },
       "accounts": {
         "title": "2. Account Requirements",
-        "body": "Users under the age of 13 require verifiable parental consent in compliance with the Children's Online Privacy Protection Act (COPPA). Parents or legal guardians are responsible for their child's use of PianoMaster and for ensuring that all account information is accurate."
+        "body": "Users under the age of 13 must have permission from a parent or legal guardian to use PianoMaster. Parents or legal guardians are responsible for their child's use of PianoMaster and for ensuring that all account information is accurate."
       },
       "subscriptions": {
         "title": "3. Subscriptions & Payments",

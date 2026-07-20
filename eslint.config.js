@@ -38,11 +38,14 @@ export default [
       "react/react-in-jsx-scope": "off",
       "react/jsx-uses-vars": "warn",
       "react/prop-types": "off",
-      "no-unused-vars": ["warn", {
-        argsIgnorePattern: "^_",
-        varsIgnorePattern: "^_",
-        caughtErrorsIgnorePattern: "^_",
-      }],
+      "no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
       "no-undef": "warn",
       "no-console": ["warn", { allow: ["warn", "error", "info"] }],
     },
@@ -50,7 +53,11 @@ export default [
   // Vitest test globals — eliminates ~320 no-undef warnings from test files
   // Also includes node globals for test files that use require() inside test cases
   {
-    files: ["**/*.test.{js,jsx}", "**/*.spec.{js,jsx}", "src/test/**/*.{js,jsx}"],
+    files: [
+      "**/*.test.{js,jsx}",
+      "**/*.spec.{js,jsx}",
+      "src/test/**/*.{js,jsx}",
+    ],
     languageOptions: {
       globals: {
         ...globals.vitest,
@@ -73,7 +80,6 @@ export default [
       "src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx",
       "src/contexts/SubscriptionContext.jsx",
       "src/services/accountDeletionService.js",
-      "src/services/consentService.js",
     ],
     languageOptions: {
       globals: {
