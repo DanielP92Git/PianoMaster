@@ -1799,7 +1799,7 @@
       "dobLabel": "Date of birth",
       "dobDesc": "used to determine age and apply COPPA protections for users under 13.",
       "parentEmailLabel": "Parent email address",
-      "parentEmailDesc": "collected for users under 13 to obtain verifiable parental consent before account activation.",
+      "parentEmailDesc": "optionally collected for users under 13, used to send weekly progress reports and notification reminders to a parent or guardian.",
       "progressLabel": "Learning progress",
       "progressDesc": "scores, exercises completed, skill levels, and star ratings across all game modes.",
       "activityLabel": "Practice activity",
@@ -1822,14 +1822,14 @@
       "title": "3. Third-Party Services",
       "intro": "We use the following third-party services to operate PianoMaster:",
       "supabaseDesc": "database hosting, user authentication, and real-time data sync.",
-      "brevoDesc": "transactional emails including parental consent verification and weekly progress reports.",
+      "brevoDesc": "transactional emails including weekly progress reports and account notifications.",
       "lemonDesc": "payment processing for subscription plans. We do not store payment card details.",
       "noSell": "We do NOT sell, rent, or share personal data with advertisers or data brokers."
     },
     "parentalRights": {
       "title": "4. Parental Rights (COPPA)",
       "intro": "PianoMaster complies with the Children's Online Privacy Protection Act (COPPA). For users under 13:",
-      "consent": "Accounts require verifiable parental consent via email before activation.",
+      "consent": "Parent-controlled features such as notifications and email reports require a parent gate before they can be enabled.",
       "review": "Parents can review all data collected about their child at any time via the Settings page.",
       "export": "Parents can export their child's learning data in a portable format.",
       "deletion": "Parents can request deletion of their child's account and all associated data via Settings or by contacting us directly.",
@@ -1868,7 +1868,7 @@
       },
       "accounts": {
         "title": "2. Account Requirements",
-        "body": "Users under the age of 13 require verifiable parental consent in compliance with the Children's Online Privacy Protection Act (COPPA). Parents or legal guardians are responsible for their child's use of PianoMaster and for ensuring that all account information is accurate."
+        "body": "Users under the age of 13 must have permission from a parent or legal guardian to use PianoMaster. Parents or legal guardians are responsible for their child's use of PianoMaster and for ensuring that all account information is accurate."
       },
       "subscriptions": {
         "title": "3. Subscriptions & Payments",
