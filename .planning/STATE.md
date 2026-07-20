@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.7
-milestone_name: Sight-Reading Engagement & Pedagogy
-status: completed
-stopped_at: Phase 03 context gathered
-last_updated: "2026-07-18T12:37:14.492Z"
-last_activity: 2026-07-18
+milestone: v4.0
+milestone_name: Parent-First Account Architecture (COPPA)
+status: planning
+last_updated: "2026-07-20T22:57:17.694Z"
+last_activity: 2026-07-20
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 18
-  completed_plans: 18
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-07-18 after v3.7 milestone shipped)
 
 ## Current Position
 
-Phase: — (v3.7 complete, all 3 phases shipped)
+Phase: Not started (defining requirements)
 Plan: —
-Status: Milestone v3.7 complete (archived 2026-07-18)
-Last activity: 2026-07-18
-
-Progress: [██████████] 100%
+Status: Defining requirements
+Last activity: 2026-07-20 — Milestone v4.0 started
 
 ### Quick Tasks Completed
 

@@ -316,7 +316,39 @@ These capabilities exist, are working, and have been shipped:
 
 - **v3.7 Sight-Reading Engagement & Pedagogy** — see `## Current Milestone` below and `.planning/REQUIREMENTS.md`. Turns the correctness/perf/feedback-hardened sight-reading game (Phases A–C, PRs #10/#11/#12) into an elite learning experience: engagement HUD parity, practice tooling (replay / practice-vs-test / review-mistakes), and adaptive per-note-mastery pedagogy.
 
-## Current Milestone: v3.7 Sight-Reading Engagement & Pedagogy
+## Current Milestone: v4.0 Parent-First Account Architecture (COPPA)
+
+**Goal:** Make every top-level account belong to an adult — children become lightweight profile rows owned by a parent, with no login and no personally identifiable information — and remove the audio recording feature entirely so no child voice data is collected at all.
+
+**Source PRD:** `COPPA_REFACTOR_PRD.md` (repo root). Its §5 is generic boilerplate naming Firebase/PostHog/Mixpanel/IDFA, none of which exist here; the real third-party surface is Supabase, Umami, Sentry, and a PWA with no native wrapper. Treat §5 as needing rewrite, not implementation.
+
+**Target features:**
+
+- `parents` / `child_profiles` schema replacing the current "the authenticated user **is** the student" identity model
+- Rewrite of every `auth.uid()` RLS policy from `student_id = auth.uid()` to an owned-children subquery
+- Age gate blocking under-18 self-signup; registration is parent-only
+- Child profile CRUD (nickname + preset avatar + optional birth year only) and a profile switcher
+- Parental gate on account settings, subscription, and billing
+- **Full removal of the audio recording feature** — the COPPA driver, since a child's voice recording is itself personal information under the 2013 amendment
+- Data migration for existing live users
+
+**Owner decisions (2026-07-21):**
+
+- **Supersedes the counsel hold.** The earlier plan waited on a lawyer's answer to whether teacher access to student data counts as "disclosure to a third party." That question is set aside — removing recordings takes children's voice data off the table, which was what made it sharp. Teacher access to _progress_ data remains.
+- **Teachers stay**, re-pointed at `child_profiles` via `teacher_student_connections`.
+- **Under-18 self-signup is blocked** (not just under-13). One account-creation path, one data model; also satisfies Google Play Families.
+- **Existing users auto-migrate** to a parent account owning one child profile, preserving logins and the 3 active subscriptions. Where a child originally registered with their own email, that email ends up owning a "parent" account — this needs a re-consent prompt, not a silent conversion.
+
+**Key context — measured, not estimated:**
+
+- `students.id` has **no** FK to `auth.users(id)`; it was deliberately dropped across five migrations (`20250115000005` exists solely for this) so teachers could create placeholder students with no auth account. Login-less profile rows already work in production — this milestone re-points that proven pattern at parents instead of teachers.
+- Migration surface: **30 identity-bearing FK columns across 26 tables**; **62 of 80 RLS policies** use `auth.uid()` across 32 tables.
+- Client surface: **34 files** consume `useUser()` (42 call sites), **151** `user?.id` references in `src/`, **47** auth-id resolution call sites in services (`apiTeacher.js` alone: 25).
+- Live data at risk: **20 students, 15 with auth accounts, 3 paying subscriptions.**
+- Recording removal couples to two things that must be handled explicitly: `achievementService.js:234` counts `practice_sessions` with **no** `has_recording` filter, so achievement progress bars regress when recording rows go; and `teacher_feedback` is only ever written by `RecordingsReview`, so the student feedback badge dies silently. Streaks and assignments have **zero** coupling (verified).
+- The `practice-recordings` Storage bucket and its policies exist **only in the remote Supabase project** — no migration creates them, so deleting stored audio is a live, irreversible operation with no migration to represent it. The feature also has **zero test coverage**.
+
+## Previous Milestone: v3.7 Sight-Reading Engagement & Pedagogy
 
 **Goal:** Turn the now-correct, performant, feedback-wired sight-reading game into an elite learning experience — engagement parity with the sibling games plus adaptive, mastery-driven pedagogy. (Phase D of the sight-reading deep audit; Phases A/B/C shipped as PRs #10/#11/#12.)
 
@@ -330,9 +362,9 @@ These capabilities exist, are working, and have been shipped:
 
 ## Planning Next Milestone
 
-Last shipped: v3.5 Rhythm Pedagogy (2026-06-29). Prior: v3.6 Game Screen UI Unification (2026-06-14, closed out-of-order), v3.4 Rhythm Games Responsive UX (2026-05-12).
+Last shipped: v3.7 Sight-Reading Engagement & Pedagogy (2026-07-18). Prior: v3.5 Rhythm Pedagogy (2026-06-29), v3.6 Game Screen UI Unification (2026-06-14, closed out-of-order).
 
-No active milestone — define the next one with `/gsd-new-milestone`. Strong candidates from carry-over below: notes-master responsive (NM-01) and ear-training responsive (ET-01), both able to reuse the `NeedsLandscapeContext` infra; or rhythm content expansion (eighth/sixteenth/dotted rest intro nodes, syncopation unit re-enable).
+v4.0 is active (see Current Milestone above). Candidates deferred behind it: notes-master responsive (NM-01) and ear-training responsive (ET-01), both able to reuse the `NeedsLandscapeContext` infra; or rhythm content expansion (eighth/sixteenth/dotted rest intro nodes, syncopation unit re-enable).
 
 **Carry-over from v3.4 (deferred, NOT in next milestone scope unless explicitly added):**
 
