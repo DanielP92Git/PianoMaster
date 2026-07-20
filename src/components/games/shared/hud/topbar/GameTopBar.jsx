@@ -195,10 +195,12 @@ export function GameTopBar({
 
       {trailingSlot}
 
-      {/* Reading-end cluster. Dissolves when stacked so progress and exit can
-          be ordered onto different rows. */}
-      <div className="ms-auto flex items-center gap-3 max-[700px]:contents">
-        {progress && (
+      {/* Centered zone: grows to fill the gap between the reading-start
+          cluster and the exit button, so progress sits in the bar's middle
+          rather than hugging the exit button. Dissolves when stacked so
+          progress can wrap to its own row via STACKED_ORDER.progress. */}
+      {progress && (
+        <div className="flex min-w-0 flex-1 items-center justify-center max-[700px]:contents">
           <TopBarProgress
             current={progress.current}
             total={progress.total}
@@ -206,16 +208,21 @@ export function GameTopBar({
             compact={dense}
             className={STACKED_ORDER.progress}
           />
-        )}
-        {exit && (
+        </div>
+      )}
+
+      {/* Reading-end cluster. Dissolves when stacked so exit can be ordered
+          onto its own row. */}
+      {exit && (
+        <div className="ms-auto flex items-center max-[700px]:contents">
           <TopBarExitButton
             to={exit.to}
             onClick={exit.onClick}
             label={exit.label}
             className={STACKED_ORDER.exit}
           />
-        )}
-      </div>
+        </div>
+      )}
     </header>
   );
 }
