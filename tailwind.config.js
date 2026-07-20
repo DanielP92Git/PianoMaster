@@ -17,6 +17,11 @@ module.exports = {
       screens: {
         // portrait/landscape removed — Tailwind v3.2+ built-in variants
         // support modifier stacking (sm:landscape:) which custom screens cannot
+
+        // Height-based, for short phones (iPhone SE is 667px tall). Used by the
+        // auth shell to tighten vertical rhythm so the sheet never needs to
+        // scroll. NOTE: this is max-HEIGHT — `max-[700px]:` would be max-width.
+        short: { raw: "(max-height: 700px)" },
       },
       fontFamily: {
         outfit: ["Outfit", "sans-serif"],
@@ -55,6 +60,10 @@ module.exports = {
         floatUp: {
           "0%": { transform: "translateY(10px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        pmfloat: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-7px)" },
         },
         shimmer: {
           "0%": { backgroundPosition: "200% 0" },
@@ -95,6 +104,7 @@ module.exports = {
       animation: {
         celebration: "celebration 2s ease-in-out infinite",
         floatUp: "floatUp 0.6s ease-out forwards",
+        pmfloat: "pmfloat 4s ease-in-out infinite",
         shimmer: "shimmer 3s linear infinite",
         fadeIn: "fadeIn 0.3s ease-in-out forwards",
         bounce: "bounce 1s infinite",

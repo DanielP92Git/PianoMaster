@@ -34,20 +34,18 @@ Deploy changed Edge Functions after migrations are applied (some functions refer
 npx supabase functions deploy <function-name>
 ```
 
-All 10 Edge Functions in this project:
+All 8 Edge Functions in this project:
 
-| Function | JWT Verify | Notes |
-|----------|-----------|-------|
-| `cancel-subscription` | Yes | Cancels subscription via Lemon Squeezy API |
-| `create-checkout` | Yes | Creates Lemon Squeezy checkout URL |
-| `lemon-squeezy-webhook` | **No** (`--no-verify-jwt`) | Webhook callbacks don't carry user JWT |
-| `process-account-deletions` | Yes | Scheduled account deletion processing |
-| `send-consent-email` | Yes | COPPA parent consent email |
-| `send-daily-push` | Yes | Cron-triggered daily practice reminder |
-| `send-feedback` | Yes | User feedback submission |
-| `send-weekly-report` | Yes | Cron-triggered weekly parent email |
-| `unsubscribe-weekly-report` | Yes | HMAC-signed unsubscribe handler |
-| `verify-consent` | Yes | Parent email verification |
+| Function                    | JWT Verify                 | Notes                                      |
+| --------------------------- | -------------------------- | ------------------------------------------ |
+| `cancel-subscription`       | Yes                        | Cancels subscription via Lemon Squeezy API |
+| `create-checkout`           | Yes                        | Creates Lemon Squeezy checkout URL         |
+| `lemon-squeezy-webhook`     | **No** (`--no-verify-jwt`) | Webhook callbacks don't carry user JWT     |
+| `process-account-deletions` | Yes                        | Scheduled account deletion processing      |
+| `send-daily-push`           | Yes                        | Cron-triggered daily practice reminder     |
+| `send-feedback`             | Yes                        | User feedback submission                   |
+| `send-weekly-report`        | Yes                        | Cron-triggered weekly parent email         |
+| `unsubscribe-weekly-report` | Yes                        | HMAC-signed unsubscribe handler            |
 
 Only `lemon-squeezy-webhook` requires `--no-verify-jwt`:
 
@@ -116,30 +114,30 @@ Bump `CACHE_NAME` in `public/sw.js` (currently `pianomaster-v9`) to force client
 
 These are injected at build time via Vite's `import.meta.env`:
 
-| Variable | Purpose |
-|----------|---------|
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key |
-| `VITE_VAPID_PUBLIC_KEY` | Web Push VAPID public key |
-| `VITE_SITE_URL` | App URL (`https://my-pianomaster.netlify.app`) |
-| `SENTRY_DSN` | Sentry error tracking DSN (build plugin) |
-| `VITE_SENTRY_DSN` | Sentry DSN exposed to client |
+| Variable                 | Purpose                                        |
+| ------------------------ | ---------------------------------------------- |
+| `VITE_SUPABASE_URL`      | Supabase project URL                           |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key                  |
+| `VITE_VAPID_PUBLIC_KEY`  | Web Push VAPID public key                      |
+| `VITE_SITE_URL`          | App URL (`https://my-pianomaster.netlify.app`) |
+| `SENTRY_DSN`             | Sentry error tracking DSN (build plugin)       |
+| `VITE_SENTRY_DSN`        | Sentry DSN exposed to client                   |
 
 Set via: Netlify Dashboard > Site Settings > Environment Variables.
 
 ### Supabase Edge Functions (Runtime secrets)
 
-| Secret | Used by |
-|--------|---------|
-| `CRON_SECRET` | `send-daily-push`, `send-weekly-report` (cron auth) |
-| `VAPID_PUBLIC_KEY` | `send-daily-push` (Web Push) |
-| `VAPID_PRIVATE_KEY` | `send-daily-push` (Web Push signing) |
-| `VAPID_SUBJECT` | `send-daily-push` (Web Push contact) |
-| `BREVO_API_KEY` | `send-weekly-report`, `send-consent-email` (email API) |
-| `SENDER_EMAIL` | `send-weekly-report`, `send-consent-email` |
-| `SENDER_NAME` | `send-weekly-report`, `send-consent-email` |
-| `WEEKLY_REPORT_HMAC_SECRET` | `unsubscribe-weekly-report` (signed unsubscribe links) |
-| `LS_SIGNING_SECRET` | `lemon-squeezy-webhook` (webhook signature verification) |
+| Secret                      | Used by                                                  |
+| --------------------------- | -------------------------------------------------------- |
+| `CRON_SECRET`               | `send-daily-push`, `send-weekly-report` (cron auth)      |
+| `VAPID_PUBLIC_KEY`          | `send-daily-push` (Web Push)                             |
+| `VAPID_PRIVATE_KEY`         | `send-daily-push` (Web Push signing)                     |
+| `VAPID_SUBJECT`             | `send-daily-push` (Web Push contact)                     |
+| `BREVO_API_KEY`             | `send-weekly-report` (email API)                         |
+| `SENDER_EMAIL`              | `send-weekly-report`                                     |
+| `SENDER_NAME`               | `send-weekly-report`                                     |
+| `WEEKLY_REPORT_HMAC_SECRET` | `unsubscribe-weekly-report` (signed unsubscribe links)   |
+| `LS_SIGNING_SECRET`         | `lemon-squeezy-webhook` (webhook signature verification) |
 
 Set via:
 

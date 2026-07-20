@@ -42,9 +42,6 @@ import { useDocumentTitle } from "./hooks/useDocumentTitle";
 // Lazy-loaded page components (lazyWithRetry auto-reloads on stale chunks after deploy)
 const Dashboard = lazyWithRetry(() => import("./components/layout/Dashboard"));
 const Login = lazyWithRetry(() => import("./components/auth/LoginForm"));
-const ConsentVerifyPage = lazyWithRetry(
-  () => import("./pages/ConsentVerifyPage")
-);
 const ResetPasswordPage = lazyWithRetry(
   () => import("./pages/ResetPasswordPage")
 );
@@ -180,8 +177,7 @@ function AuthenticatedWrapper({ children }) {
   const location = useLocation();
 
   // Public routes that should bypass suspension checks
-  const isPublicRoute =
-    location.pathname === "/consent/verify" || location.pathname === "/login";
+  const isPublicRoute = location.pathname === "/login";
 
   // Check account status for students (suspended for deletion)
   const {
@@ -213,9 +209,8 @@ function AuthenticatedWrapper({ children }) {
     );
   }
 
-  // If account is suspended for deletion, also show a message (could be a different component)
-  // For now, we reuse the consent pending with a different message
-  // Skip for public routes
+  // Account is pending deletion — block the app and explain why.
+  // Skip for public routes, which must stay reachable without a usable session.
   if (
     user &&
     isStudent &&
@@ -515,7 +510,6 @@ function AppRoutes() {
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
-          <Route path="/consent/verify" element={<ConsentVerifyPage />} />
           {/* Public routes - no auth required */}
           <Route path="/privacy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsOfServicePage />} />

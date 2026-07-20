@@ -82,3 +82,6 @@ bars_prd.txt
 # Local working icon variants (not for commit)
 src/assets/icons/Achievements3.svg
 src/assets/icons/Teacher-Hat2.svg
+
+# Legal correspondence — privileged, must not be published to this public repo
+docs/coppa-legal-questions-he.md

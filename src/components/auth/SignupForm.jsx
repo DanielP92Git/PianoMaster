@@ -1,42 +1,46 @@
 import { useState } from "react";
-import {
-  Loader2,
-  Users,
-  GraduationCap,
-  Eye,
-  EyeOff,
-  ArrowLeft,
-  ArrowRight,
-} from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SocialLogin } from "./SocialLogin";
 import { useSignup } from "../../features/authentication/useSignup";
 import { AgeGate } from "./AgeGate";
 import { ParentEmailStep } from "./ParentEmailStep";
+import { AuthLanguageToggle } from "./AuthLanguageToggle";
+import AuthShell from "./AuthShell";
+import AuthInput from "./AuthInput";
+import AuthCta from "./AuthCta";
+import CircleIconButton from "./CircleIconButton";
+import RoleCard from "./RoleCard";
 
 // Step sequences per role (D-01, D-02, D-03)
 const STUDENT_STEPS = ["role", "birth-year", "parent-email", "credentials"];
 const TEACHER_STEPS = ["role", "credentials"];
+
+const BENEFIT_KEYS = [
+  "auth.signup.benefits.games",
+  "auth.signup.benefits.progress",
+  "auth.signup.benefits.free",
+];
 
 /**
  * StepDots — progress indicator showing current position in the wizard.
  * Shows 4 dots for students, 2 for teachers.
  * Before role is selected, optimistically shows 4 dots (common student path).
  */
-function StepDots({ step, role }) {
+function StepDots({ step, role, className = "" }) {
   const steps = role === "teacher" ? TEACHER_STEPS : STUDENT_STEPS;
   const currentIndex = steps.indexOf(step);
   return (
-    <div className="flex justify-center gap-2 mb-4">
+    <div className={`flex gap-2 ${className}`}>
       {steps.map((s, i) => (
         <div
           key={s}
-          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+          className={`h-2 w-2 rounded-full transition-all duration-300 ${
             i === currentIndex
-              ? "bg-indigo-400 scale-125"
+              ? "scale-125 bg-indigo-400"
               : i < currentIndex
-              ? "bg-indigo-400/50"
-              : "bg-white/20"
+                ? "bg-indigo-400/50"
+                : "bg-white/20"
           }`}
         />
       ))}
@@ -46,7 +50,11 @@ function StepDots({ step, role }) {
 
 function SignupForm({ onBackToLogin }) {
   const { t, i18n } = useTranslation("common");
-  const isRTL = i18n.dir() === "rtl";
+  // `startsWith` rather than `=== "he"` — a strict match breaks for `he-IL`.
+  const isHebrew = i18n.language?.startsWith("he");
+  // Fredoka One has no Hebrew glyphs, so Hebrew headings fall back to an
+  // arbitrary system face. Use the app's Hebrew stack at a heavy weight instead.
+  const headingFont = isHebrew ? "font-hebrew font-extrabold" : "font-playful";
 
   // Step state: 'role' | 'birth-year' | 'parent-email' | 'credentials'
   const [step, setStep] = useState("role");
@@ -66,17 +74,23 @@ function SignupForm({ onBackToLogin }) {
   const [error, setError] = useState(null);
 
   // Derived: is the student under 13? (per D-10 January 1st convention)
-  const isUnder13 = birthYear != null && (new Date().getFullYear() - birthYear) < 13;
+  const isUnder13 =
+    birthYear != null && new Date().getFullYear() - birthYear < 13;
 
   // --- Step navigation handlers ---
 
-  // Step 1: Role selection (D-02, D-03)
+  // Step 1: Role selection (D-02, D-03) — selection only; `handleRoleContinue`
+  // performs the navigation so the card design can show a selected state.
   const handleRoleSelect = (selectedRole) => {
     setRole(selectedRole);
     // Reset downstream state when role changes (pitfall 1 from RESEARCH.md)
     setBirthYear(null);
     setParentEmail(null);
-    if (selectedRole === "teacher") {
+  };
+
+  const handleRoleContinue = () => {
+    if (!role) return;
+    if (role === "teacher") {
       setStep("credentials"); // D-03: teachers skip birth year + parent email
     } else {
       setStep("birth-year"); // D-02: students go to birth year
@@ -86,7 +100,7 @@ function SignupForm({ onBackToLogin }) {
   // Step 2: Birth year (students only, D-02)
   const handleBirthYearSubmit = (year) => {
     setBirthYear(year);
-    const under13 = (new Date().getFullYear() - year) < 13;
+    const under13 = new Date().getFullYear() - year < 13;
     if (under13) {
       setStep("parent-email"); // D-07: under-13 sees parent email step
     } else {
@@ -116,6 +130,14 @@ function SignupForm({ onBackToLogin }) {
     }
   };
 
+  // The shell owns the single back affordance; each step just names its target.
+  const backTargets = {
+    role: onBackToLogin,
+    "birth-year": () => setStep("role"),
+    "parent-email": () => setStep("birth-year"),
+    credentials: handleBackFromCredentials,
+  };
+
   // Credentials form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -139,284 +161,279 @@ function SignupForm({ onBackToLogin }) {
 
   // --- Title and subtitle per step ---
   const STEP_KEYS = {
-    "role": "role",
+    role: "role",
     "birth-year": "birthYear",
     "parent-email": "parentEmail",
-    "credentials": "credentials",
+    credentials: "credentials",
   };
   const stepKey = STEP_KEYS[step] || "credentials";
   const title = t(`auth.signup.titles.${stepKey}`);
   const subtitle = t(`auth.signup.subtitles.${stepKey}`);
 
-  return (
-    <div className="p-3 md:p-4 lg:p-5 relative z-10">
-      {/* Step dots progress indicator (D-01) */}
-      <StepDots step={step} role={role} />
+  const alreadyHaveAccount = (
+    <p className="text-center text-sm text-white/70">
+      {t("auth.signup.alreadyHaveAccount")}{" "}
+      <button
+        type="button"
+        onClick={onBackToLogin}
+        className="font-semibold text-[#93c5fd] transition-colors hover:text-white"
+      >
+        {t("auth.signup.logIn")}
+      </button>
+    </p>
+  );
 
-      {/* Title + Subtitle */}
-      <div className="text-center mb-3 md:mb-4">
-        <h1 className="text-xl md:text-2xl lg:text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient mb-0.5">
+  const desktopHero = (
+    <>
+      <div className="flex items-center gap-[14px]">
+        <div
+          className="flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-gradient-to-br from-[#4f46e5] to-[#c026d3] shadow-[0_8px_24px_rgba(192,38,211,0.5)] motion-safe:animate-pmfloat"
+          aria-hidden="true"
+        >
+          <span className="text-[26px]">🎹</span>
+        </div>
+        <span className="font-playful text-[26px] text-white">PianoMaster</span>
+      </div>
+      <div>
+        <h2
+          className={`max-w-[380px] text-[44px] leading-[1.1] text-white [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] ${headingFont}`}
+        >
+          {t("auth.signup.desktopHeadline")}
+        </h2>
+        <p className="mt-4 max-w-[360px] text-[17px] leading-[1.55] text-white/[0.82]">
+          {t("auth.signup.desktopSubcopy")}
+        </p>
+        <ul className="mt-[30px] flex flex-col gap-3">
+          {BENEFIT_KEYS.map((key) => (
+            <li
+              key={key}
+              className="flex items-center gap-3 text-[15px] text-white/90"
+            >
+              <Check
+                className="h-5 w-5 shrink-0 text-[#86efac]"
+                strokeWidth={2.4}
+                aria-hidden="true"
+              />
+              {t(key)}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </>
+  );
+
+  return (
+    <AuthShell
+      scrim="signup"
+      sheetClassName="gap-[14px] short:gap-2.5"
+      topStart={
+        <CircleIconButton
+          onClick={backTargets[step]}
+          label={t("auth.signup.back")}
+        >
+          <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
+        </CircleIconButton>
+      }
+      topEnd={<AuthLanguageToggle />}
+      desktopHero={desktopHero}
+      mobileHero={
+        <div className="flex w-full flex-col items-center px-8 text-center">
+          <StepDots step={step} role={role} className="justify-center" />
+          <h1
+            className={`mt-4 text-[26px] text-white short:mt-2 short:text-[22px] ${headingFont}`}
+          >
+            {title}
+          </h1>
+          <p className="mt-0.5 text-[14px] text-white/[0.82] short:text-[13px]">
+            {subtitle}
+          </p>
+        </div>
+      }
+    >
+      {/* Desktop repeats the step heading inside the form column */}
+      <div className="mb-6 hidden lg:block">
+        <StepDots step={step} role={role} className="justify-start" />
+        <h1 className={`mt-4 text-[30px] text-white ${headingFont}`}>
           {title}
         </h1>
-        <p className="text-white/90 text-xs">{subtitle}</p>
+        <p className="mt-1 text-[15px] text-white/60">{subtitle}</p>
       </div>
 
-      {/* Step-based rendering */}
-      <div className="max-w-4xl lg:max-w-5xl mx-auto">
-        {/* STEP 1: Role Selection (D-01, D-02, D-03) */}
-        {step === "role" && (
-          <div className="max-w-md mx-auto space-y-4">
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("student")}
-                className="w-full p-3 md:p-4 rounded-xl border-2 border-white/20 bg-white/5 hover:bg-white/10 hover:border-indigo-400/50 transition-all duration-300 text-start"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-indigo-500/20">
-                    <Users className="w-5 h-5 text-indigo-300" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-sm text-white block">
-                      {t("auth.signup.role.student")}
-                    </span>
-                    <span className="text-xs text-white/60">
-                      {t("auth.signup.role.studentDesc")}
-                    </span>
-                  </div>
-                </div>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRoleSelect("teacher")}
-                className="w-full p-3 md:p-4 rounded-xl border-2 border-white/20 bg-white/5 hover:bg-white/10 hover:border-purple-400/50 transition-all duration-300 text-start"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-500/20">
-                    <GraduationCap className="w-5 h-5 text-purple-300" />
-                  </div>
-                  <div>
-                    <span className="font-medium text-sm text-white block">
-                      {t("auth.signup.role.teacher")}
-                    </span>
-                    <span className="text-xs text-white/60">
-                      {t("auth.signup.role.teacherDesc")}
-                    </span>
-                  </div>
-                </div>
-              </button>
+      {error && (
+        <div className="rounded-[14px] border border-red-300/25 bg-red-500/15 p-3 text-[13px] text-red-100">
+          {error}
+        </div>
+      )}
+
+      {/* STEP 1: Role Selection (D-01, D-02, D-03) */}
+      {step === "role" && (
+        <div className="flex flex-col gap-3">
+          <RoleCard
+            selected={role === "student"}
+            onClick={() => handleRoleSelect("student")}
+            tileClassName="from-[#4f46e5] to-[#3b82f6]"
+            emoji="🎹"
+            label={t("auth.signup.role.student")}
+            description={t("auth.signup.role.studentDesc")}
+          />
+          <RoleCard
+            selected={role === "teacher"}
+            onClick={() => handleRoleSelect("teacher")}
+            tileClassName="from-[#c026d3] to-[#a21caf]"
+            emoji="🎓"
+            label={t("auth.signup.role.teacher")}
+            description={t("auth.signup.role.teacherDesc")}
+          />
+
+          <AuthCta
+            variant="secondary"
+            onClick={handleRoleContinue}
+            disabled={!role}
+            className="mt-1"
+          >
+            {t("auth.signup.role.continue")}
+          </AuthCta>
+
+          {alreadyHaveAccount}
+        </div>
+      )}
+
+      {/* STEP 2: Birth Year (students only, D-02) */}
+      {step === "birth-year" && (
+        <AgeGate onSubmit={handleBirthYearSubmit} disabled={isPending} />
+      )}
+
+      {/* STEP 3: Parent Email (under-13 students only, D-06, D-07) */}
+      {step === "parent-email" && (
+        <ParentEmailStep
+          onSubmit={handleParentEmailSubmit}
+          onSkip={handleParentEmailSkip}
+          disabled={isPending}
+        />
+      )}
+
+      {/* STEP 4: Credentials + Name (D-08, D-09) */}
+      {step === "credentials" && (
+        <>
+          <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-[14px] short:gap-2.5"
+          >
+            <div className="grid grid-cols-2 gap-3">
+              <AuthInput
+                id="signup-firstName"
+                type="text"
+                label={t("auth.signup.credentials.firstName")}
+                icon={User}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder={t("auth.signup.credentials.firstNamePlaceholder")}
+                disabled={isPending}
+                autoComplete="given-name"
+                required
+              />
+              <AuthInput
+                id="signup-lastName"
+                type="text"
+                label={t("auth.signup.credentials.lastName")}
+                icon={User}
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder={t("auth.signup.credentials.lastNamePlaceholder")}
+                disabled={isPending}
+                autoComplete="family-name"
+              />
             </div>
 
-            <div className="text-center text-xs">
-              <span className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/80 border border-white/10 inline-block">
-                {t("auth.signup.alreadyHaveAccount")}{" "}
+            <AuthInput
+              id="signup-email"
+              type="email"
+              label={t("auth.signup.credentials.email")}
+              icon={Mail}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t("auth.signup.credentials.emailPlaceholder")}
+              disabled={isPending}
+              autoComplete="email"
+              required
+            />
+
+            <AuthInput
+              id="signup-password"
+              type={showPassword ? "text" : "password"}
+              label={t("auth.signup.credentials.password")}
+              icon={Lock}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={t("auth.signup.credentials.passwordPlaceholder")}
+              disabled={isPending}
+              autoComplete="new-password"
+              required
+              trailing={
                 <button
                   type="button"
-                  onClick={onBackToLogin}
-                  className="font-medium text-indigo-300 hover:text-indigo-200 transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={t(
+                    showPassword
+                      ? "auth.login.hidePassword"
+                      : "auth.login.showPassword"
+                  )}
+                  className="flex text-white/55 transition-colors hover:text-white focus:outline-none"
+                  tabIndex={-1}
                 >
-                  {t("auth.signup.logIn")}
-                </button>
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 2: Birth Year (students only, D-02) */}
-        {step === "birth-year" && (
-          <div className="max-w-md mx-auto">
-            <AgeGate
-              onSubmit={handleBirthYearSubmit}
-              onBack={() => setStep("role")}
-              disabled={isPending}
-            />
-          </div>
-        )}
-
-        {/* STEP 3: Parent Email (under-13 students only, D-06, D-07) */}
-        {step === "parent-email" && (
-          <div className="max-w-md mx-auto">
-            <ParentEmailStep
-              onSubmit={handleParentEmailSubmit}
-              onSkip={handleParentEmailSkip}
-              onBack={() => setStep("birth-year")}
-              disabled={isPending}
-            />
-          </div>
-        )}
-
-        {/* STEP 4: Credentials + Name (D-08, D-09) */}
-        {step === "credentials" && (
-          <>
-            {error && (
-              <div className="p-2 md:p-3 text-xs md:text-sm text-red-200 bg-red-500/10 border border-red-200/20 rounded-lg mb-3 md:mb-4">
-                {error}
-              </div>
-            )}
-
-            <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
-              {/* Left Column: Form Fields */}
-              <div className="flex-1 lg:pr-8">
-                <div className="lg:border-r lg:border-white/20 lg:pr-8">
-                  <form
-                    id="signup-form"
-                    onSubmit={handleSubmit}
-                    className="space-y-2.5 md:space-y-3"
-                  >
-                    {/* Back button (D-04) */}
-                    <button
-                      type="button"
-                      onClick={handleBackFromCredentials}
-                      className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors mb-2"
-                    >
-                      {isRTL ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
-                      {t("auth.signup.back")}
-                    </button>
-
-                    <div className="space-y-2 md:space-y-2.5">
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="group">
-                          <label
-                            htmlFor="signup-firstName"
-                            className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
-                          >
-                            {t("auth.signup.credentials.firstName")}
-                          </label>
-                          <input
-                            type="text"
-                            id="signup-firstName"
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            disabled={isPending}
-                            className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                            placeholder={t("auth.signup.credentials.firstNamePlaceholder")}
-                            required
-                          />
-                        </div>
-                        <div className="group">
-                          <label
-                            htmlFor="signup-lastName"
-                            className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
-                          >
-                            {t("auth.signup.credentials.lastName")}
-                          </label>
-                          <input
-                            type="text"
-                            id="signup-lastName"
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            disabled={isPending}
-                            className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                            placeholder={t("auth.signup.credentials.lastNamePlaceholder")}
-                          />
-                        </div>
-                      </div>
-                      <div className="group">
-                        <label
-                          htmlFor="signup-email"
-                          className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
-                        >
-                          {t("auth.signup.credentials.email")}
-                        </label>
-                        <input
-                          type="email"
-                          id="signup-email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          disabled={isPending}
-                          className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                          placeholder={t("auth.signup.credentials.emailPlaceholder")}
-                          required
-                        />
-                      </div>
-                      <div className="group">
-                        <label
-                          htmlFor="signup-password"
-                          className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
-                        >
-                          {t("auth.signup.credentials.password")}
-                        </label>
-                        <div className="relative">
-                          <input
-                            type={showPassword ? "text" : "password"}
-                            id="signup-password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            disabled={isPending}
-                            className="w-full px-2.5 md:px-3 py-1.5 md:py-2 pr-9 md:pr-10 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                            placeholder={t("auth.signup.credentials.passwordPlaceholder")}
-                            required
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 transition-colors focus:outline-none"
-                            tabIndex={-1}
-                          >
-                            {showPassword ? (
-                              <EyeOff className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            ) : (
-                              <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </form>
-                </div>
-              </div>
-
-              {/* Right Column: Actions and Links */}
-              <div className="flex flex-col justify-start lg:justify-center space-y-3 md:space-y-4 lg:min-w-[300px] lg:pl-0">
-                <button
-                  type="submit"
-                  form="signup-form"
-                  disabled={isPending}
-                  className="w-full h-9 md:h-10 lg:h-11 flex items-center justify-center px-4 text-xs md:text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPending ? (
-                    <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
+                  {showPassword ? (
+                    <EyeOff className="h-[18px] w-[18px]" />
                   ) : (
-                    t(role === "teacher" ? "auth.signup.credentials.submitTeacher" : "auth.signup.credentials.submitStudent")
+                    <Eye className="h-[18px] w-[18px]" />
                   )}
                 </button>
+              }
+            />
 
-                {/* Google OAuth (D-08, D-09) */}
-                <div className="text-center space-y-1.5 md:space-y-2">
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-white/10"></div>
-                    </div>
-                    <div className="relative flex justify-center text-xs">
-                      <span className="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-white/80 border border-white/10">
-                        {t("auth.signup.social.divider")}
-                      </span>
-                    </div>
-                  </div>
+            <AuthCta variant="secondary" type="submit" loading={isPending}>
+              {t(
+                role === "teacher"
+                  ? "auth.signup.credentials.submitTeacher"
+                  : "auth.signup.credentials.submitStudent"
+              )}
+            </AuthCta>
+          </form>
 
-                  <div>
-                    <SocialLogin mode="signup" role={role || "student"} />
-                  </div>
-                </div>
+          <div className="my-0.5 flex items-center gap-3">
+            <span className="h-px flex-1 bg-white/15" />
+            <span className="text-xs font-medium text-white/50">
+              {t("auth.signup.social.divider")}
+            </span>
+            <span className="h-px flex-1 bg-white/15" />
+          </div>
 
-                <div className="text-center text-xs">
-                  <span className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/80 border border-white/10 inline-block">
-                    {t("auth.signup.alreadyHaveAccount")}{" "}
-                    <button
-                      type="button"
-                      onClick={onBackToLogin}
-                      className="font-medium text-indigo-300 hover:text-indigo-200 transition-colors"
-                    >
-                      {t("auth.signup.logIn")}
-                    </button>
-                  </span>
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-    </div>
+          <SocialLogin mode="signup" role={role || "student"} />
+
+          {alreadyHaveAccount}
+
+          <p className="text-center text-[11.5px] leading-[1.5] text-white/50">
+            {t("auth.signup.terms.text")}{" "}
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/75 underline transition-colors hover:text-white"
+            >
+              {t("auth.signup.terms.termsLink")}
+            </a>{" "}
+            {t("auth.signup.terms.and")}{" "}
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/75 underline transition-colors hover:text-white"
+            >
+              {t("auth.signup.terms.privacyLink")}
+            </a>
+          </p>
+        </>
+      )}
+    </AuthShell>
   );
 }
 

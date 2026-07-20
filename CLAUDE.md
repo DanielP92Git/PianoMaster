@@ -77,7 +77,6 @@ supabase/
 ├── functions/                    # Edge Functions
 │   ├── send-daily-push/          # Daily practice reminder (cron-triggered)
 │   ├── send-weekly-report/       # Weekly parent progress email (cron-triggered)
-│   ├── send-consent-email/       # COPPA parent consent email
 │   ├── unsubscribe-weekly-report/ # HMAC-signed unsubscribe handler
 │   ├── create-checkout/          # Lemon Squeezy checkout URL
 │   ├── cancel-subscription/      # Cancel subscription via LS API
@@ -134,7 +133,6 @@ Protected routes require authentication. Teachers auto-redirect to `/teacher`. K
 - `/parent-portal` — Parent Zone (math-gated: stats, heatmap, subscription, notifications, account deletion, legal)
 - `/settings` — App settings (profile, accessibility, audio, install instructions)
 - `/legal` — Privacy/legal page
-- `/consent/verify` — **Public route** (no auth). Parent email verification for COPPA consent
 
 ### Layout Patterns
 

@@ -10,23 +10,29 @@ export function AuthLanguageToggle() {
   const current = i18n.resolvedLanguage || i18n.language || "en";
 
   return (
-    <div className="flex rounded-full bg-white/10 backdrop-blur-sm border border-white/15 overflow-hidden">
-      {LANGUAGES.map((lang) => (
-        <button
-          key={lang.code}
-          type="button"
-          onClick={() => {
-            if (lang.code !== current) i18n.changeLanguage(lang.code);
-          }}
-          className={`px-3 py-1 text-xs font-medium transition-colors ${
-            lang.code === current
-              ? "bg-white/20 text-white"
-              : "text-white/60 hover:text-white/90"
-          }`}
-        >
-          {lang.label}
-        </button>
-      ))}
+    <div className="flex gap-[2px] rounded-full border border-white/[0.22] bg-white/[0.12] p-[3px] backdrop-blur-[8px]">
+      {LANGUAGES.map((lang) => {
+        // `startsWith` so `he-IL` still matches the Hebrew pill.
+        const isActive = current.startsWith(lang.code);
+        return (
+          <button
+            key={lang.code}
+            type="button"
+            lang={lang.code}
+            aria-pressed={isActive}
+            onClick={() => {
+              if (!isActive) i18n.changeLanguage(lang.code);
+            }}
+            className={`rounded-full px-[11px] py-[5px] text-xs transition-colors ${
+              isActive
+                ? "bg-white font-bold text-[#1e1b4b]"
+                : "font-semibold text-white/85 hover:text-white"
+            }`}
+          >
+            {lang.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
