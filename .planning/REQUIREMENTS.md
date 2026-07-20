@@ -116,4 +116,48 @@ These were open questions all four researchers surfaced independently. They are 
 
 ## Traceability
 
-_Filled by the roadmapper._
+| Requirement | Phase                                                    | Status  |
+| ----------- | -------------------------------------------------------- | ------- |
+| IDENT-01    | Phase 1 — Identity Schema Expand                         | Pending |
+| IDENT-02    | Phase 1 — Identity Schema Expand                         | Pending |
+| IDENT-03    | Phase 1 — Identity Schema Expand                         | Pending |
+| IDENT-04    | Phase 1 — Identity Schema Expand                         | Pending |
+| IDENT-05    | Phase 1 — Identity Schema Expand                         | Pending |
+| RLS-01      | Phase 2 — RLS Rewrite                                    | Pending |
+| RLS-02      | Phase 2 — RLS Rewrite                                    | Pending |
+| RLS-03      | Phase 2 — RLS Rewrite                                    | Pending |
+| RLS-04      | Phase 2 — RLS Rewrite                                    | Pending |
+| RLS-05      | Phase 2 — RLS Rewrite                                    | Pending |
+| RLS-06      | Phase 2 — RLS Rewrite                                    | Pending |
+| SIGNUP-01   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
+| SIGNUP-02   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
+| SIGNUP-03   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
+| SIGNUP-04   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
+| SIGNUP-05   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
+| PROFILE-01  | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| PROFILE-02  | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| PROFILE-03  | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| PROFILE-04  | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| PROFILE-05  | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| PROFILE-06  | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| COPPA-01    | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| COPPA-02    | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| COPPA-03    | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| COPPA-04    | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| COPPA-05    | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| COPPA-06    | Phase 4 — Child Profiles & Parental Gating               | Pending |
+| MIGRATE-04  | Phase 5 — Subscription Re-Pointing                       | Pending |
+| MIGRATE-01  | Phase 6 — Live Migration & Re-Consent                    | Pending |
+| MIGRATE-02  | Phase 6 — Live Migration & Re-Consent                    | Pending |
+| MIGRATE-03  | Phase 6 — Live Migration & Re-Consent                    | Pending |
+| MIGRATE-06  | Phase 6 — Live Migration & Re-Consent                    | Pending |
+| RECORD-01   | Phase 7 — Audio Recording Removal                        | Pending |
+| RECORD-02   | Phase 7 — Audio Recording Removal                        | Pending |
+| RECORD-03   | Phase 7 — Audio Recording Removal                        | Pending |
+| RECORD-04   | Phase 7 — Audio Recording Removal                        | Pending |
+| RECORD-05   | Phase 7 — Audio Recording Removal                        | Pending |
+| RECORD-06   | Phase 7 — Audio Recording Removal                        | Pending |
+| RECORD-07   | Phase 7 — Audio Recording Removal                        | Pending |
+| MIGRATE-05  | Phase 8 — Contract — Legacy Cleanup & Final Verification | Pending |
+
+**Coverage: 41/41 v4.0 requirements mapped, 0 orphans, 0 duplicates.**

@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: planning
-last_updated: "2026-07-20T22:57:17.694Z"
-last_activity: 2026-07-20
+status: roadmapped
+last_updated: "2026-07-20T23:34:47.986Z"
+last_activity: 2026-07-21
 progress:
-  total_phases: 0
+  total_phases: 8
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,25 +17,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-18 after v3.7 milestone shipped)
+See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** None — v3.7 shipped. Run `/gsd-new-milestone` to start the next.
+**Current focus:** v4.0 Phase 1 — Identity Schema Expand (roadmap created, not yet planned)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-07-20 — Milestone v4.0 started
+Phase: 1 of 8 (Identity Schema Expand)
+Plan: — (not yet planned)
+Status: Roadmap created, awaiting `/gsd-plan-phase 1`
+Last activity: 2026-07-21 — ROADMAP.md created for v4.0, 41/41 requirements mapped across 8 phases
 
-### Quick Tasks Completed
-
-| #          | Description                                                                     | Date       | Commit   | Directory                                                                                                           |
-| ---------- | ------------------------------------------------------------------------------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
-| 260514-w1y | Merge rhythm trail nodes 1_1 and 1_2 into a single quarter-notes discovery node | 2026-05-14 | 8500313  | [260514-w1y-merge-rhythm-trail-nodes-1-1-and-1-2-int](./quick/260514-w1y-merge-rhythm-trail-nodes-1-1-and-1-2-int/) |
-| 260524-l3r | Refactor Rhythm Unit 8 syncopation pedagogy and engagement (gsd-quick --full)   | 2026-05-24 | 28b92d4  | [260524-l3r-refactor-rhythm-unit-8-syncopation-pedag](./quick/260524-l3r-refactor-rhythm-unit-8-syncopation-pedag/) |
-| 260614-5wj | Unify Listen & Tap (MetronomeTrainer) HUD with other games per Phase 36         | 2026-06-14 | df2bdff4 | [260614-5wj-make-listen-and-tap-game-ui-consistent-w](./quick/260614-5wj-make-listen-and-tap-game-ui-consistent-w/) |
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -123,6 +117,15 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 | 01-03 | 4 min    | 3     | 4     | Scaffolding card + unit-name locale infrastructure. EN+HE `game.discovery.cards.*` tree authored for all 12 concepts (89 paths each, exact parity). 7 new unit display names added to EN+HE trail.json (3 pre-existing preserved). Parity test substantively GREEN (was vacuous). Kodaly nikud verbatim.                                                                                                                             |
 | 01-04 | 7 min    | 2     | 3     | Atomic Supabase migration authored (BEGIN/COMMIT wraps scoped rhythm wipe + `is_free_node()` body swap with 6-ID U1 whitelist per D-12). JS FREE_RHYTHM_NODE_IDS updated 4→5 IDs; new FREE_BOSS_RHYTHM_NODE_IDS export spread into FREE_NODE_IDS Set. freeNodes.parity test RED→GREEN. Migration committed to repo, NOT applied (Plan 01-10 owner-gated). Pre-existing subscriptionConfig.test.js stale assertions updated (Rule 1). |
 
+## Decisions (v4.0)
+
+- **Roadmap:** 8-phase structure derived from the 41 v4.0 requirements + research's expand/contract sequencing. Phase numbering restarts at 1 (milestone-scoped convention).
+- **Roadmap:** RLS rewrite is its own phase (Phase 2) with a dedicated `/gsd-secure-phase` pass — 62 policies across 32 tables is the largest blast-radius change in the milestone, must not be folded into feature work.
+- **Roadmap:** Recording removal (Phase 7) sequenced after all identity/billing/migration phases but before the final contract phase — it is the only irreversible step and deploys independently.
+- **Roadmap:** Added a Phase 8 (Contract — Legacy Cleanup) not explicitly itemized in research's phase list, to give MIGRATE-05 ("reversible until the final contract step") a concrete home and to formally close the expand/contract cycle (drop legacy RLS policies only after verified zero traffic).
+- **Roadmap:** PROFILE (6 reqs) and COPPA (6 reqs) combined into one Phase 4 — the parental gate (COPPA-01/02) and the profile CRUD/switcher it protects (PROFILE-01-06) are the same coherent capability; splitting them would create an artificial layer boundary.
+- **Roadmap:** Billing re-pointing isolated as its own Phase 5, sandwiched between RLS (Phase 2) and the full live-account migration (Phase 6), per instruction that MIGRATE-04 is the highest-blast-radius single item and must be sandbox-tested before touching the 3 live subscriptions.
+
 ## Decisions (v3.7)
 
 - **Roadmap:** 3-phase split is owner-agreed and fixed (P1 HUD parity → P2 practice tooling → P3 adaptive pedagogy). Phase numbering restarts at 01 for this milestone (milestone-scoped numbering convention).
@@ -145,17 +148,13 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** v3.7 is shipped and archived. Merge PR #13 to `main` (owner action — the archive commit + `v3.7` tag live on this branch), then run `/gsd-new-milestone` to start the next cycle. Outstanding after merge: PRAC-04 mic-review device UAT (item 2) — owner testing separately.
+**Next action:** Run `/gsd-plan-phase 1` to plan Phase 1 (Identity Schema Expand). Four open questions from research need owner sign-off timed to their respective phases (not all before Phase 1): the 5 auth-less students (Phase 1 backfill, resolved by D-06 nullable `parent_id`), sibling switch-away gating (Phase 4 discussion), `teacher_feedback` fate (Phase 7 scoping, resolved by D-08 repurpose), gate-reentry timeout (Phase 4 discussion).
 
-**Historical context (v3.5 Phase 01, retained for reference):**
+**Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-- `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` applied to production 2026-06-28 — rhythm wipe + `is_free_node()` body swap, `total_xp` preserved.
-- Hidden Syncopation renamed `rhythm_8_*` → `rhythm_synco_*`; HIDDEN-V1 4-step re-enable checklist in `src/data/expandedNodes.js`.
-- `game.discovery.cards.*` EN+HE tree authored for all 12 rhythm concepts (89 paths each, exact parity), Kodaly nikud reused verbatim.
-
-**Stopped at:** Phase 03 context gathered
-**Resume file:** .planning/phases/03-adaptive-pedagogy/03-CONTEXT.md
+**Stopped at:** v4.0 ROADMAP.md created, REQUIREMENTS.md traceability filled
+**Resume file:** None
 
 ---
 
-_State updated: 2026-07-18 — v3.7 Sight-Reading Engagement & Pedagogy shipped and archived (10/12 requirements; HUD-02 + PRAC-02 deferred). Phase 02 device UAT completed at close; audit PASSED. Next: merge PR #13, then `/gsd-new-milestone`._
+_State updated: 2026-07-21 — v4.0 Parent-First Account Architecture (COPPA) roadmap created: 8 phases, 41/41 requirements mapped, 0 orphans. Next: `/gsd-plan-phase 1`._
