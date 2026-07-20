@@ -47,7 +47,6 @@ import {
 import { useUser } from "../../../features/authentication/useUser";
 import { updateStudentScore } from "../../../services/apiScores";
 import toast from "react-hot-toast";
-import BackButton from "../../ui/BackButton";
 import {
   SIGHT_READING_SESSION_CONSTANTS,
   useSightReadingSession,
@@ -61,10 +60,7 @@ import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { isIOSSafari } from "../../../utils/isIOSSafari.js";
 import { useTranslation } from "react-i18next";
-import { ProgressBar } from "../shared/hud/ProgressBar";
-import { ScorePill } from "../shared/hud/ScorePill";
-import { ComboPill } from "../shared/hud/ComboPill";
-import { OnFireBadge } from "../shared/hud/OnFireBadge";
+import { GameTopBar } from "../shared/hud/topbar";
 import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
 import { TIME_SIGNATURES } from "../rhythm-games/RhythmPatternGenerator";
 import { getAllComplexPatternIds } from "./utils/rhythmPatterns";
@@ -4337,123 +4333,108 @@ export function SightReadingGame() {
     isMultiBar: measuresPerPattern > 1,
   };
 
+  // Tool cluster, in reading-start order per the design handoff:
+  // settings -> metronome -> input mode. The input-mode tool is only offered
+  // once a pattern is loaded and we're past setup (unchanged from before).
+  const headerTools = [
+    {
+      id: "settings",
+      priority: "primary",
+      icon: <Settings className="h-4 w-4 lg:h-5 lg:w-5" />,
+      onClick: () => (nodeConfig ? openSettingsModal() : returnToSetup()),
+      title: t("sightReading.changeSettings"),
+    },
+    {
+      id: "metronome",
+      icon: (
+        <img src={MetronomeIcon} alt="" className="h-4 w-4 lg:h-5 lg:w-5" />
+      ),
+      onClick: () => setMetronomeEnabled((prev) => !prev),
+      active: metronomeEnabled,
+      disabled: gamePhase === GAME_PHASES.COUNT_IN,
+      title: t("sightReading.controls.toggleMetronome"),
+    },
+  ];
+
+  if (currentPattern && gamePhase !== GAME_PHASES.SETUP) {
+    headerTools.push({
+      id: "input-mode",
+      // Shows the icon of the mode you can switch TO.
+      icon:
+        inputMode === "keyboard" ? (
+          <Mic className="h-4 w-4 lg:h-5 lg:w-5" />
+        ) : (
+          <Piano className="h-4 w-4 lg:h-5 lg:w-5" />
+        ),
+      onClick: () => setShowInputModeModal(true),
+      active: inputMode === "mic",
+      disabled: isFeedbackPhase,
+      title:
+        inputMode === "keyboard"
+          ? t("sightReading.controls.switchToMic")
+          : t("sightReading.controls.switchToKeyboard"),
+    });
+  }
+
   const headerRegion = (
-    <div className="flex flex-shrink-0 items-center justify-between gap-2 px-2 py-1 sm:gap-3 sm:px-3">
-      {/* Back Button - Icon Only */}
-      <BackButton
-        to={
-          nodeId
-            ? `/trail?path=${getTrailTabForNode(nodeId) || "treble"}`
-            : "/notes-master-mode"
-        }
-        name={nodeId ? "Trail" : "Notes Master"}
-        styling="text-white/80 hover:text-white p-2"
-      />
-
-      {/* Progress Bar - Center */}
-      <div className="min-w-0 flex-1 px-2 sm:px-3">
-        <ProgressBar
-          current={currentExerciseNumber - 1}
-          total={sessionTotalExercises}
-        />
-      </div>
-
-      {/* Right Controls: Score + BPM + Icons */}
-      <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-        {/* Combo / On-Fire (HUD-01, HUD-03) */}
-        {isOnFire && (
-          <div aria-label={t("games.engagement.onFire")}>
-            <OnFireBadge active={isOnFire} />
-          </div>
-        )}
-        <div role="status" aria-label={t("games.engagement.combo")}>
-          <ComboPill combo={combo} isOnFire={isOnFire} />
-        </div>
-        {/* Score Pill */}
-        <ScorePill
-          value={Math.round(sessionTotalScore)}
-          label={t("games.score")}
-        />
-        {/* BPM Pill */}
-        <div className="hidden items-center rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 sm:flex">
-          {t("sightReading.bpm", { value: gameSettings.tempo })}
-        </div>
-
-        {/* Practice/Test grading-mode pill (D-02/D-03/D-05) */}
-        <button
-          type="button"
-          onClick={() =>
-            setGradingMode(
-              isPracticeMode ? GRADING_MODES.TEST : GRADING_MODES.PRACTICE
-            )
-          }
-          disabled={isModeLocked}
-          aria-label={t("sightReading.controls.modeToggleLabel")}
-          aria-pressed={isPracticeMode}
-          className={`rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
-            isPracticeMode
-              ? "border-fuchsia-400/40 bg-fuchsia-500 text-white hover:bg-fuchsia-600"
-              : "border-white/20 bg-white/10 text-white/90 hover:bg-white/20"
-          } ${isModeLocked ? "cursor-not-allowed opacity-60" : ""}`}
-        >
-          {isPracticeMode
-            ? t("sightReading.controls.modePractice")
-            : t("sightReading.controls.modeTest")}
-        </button>
-
-        {/* Input Mode Selector Button - shows icon of mode you can switch TO */}
-        {currentPattern && gamePhase !== GAME_PHASES.SETUP && (
-          <button
-            onClick={() => setShowInputModeModal(true)}
-            disabled={isFeedbackPhase}
-            className={`rounded-lg p-1.5 transition-colors sm:p-2 ${
-              inputMode === "mic"
-                ? "bg-purple-600 hover:bg-purple-700"
-                : "bg-white/10 hover:bg-white/20"
-            } ${isFeedbackPhase ? "cursor-not-allowed opacity-60" : ""}`}
-            title={
-              inputMode === "keyboard"
-                ? t("sightReading.controls.switchToMic")
-                : t("sightReading.controls.switchToKeyboard")
-            }
-          >
-            {inputMode === "keyboard" ? (
-              <Mic className="h-4 w-4 text-white sm:h-5 sm:w-5" />
-            ) : (
-              <Piano className="h-4 w-4 text-white sm:h-5 sm:w-5" />
-            )}
-          </button>
-        )}
-        <button
-          onClick={() => setMetronomeEnabled((prev) => !prev)}
-          className={`rounded-lg p-1.5 transition-colors sm:p-2 ${
-            metronomeEnabled
-              ? "bg-fuchsia-500 hover:bg-fuchsia-600"
-              : "bg-white/10 hover:bg-white/20"
-          }`}
-          title={t("sightReading.controls.toggleMetronome")}
-          disabled={gamePhase === GAME_PHASES.COUNT_IN}
-        >
-          <img
-            src={MetronomeIcon}
-            alt="Metronome"
-            className="h-4 w-4 sm:h-5 sm:w-5"
-          />
-        </button>
-        <button
-          onClick={() => (nodeConfig ? openSettingsModal() : returnToSetup())}
-          className="rounded-lg bg-white/10 p-1.5 transition-colors hover:bg-white/20 sm:p-2"
-          title={t("sightReading.changeSettings")}
-        >
-          <Settings className="h-4 w-4 text-white sm:h-5 sm:w-5" />
-        </button>
-      </div>
-    </div>
+    <GameTopBar
+      dense={isCompactLandscape}
+      tools={headerTools}
+      modeSwitch={{
+        value: gradingMode,
+        options: [
+          {
+            value: GRADING_MODES.PRACTICE,
+            label: t("sightReading.controls.modePractice"),
+          },
+          {
+            value: GRADING_MODES.TEST,
+            label: t("sightReading.controls.modeTest"),
+          },
+        ],
+        onChange: setGradingMode,
+        disabled: isModeLocked,
+        label: t("sightReading.controls.modeToggleLabel"),
+      }}
+      stats={[
+        {
+          id: "bpm",
+          label: t("games.topBar.bpmLabel"),
+          value: gameSettings.tempo,
+          tone: "purple",
+          hideWhenStacked: true,
+        },
+        {
+          id: "score",
+          label: t("games.score"),
+          value: Math.round(sessionTotalScore),
+          tone: "gold",
+        },
+      ]}
+      streak={{ value: combo, active: isOnFire }}
+      progress={{
+        current: currentExerciseNumber - 1,
+        total: sessionTotalExercises,
+      }}
+      exit={{
+        to: nodeId
+          ? `/trail?path=${getTrailTabForNode(nodeId) || "treble"}`
+          : "/notes-master-mode",
+        label: t("games.topBar.exitTo", {
+          name: nodeId ? "Trail" : "Notes Master",
+        }),
+      }}
+    />
   );
 
   const countInOverlay =
     gamePhase === GAME_PHASES.COUNT_IN ? (
-      <div className="absolute left-1/2 top-12 z-10 -translate-x-1/2 transform sm:top-16">
+      <div
+        className="absolute left-1/2 z-10 -translate-x-1/2 transform"
+        // Sits just below the top bar. Previously a fixed top-12/sm:top-16,
+        // which matched the old header height and would now overlap the bar.
+        style={{ top: "calc(var(--game-topbar-height, 64px) + 0.5rem)" }}
+      >
         <MetronomeDisplay
           currentBeat={currentBeat}
           timeSignature={gameSettings.timeSignature}

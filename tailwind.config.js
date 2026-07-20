@@ -21,6 +21,7 @@ module.exports = {
         comic: ["Comic Neue", "cursive"],
         rounded: ["Nunito", "sans-serif"],
         playful: ["Fredoka One", "cursive"],
+        fredoka: ["Fredoka", "Fredoka One", "sans-serif"],
         signature: ["Dancing Script", "cursive"],
         hebrew: [
           "Heebo",
@@ -30,7 +31,7 @@ module.exports = {
           "Arial",
           "sans-serif",
         ],
-        quicksand: ['Quicksand', 'Nunito', 'sans-serif'],
+        quicksand: ["Quicksand", "Nunito", "sans-serif"],
       },
       fontSize: {
         xs: ["0.75rem", { lineHeight: "1.5" }],
@@ -79,6 +80,15 @@ module.exports = {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        // Game top bar streak hero (design_handoff_gamified_topbar)
+        flameFlicker: {
+          "0%, 100%": { transform: "scale(1) rotate(-2deg)" },
+          "50%": { transform: "scale(1.14) rotate(2deg)" },
+        },
+        streakGlow: {
+          "0%, 100%": { boxShadow: "0 0 18px rgba(251, 146, 60, 0.55)" },
+          "50%": { boxShadow: "0 0 30px rgba(251, 146, 60, 0.85)" },
+        },
       },
       animation: {
         celebration: "celebration 2s ease-in-out infinite",
@@ -88,6 +98,8 @@ module.exports = {
         bounce: "bounce 1s infinite",
         wiggle: "wiggle 1s ease-in-out infinite",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        flameFlicker: "flameFlicker 1.4s ease-in-out infinite",
+        streakGlow: "streakGlow 2.2s ease-in-out infinite",
       },
       colors: {
         // Use CSS custom properties for consistent theming
@@ -335,11 +347,11 @@ module.exports = {
           error: "#ff0000",
         },
         trail: {
-          'cyan-glow': '#00f2ff',
-          'purple-glow': '#aa00ff',
-          'forest-base': '#0f172a',
-          'forest-mid': '#1a1040',
-          'forest-accent': '#2d1b69',
+          "cyan-glow": "#00f2ff",
+          "purple-glow": "#aa00ff",
+          "forest-base": "#0f172a",
+          "forest-mid": "#1a1040",
+          "forest-accent": "#2d1b69",
         },
       },
       borderRadius: {
@@ -379,14 +391,14 @@ module.exports = {
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
         "2xl": "var(--shadow-2xl)",
-        'node-3d': '0 6px 0 #009eb3, 0 10px 20px rgba(0, 242, 255, 0.4)',
-        'node-3d-pressed': '0 2px 0 #009eb3, 0 5px 10px rgba(0, 242, 255, 0.4)',
-        'glow-cyan': '0 0 20px rgba(0, 242, 255, 0.6)',
-        'glow-purple': '0 0 15px rgba(147, 51, 234, 0.5)',
+        "node-3d": "0 6px 0 #009eb3, 0 10px 20px rgba(0, 242, 255, 0.4)",
+        "node-3d-pressed": "0 2px 0 #009eb3, 0 5px 10px rgba(0, 242, 255, 0.4)",
+        "glow-cyan": "0 0 20px rgba(0, 242, 255, 0.6)",
+        "glow-purple": "0 0 15px rgba(147, 51, 234, 0.5)",
       },
       dropShadow: {
-        'glow-cyan': '0 0 8px #00FFFF',
-        'glow-purple': '0 0 6px #aa00ff',
+        "glow-cyan": "0 0 8px #00FFFF",
+        "glow-purple": "0 0 6px #aa00ff",
       },
       transitionDuration: {
         fast: "var(--transition-fast)",
