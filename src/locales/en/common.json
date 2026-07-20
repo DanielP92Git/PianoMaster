@@ -1833,6 +1833,8 @@
       "supabaseDesc": "database hosting, user authentication, and real-time data sync.",
       "brevoDesc": "transactional emails including weekly progress reports and account notifications.",
       "lemonDesc": "payment processing for subscription plans. We do not store payment card details.",
+      "umamiDesc": "privacy-focused traffic analytics. Cookie-free, and does not collect personal information or track users across sites.",
+      "sentryDesc": "error monitoring in the production app, configured not to collect personal information. Session recording is disabled.",
       "noSell": "We do NOT sell, rent, or share personal data with advertisers or data brokers."
     },
     "parentalRights": {
@@ -1853,7 +1855,7 @@
     },
     "cookies": {
       "title": "6. Cookies & Local Storage",
-      "noTracking": "PianoMaster does not use tracking cookies or any third-party analytics trackers.",
+      "noTracking": "PianoMaster does not use tracking cookies, advertising trackers, or cross-site profiling. We use a cookie-free analytics service to count page views — see Third-Party Services above.",
       "localStorageUse": "We use localStorage (browser storage) exclusively for UI preferences: theme, language selection, onboarding state, and dismissed prompts.",
       "deviceOnly": "localStorage data remains on your device and is never transmitted to our servers."
     },
@@ -1862,7 +1864,7 @@
       "desc": "If you have questions about this privacy policy, wish to exercise your parental rights, or need to request data deletion, please contact us at:"
     },
     "lastUpdated": "Last updated",
-    "termsLink": "Terms of Service & Legal"
+    "termsLink": "Terms of Service"
   },
   "legal": {
     "backToHome": "Back to Settings",

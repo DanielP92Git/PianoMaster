@@ -148,6 +148,14 @@ function PrivacyPolicyPage() {
                   </span>{" "}
                   — {t("privacy.thirdParty.lemonDesc")}
                 </li>
+                <li>
+                  <span className="font-medium text-white/90">Umami</span> —{" "}
+                  {t("privacy.thirdParty.umamiDesc")}
+                </li>
+                <li>
+                  <span className="font-medium text-white/90">Sentry</span> —{" "}
+                  {t("privacy.thirdParty.sentryDesc")}
+                </li>
               </ul>
               <div className="mt-4 rounded-lg border border-white/10 bg-white/5 p-3">
                 <p className="text-sm font-medium text-white/90">
@@ -228,7 +236,7 @@ function PrivacyPolicyPage() {
             {/* Terms of Service link */}
             <div className="border-t border-white/10 pb-2 pt-2 text-center">
               <Link
-                to="/legal"
+                to="/terms"
                 className="text-sm text-indigo-300 underline transition-colors hover:text-indigo-200"
               >
                 {t("privacy.termsLink")}

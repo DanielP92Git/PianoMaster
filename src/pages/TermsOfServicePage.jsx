@@ -68,7 +68,7 @@ function TermsOfServicePage() {
           <p className="text-xs text-white/50">
             {t("legal.tosPrivacyNote")}{" "}
             <Link
-              to="/legal"
+              to="/privacy"
               className="text-indigo-400 underline hover:text-indigo-300"
             >
               {t("legal.privacyPolicyLink")}
