@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
@@ -20,18 +20,27 @@ import {
  */
 function PrivacyPolicyPage() {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
+
+  // This page is public, so the back control cannot target an auth-gated route
+  // (it used to point at /settings, which bounced logged-out readers to login).
+  // History-back returns everyone where they came from; "/" is only the
+  // no-history fallback for someone who landed here directly.
+  const goBack = () =>
+    window.history.length > 1 ? navigate(-1) : navigate("/");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
       <div className="mx-auto max-w-3xl px-4 py-8">
-        {/* Back to home link */}
-        <Link
-          to="/settings"
+        {/* Back link */}
+        <button
+          type="button"
+          onClick={goBack}
           className="mb-6 inline-flex items-center gap-2 text-white/70 transition-colors hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("privacy.backHome")}
-        </Link>
+        </button>
 
         {/* Main card */}
         <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-lg md:p-8">
@@ -229,7 +238,7 @@ function PrivacyPolicyPage() {
             {/* Last Updated */}
             <div className="pt-2 text-center">
               <p className="text-xs text-white/50">
-                {t("privacy.lastUpdated")}: March 2026
+                {t("privacy.lastUpdated")}: {t("privacy.lastUpdatedDate")}
               </p>
             </div>
 

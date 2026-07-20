@@ -14,6 +14,12 @@
  *    the privacy policy and clicking through got bounced to login. Since these
  *    pages are public by design, the public -> public path is pinned too.
  *    jsdom cannot catch a bad route by rendering; only the href assertion does.
+ *
+ * 3. The back control — same defect class as (2), on the other link of the same
+ *    pages, and missed on the first pass. It pointed at /settings, which is
+ *    inside the ProtectedRoute block. Nothing here may link into an auth-gated
+ *    route, so that is asserted over the whole rendered tree rather than against
+ *    one element: a future link added anywhere on these pages is covered too.
  */
 
 import { describe, it, expect } from "vitest";
@@ -61,5 +67,32 @@ describe("TermsOfServicePage", () => {
     renderAt(<TermsOfServicePage />);
     const link = screen.getByRole("link", { name: "Privacy Policy" });
     expect(link).toHaveAttribute("href", "/privacy");
+  });
+});
+
+describe.each([
+  ["PrivacyPolicyPage", PrivacyPolicyPage],
+  ["TermsOfServicePage", TermsOfServicePage],
+])("%s public-route discipline", (_name, Page) => {
+  // The only in-app routes outside the ProtectedRoute block in App.jsx that a
+  // public legal page has any reason to reach. Anything else sends a logged-out
+  // reader to the login screen.
+  const PUBLIC_ROUTES = ["/privacy", "/terms"];
+
+  it("contains no internal link into an auth-gated route", () => {
+    const { container } = renderAt(<Page />);
+    const internal = [...container.querySelectorAll("a[href^='/']")].map((a) =>
+      a.getAttribute("href")
+    );
+    expect(internal.length).toBeGreaterThan(0); // guards against a vacuous pass
+    for (const href of internal) {
+      expect(PUBLIC_ROUTES).toContain(href);
+    }
+  });
+
+  it("offers a back control that is not a link to /settings", () => {
+    renderAt(<Page />);
+    const back = screen.getByRole("button", { name: /back|חזרה/i });
+    expect(back).toBeInTheDocument();
   });
 });

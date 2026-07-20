@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, FileText } from "lucide-react";
 
@@ -9,6 +9,11 @@ import { ArrowLeft, FileText } from "lucide-react";
  */
 function TermsOfServicePage() {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
+
+  // Public page — see the note in PrivacyPolicyPage; /settings is auth-gated.
+  const goBack = () =>
+    window.history.length > 1 ? navigate(-1) : navigate("/");
 
   const sectionKeys = [
     "acceptance",
@@ -24,14 +29,15 @@ function TermsOfServicePage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
       <div className="my-8 w-full max-w-2xl rounded-2xl border border-white/20 bg-white/10 p-6 shadow-2xl backdrop-blur-lg md:p-8">
-        {/* Back to home link */}
-        <Link
-          to="/settings"
+        {/* Back link */}
+        <button
+          type="button"
+          onClick={goBack}
           className="mb-6 inline-flex items-center gap-1.5 text-sm text-indigo-300 transition-colors hover:text-indigo-200"
         >
           <ArrowLeft className="h-4 w-4" />
           {t("legal.backToHome")}
-        </Link>
+        </button>
 
         {/* Header */}
         <div className="mb-8 text-center">

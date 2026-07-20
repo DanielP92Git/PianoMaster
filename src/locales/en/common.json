@@ -1800,7 +1800,7 @@
     "letsGo": "Let's Go!"
   },
   "privacy": {
-    "backHome": "Back to Settings",
+    "backHome": "Back",
     "title": "Privacy Policy",
     "subtitle": "Piano Learning App for Children",
     "dataCollect": {
@@ -1864,12 +1864,13 @@
       "desc": "If you have questions about this privacy policy, wish to exercise your parental rights, or need to request data deletion, please contact us at:"
     },
     "lastUpdated": "Last updated",
+    "lastUpdatedDate": "July 2026",
     "termsLink": "Terms of Service"
   },
   "legal": {
-    "backToHome": "Back to Settings",
+    "backToHome": "Back",
     "tosTitle": "Terms of Service",
-    "tosLastUpdated": "Last Updated: March 2026",
+    "tosLastUpdated": "Last Updated: July 2026",
     "tosPrivacyNote": "Please also review our",
     "privacyPolicyLink": "Privacy Policy",
     "tos": {
