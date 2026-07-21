@@ -2,9 +2,10 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: roadmapped
-last_updated: "2026-07-20T23:34:47.986Z"
-last_activity: 2026-07-21
+status: Roadmap created, awaiting `/gsd-plan-phase 1`
+stopped_at: Phase 1 context gathered
+last_updated: "2026-07-21T15:01:12.004Z"
+last_activity: 2026-07-21 — ROADMAP.md created for v4.0, 41/41 requirements mapped across 8 phases
 progress:
   total_phases: 8
   completed_phases: 0
@@ -152,8 +153,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-**Stopped at:** v4.0 ROADMAP.md created, REQUIREMENTS.md traceability filled
-**Resume file:** None
+**Stopped at:** Phase 1 context gathered
+**Resume file:** .planning/phases/01-identity-schema-expand/01-CONTEXT.md
 
 ---
 
