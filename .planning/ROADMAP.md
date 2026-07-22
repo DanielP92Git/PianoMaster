@@ -83,10 +83,10 @@ feature is removed entirely so no child voice data is collected at all.
 4. The 5 teacher-created, auth-less student rows have valid `child_profiles` rows with `parent_id = NULL`
 5. A single authoritative `information_schema` query confirms all 30 identity-bearing FK columns across the 26 downstream tables resolve to `child_profiles`, with zero unaccounted-for references to `students(id)`
    **Plans**: 5 plans across 4 waves
-   - [ ] 01-01-PLAN.md — Wave 1: generate FK checklist + function inventory + confirm rehearsal env
-   - [ ] 01-02-PLAN.md — Wave 1: account-segmentation table + SQL assertion suite
-   - [ ] 01-03-PLAN.md — Wave 2: owner gates (FK scope sign-off + segmentation sign-off)
-   - [ ] 01-04-PLAN.md — Wave 3: atomic up-migration + committed down-migration
+   - [x] 01-01-PLAN.md — Wave 1: generate FK checklist + function inventory + confirm rehearsal env
+   - [x] 01-02-PLAN.md — Wave 1: account-segmentation table + SQL assertion suite
+   - [x] 01-03-PLAN.md — Wave 2: owner gates (FK scope sign-off + segmentation sign-off)
+   - [x] 01-04-PLAN.md — Wave 3: atomic up-migration + committed down-migration
    - [ ] 01-05-PLAN.md — Wave 4: owner-gated apply/rehearse + IDENT-05 verify + D-29 smoke test
          **Pitfalls to avoid**: Pitfall 2 (FK target drift — this exact bug class has already shipped 3 times in this codebase; repoint from one authoritative checklist, not memory/grep). Open Question 1 (owner for the 5 auth-less students) must be resolved before backfill completes — resolved by D-06 (`parent_id` nullable, stays teacher-owned).
          **UI hint**: no

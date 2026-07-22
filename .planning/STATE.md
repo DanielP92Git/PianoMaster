@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: Phase 1 planned (5 plans, 4 waves), awaiting `/gsd-execute-phase 1`
+status: executing
 stopped_at: Phase 1 planned & plan-checker verified
-last_updated: "2026-07-22"
-last_activity: 2026-07-22 — Phase 1 planned — 5 plans across 4 waves, plan-checker verified, 5 robustness fixes applied
+last_updated: "2026-07-22T14:12:05.945Z"
+last_activity: 2026-07-22 -- Phase 01 execution started
 progress:
   total_phases: 8
   completed_phases: 0
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v4.0 Phase 1 — Identity Schema Expand (roadmap created, not yet planned)
+**Current focus:** Phase 01 — identity-schema-expand
 
 ## Current Position
 
-Phase: 1 of 8 (Identity Schema Expand)
-Plan: planned — 01-01…01-05 (4 waves), not yet executed
-Status: Phase 1 planned & plan-checker verified, awaiting `/gsd-execute-phase 1`
-Last activity: 2026-07-22 — Phase 1 planned (5 plans, 4 waves); plan-checker verified; 5 robustness fixes folded in
+Phase: 01 (identity-schema-expand) — EXECUTING
+Plan: 1 of 5
+Status: Executing Phase 01
+Last activity: 2026-07-22 -- Phase 01 execution started
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -153,8 +153,9 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-**Stopped at:** Phase 1 planned & plan-checker verified
-**Resume file:** .planning/phases/01-identity-schema-expand/01-01-PLAN.md
+**Stopped at:** Phase 1 — Waves 1–3 executed (plans 01-01…01-04 complete, 4/5), PAUSED at the Wave 4 production-apply gate (Plan 01-05, autonomous:false, [BLOCKING]). No DDL applied to production; all artifacts + migration committed.
+**Resume file:** .planning/phases/01-identity-schema-expand/01-05-PLAN.md
+**Resume note:** Wave 4 needs owner-driven branch rehearsal (`npx supabase`, billed branch) + explicit "apply to production" authorization. MCP is `--read-only` (cannot apply DDL). Owner-gate decisions already captured: FK sweep = 16 child-scoped + `parent_subscriptions` carve-out; verifier = `pg_constraint`; `requires_reconsent=true` count = 1 (hallellu). Migration file: `supabase/migrations/20260722120000_add_parents_and_child_profiles.sql` (+ `.down.sql`).
 
 ---
 
