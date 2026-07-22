@@ -94,6 +94,8 @@ END $$;
 DO $$
 DECLARE missing text;
 BEGIN
+  -- 16 owner-signed child-scoped columns (Plan 03 gate, 2026-07-22). Only
+  -- parent_subscriptions is carved out (D-06) and is intentionally absent.
   SELECT string_agg(t.tbl || '.' || t.col, ', ') INTO missing
   FROM (VALUES
     ('assignment_submissions','student_id'),('feedback_submissions','student_id'),
@@ -101,7 +103,9 @@ BEGIN
     ('rate_limits','student_id'),('student_daily_challenges','student_id'),
     ('student_daily_goals','student_id'),('student_point_transactions','student_id'),
     ('student_skill_progress','student_id'),('students_score','student_id'),
-    ('student_unit_progress','student_id'),('user_accessories','user_id')
+    ('student_unit_progress','student_id'),('user_accessories','user_id'),
+    ('notifications','recipient_id'),('parental_consent_log','student_id'),
+    ('parental_consent_tokens','student_id'),('push_subscriptions','student_id')
   ) AS t(tbl,col)
   WHERE NOT EXISTS (
     SELECT 1 FROM pg_constraint con

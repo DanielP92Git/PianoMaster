@@ -27,32 +27,32 @@ All 17 reference column `id` and all use `ON DELETE CASCADE`.
 
 ## Checklist
 
-`scope` / `carve_out` columns are the D-06/D-07 classification. Rows marked **TBD — owner review**
-are resolved at the **Plan 03 owner gate** (D-07), not defaulted here. A wrongly-scoped row yields a
-valid-looking but wrong Phase 2 RLS policy, so judgment calls are deferred to the owner on purpose.
+`scope` / `carve_out` columns are the D-06/D-07 classification. All rows were **resolved and owner-signed
+at the Plan 03 gate** (2026-07-22) — see the OWNER SIGN-OFF block below. Every identity FK is swept except
+`parent_subscriptions` (D-06 carve-out). No rows remain unresolved.
 
-| table_name                 | column_name  | constraint_name                            | on_delete_action | scope                  | carve_out | reason                                                                                                           |
-| -------------------------- | ------------ | ------------------------------------------ | ---------------- | ---------------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
-| assignment_submissions     | student_id   | assignment_submissions_student_id_fkey     | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| feedback_submissions       | student_id   | feedback_submissions_student_id_fkey       | CASCADE          | child-scoped           | no        | per-child rate-limit ledger                                                                                      |
-| instrument_practice_logs   | student_id   | instrument_practice_logs_student_id_fkey   | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| instrument_practice_streak | student_id   | instrument_practice_streak_student_id_fkey | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| notifications              | recipient_id | notifications_recipient_id_fkey            | CASCADE          | **TBD — owner review** | **TBD**   | D-07 candidate parent-scoped — some notifications are parent-directed                                            |
-| parental_consent_log       | student_id   | parental_consent_log_student_id_fkey       | CASCADE          | **TBD — owner review** | **TBD**   | D-07 candidate parent-scoped — a consent record is the _parent's_ attestation                                    |
-| parental_consent_tokens    | student_id   | parental_consent_tokens_student_id_fkey    | CASCADE          | **TBD — owner review** | **TBD**   | D-07 candidate parent-scoped — consent verification token, parent-facing                                         |
-| parent_subscriptions       | student_id   | parent_subscriptions_student_id_fkey       | CASCADE          | parent-scoped          | **yes**   | **D-06** — Phase 5 re-points to `parents`, not `child_profiles`; sweeping now moves it the known-wrong direction |
-| push_subscriptions         | student_id   | push_subscriptions_student_id_fkey         | CASCADE          | **TBD — owner review** | **TBD**   | D-07 candidate parent-scoped — push endpoint typically the parent's device                                       |
-| rate_limits                | student_id   | rate_limits_student_id_fkey                | CASCADE          | child-scoped           | no        | per-child XP-farming guard                                                                                       |
-| student_daily_challenges   | student_id   | student_daily_challenges_student_id_fkey   | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| student_daily_goals        | student_id   | student_daily_goals_student_id_fkey        | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| student_point_transactions | student_id   | student_point_transactions_student_id_fkey | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| student_skill_progress     | student_id   | student_skill_progress_student_id_fkey     | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| students_score             | student_id   | students_score_student_id_fkey             | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| student_unit_progress      | student_id   | student_unit_progress_student_id_fkey      | CASCADE          | child-scoped           | no        | —                                                                                                                |
-| user_accessories           | user_id      | user_accessories_user_id_fkey              | CASCADE          | child-scoped           | no        | column is `user_id` (not `student_id`) but references students(id)                                               |
+| table_name                 | column_name  | constraint_name                            | on_delete_action | scope         | carve_out | reason                                                                                                           |
+| -------------------------- | ------------ | ------------------------------------------ | ---------------- | ------------- | --------- | ---------------------------------------------------------------------------------------------------------------- |
+| assignment_submissions     | student_id   | assignment_submissions_student_id_fkey     | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| feedback_submissions       | student_id   | feedback_submissions_student_id_fkey       | CASCADE          | child-scoped  | no        | per-child rate-limit ledger                                                                                      |
+| instrument_practice_logs   | student_id   | instrument_practice_logs_student_id_fkey   | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| instrument_practice_streak | student_id   | instrument_practice_streak_student_id_fkey | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| notifications              | recipient_id | notifications_recipient_id_fkey            | CASCADE          | child-scoped  | no        | **Owner-signed child-scoped (Plan 03 gate, 2026-07-22)**                                                         |
+| parental_consent_log       | student_id   | parental_consent_log_student_id_fkey       | CASCADE          | child-scoped  | no        | **Owner-signed child-scoped (Plan 03 gate, 2026-07-22)**                                                         |
+| parental_consent_tokens    | student_id   | parental_consent_tokens_student_id_fkey    | CASCADE          | child-scoped  | no        | **Owner-signed child-scoped (Plan 03 gate, 2026-07-22)**                                                         |
+| parent_subscriptions       | student_id   | parent_subscriptions_student_id_fkey       | CASCADE          | parent-scoped | **yes**   | **D-06** — Phase 5 re-points to `parents`, not `child_profiles`; sweeping now moves it the known-wrong direction |
+| push_subscriptions         | student_id   | push_subscriptions_student_id_fkey         | CASCADE          | child-scoped  | no        | **Owner-signed child-scoped (Plan 03 gate, 2026-07-22)**                                                         |
+| rate_limits                | student_id   | rate_limits_student_id_fkey                | CASCADE          | child-scoped  | no        | per-child XP-farming guard                                                                                       |
+| student_daily_challenges   | student_id   | student_daily_challenges_student_id_fkey   | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| student_daily_goals        | student_id   | student_daily_goals_student_id_fkey        | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| student_point_transactions | student_id   | student_point_transactions_student_id_fkey | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| student_skill_progress     | student_id   | student_skill_progress_student_id_fkey     | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| students_score             | student_id   | students_score_student_id_fkey             | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| student_unit_progress      | student_id   | student_unit_progress_student_id_fkey      | CASCADE          | child-scoped  | no        | —                                                                                                                |
+| user_accessories           | user_id      | user_accessories_user_id_fkey              | CASCADE          | child-scoped  | no        | column is `user_id` (not `student_id`) but references students(id)                                               |
 
-**Summary:** 17 rows · 12 firmly child-scoped (get a `child_profiles` ADD CONSTRAINT in Plan 04) ·
-1 firm carve-out (`parent_subscriptions`, D-06) · 4 **TBD** awaiting the Plan 03 owner gate.
+**Summary (owner-signed 2026-07-22):** 17 rows · **16 child-scoped** (each gets a `child_profiles`
+ADD CONSTRAINT in Plan 04) · **1 carve-out** (`parent_subscriptions`, D-06). Zero rows remain TBD.
 
 > **Note on `account_deletion_log`:** it has **no FK** to `students` by design (COPPA audit records
 > must survive deletion — `20260321000001_account_deletion_log.sql`). Correctly absent from the query
@@ -90,8 +90,8 @@ ORDER BY table_name, column_name;
 ```sql
 -- Post-migration verifier: confirms every non-carved-out checklist row now ALSO has a
 -- second FK targeting child_profiles(id). Diff this output against the checklist above;
--- IDENT-05 passes when all 12 firm child-scoped rows (plus any TBD rows the owner marks
--- child-scoped at the Plan 03 gate) appear here.
+-- IDENT-05 passes when all 16 owner-signed child-scoped rows appear here
+-- (only parent_subscriptions is carved out, D-06).
 SELECT con.conrelid::regclass::text AS table_name,
        att.attname                  AS column_name,
        con.conname                  AS constraint_name,
@@ -109,3 +109,19 @@ ORDER BY table_name, column_name;
 
 **Pre-migration baseline:** the verifier returns `[]` today (the `child_profiles` table does not yet
 exist — the `::regclass` cast will error until Plan 04 creates it; that erroring-cast IS the baseline).
+
+## OWNER SIGN-OFF
+
+**Signed:** 2026-07-22 · Owner (Daniel, `pagis.daniel@gmail.com`) via the Plan 03 gate.
+
+- **Scope resolved — all 4 TBD rows marked CHILD-scoped** (owner decision, overriding the "lean
+  parent-scoped" recommendation): `notifications`, `parental_consent_log`, `parental_consent_tokens`,
+  `push_subscriptions`. Rule adopted: **sweep every identity FK except `parent_subscriptions`** (the sole
+  D-06 carve-out that Phase 5 re-points to `parents`).
+- **Final swept-column count: 16** child-scoped rows get a `child_profiles` ADD CONSTRAINT in Plan 04.
+  **1 carve-out:** `parent_subscriptions`. **0 TBD remaining.**
+- **Verifier mechanism deviation APPROVED:** IDENT-05 uses `pg_catalog.pg_constraint`, not
+  `information_schema` (which returns `[]` under Supabase's non-owner role). This is the committed
+  IDENT-05 mechanism going forward.
+
+Plan 04 may now write the migration from this signed checklist.

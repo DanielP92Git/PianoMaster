@@ -76,3 +76,21 @@ Trivially `parent_id = NULL` — no heuristic needed. Confirmed **exactly 5** (m
 - **`avatar_id`**: all 20 rows currently have `avatar_id = NULL`; FK-reused as-is (nullable).
 - **`parents` backfill**: 15 rows (one per auth-having student above); `requires_reconsent = true` for the 1
   flagged row, `false` for the other 14 (subject to `owner_override` at the Plan 03 gate).
+
+## OWNER SIGN-OFF
+
+**Signed:** 2026-07-22 · Owner (Daniel, `pagis.daniel@gmail.com`) via the Plan 03 gate — **decision
+delegated to the executor** ("you decide"), resolved on the evidence below and left open to owner
+override before the Plan 05 apply.
+
+- **Re-consent-flagged count: 1** — `e79437b8…` / hallellu@gmail.com (DOB 2015, parent_email = self).
+  Confirmed as the sole `requires_reconsent = true` account.
+- **The other 14 accounts are NOT flagged.** Basis: 3 have explicit adult DOBs (1997, 2000, 2000); the
+  remaining 11 have no `date_of_birth`, and no evidence (email, name, or app context) indicates any is a
+  self-registered child. Absent contrary data, they default to non-minor. **No `owner_override` applied.**
+- **5 auth-less (teacher-created) rows CONFIRMED** → `parent_id = NULL`. The 5/15 split matches the
+  20-row `students` count.
+- **Reconciliation note:** the `01-db-assertions.sql` `requires_reconsent = true` literal stays **1**. If
+  the owner flips any flag before Plan 05, update that literal in lock-step (a Pitfall-6 silent-flip guard).
+
+Plan 04 may now write the backfill from this signed segmentation.
