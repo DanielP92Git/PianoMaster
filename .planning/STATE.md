@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: Roadmap created, awaiting `/gsd-plan-phase 1`
-stopped_at: Phase 1 context gathered
-last_updated: "2026-07-21T15:01:12.004Z"
-last_activity: 2026-07-21 — ROADMAP.md created for v4.0, 41/41 requirements mapped across 8 phases
+status: Phase 1 planned (5 plans, 4 waves), awaiting `/gsd-execute-phase 1`
+stopped_at: Phase 1 planned & plan-checker verified
+last_updated: "2026-07-22"
+last_activity: 2026-07-22 — Phase 1 planned — 5 plans across 4 waves, plan-checker verified, 5 robustness fixes applied
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 0
+  total_plans: 5
   completed_plans: 0
   percent: 0
 ---
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 ## Current Position
 
 Phase: 1 of 8 (Identity Schema Expand)
-Plan: — (not yet planned)
-Status: Roadmap created, awaiting `/gsd-plan-phase 1`
-Last activity: 2026-07-21 — ROADMAP.md created for v4.0, 41/41 requirements mapped across 8 phases
+Plan: planned — 01-01…01-05 (4 waves), not yet executed
+Status: Phase 1 planned & plan-checker verified, awaiting `/gsd-execute-phase 1`
+Last activity: 2026-07-22 — Phase 1 planned (5 plans, 4 waves); plan-checker verified; 5 robustness fixes folded in
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -149,13 +149,13 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** Run `/gsd-plan-phase 1` to plan Phase 1 (Identity Schema Expand). Four open questions from research need owner sign-off timed to their respective phases (not all before Phase 1): the 5 auth-less students (Phase 1 backfill, resolved by D-06 nullable `parent_id`), sibling switch-away gating (Phase 4 discussion), `teacher_feedback` fate (Phase 7 scoping, resolved by D-08 repurpose), gate-reentry timeout (Phase 4 discussion).
+**Next action:** Run `/gsd-execute-phase 1` to execute Phase 1 (Identity Schema Expand). 5 plans across 4 waves: W1 = 01-01 (FK checklist + function inventory) ∥ 01-02 (segmentation table + SQL assertion suite); W2 = 01-03 (owner scope/segmentation sign-off gate, autonomous:no); W3 = 01-04 (atomic up-migration + down-migration); W4 = 01-05 (owner-gated branch rehearsal → production apply + live IDENT-05 verifier + D-29 smoke, autonomous:no, [BLOCKING]). Plan-checker verdict: no BLOCKING issues; 5 robustness fixes folded in (per-row `requires_reconsent` VALUES encoding, parents count/true-count + positive parent-match assertions, real PASS/FAIL gating on the production apply verify, RESEARCH open-questions marked resolved, VALIDATION nyquist_compliant flipped true). Two owner gates during execution: segmentation/FK-scope sign-off (W2) and the production apply (W4).
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-**Stopped at:** Phase 1 context gathered
-**Resume file:** .planning/phases/01-identity-schema-expand/01-CONTEXT.md
+**Stopped at:** Phase 1 planned & plan-checker verified
+**Resume file:** .planning/phases/01-identity-schema-expand/01-01-PLAN.md
 
 ---
 
-_State updated: 2026-07-21 — v4.0 Parent-First Account Architecture (COPPA) roadmap created: 8 phases, 41/41 requirements mapped, 0 orphans. Next: `/gsd-plan-phase 1`._
+_State updated: 2026-07-22 — Phase 1 (Identity Schema Expand) planned: 5 plans across 4 waves, IDENT-01…05 fully covered, plan-checker verified (no blockers), 5 robustness fixes applied. Next: `/gsd-execute-phase 1`._
