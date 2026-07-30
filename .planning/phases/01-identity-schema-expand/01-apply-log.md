@@ -24,6 +24,18 @@ identity-schema expansion. Newest step appended at the bottom.
   parents backfill (1 re-consent flag) + forward/reverse sync triggers + deletion cascade +
   down-migration + tables-gone assertions all pass against real data.
 
-## 2. Production apply — PENDING (owner gate)
+## 2. Pre-migration test baseline — PASS (2026-07-30)
+
+`npm run test:run` before any production apply, to anchor the D-29 zero-visible-change
+comparison:
+
+- **Test Files:** 112 passed, 2 skipped (114)
+- **Tests:** 2160 passed, 12 todo (2172), **0 failed**
+- Exit code 0. (The `[subscriptionService] … Database connection failed` line is an
+  intentionally-mocked fixture log, not a real failure.)
+
+Post-apply must match: 2160 passed, 0 failed.
+
+## 3. Production apply — PENDING (owner gate)
 
 Awaiting explicit owner "apply to production" authorization. Nothing applied yet.
