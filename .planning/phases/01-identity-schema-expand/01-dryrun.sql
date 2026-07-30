@@ -163,7 +163,7 @@ DO $$ BEGIN
   ASSERT (SELECT count(*) FROM information_schema.table_constraints
           WHERE table_schema='public' AND table_name='parents' AND constraint_type='PRIMARY KEY') = 1,
     'IDENT-01 FAIL: parents has no single PRIMARY KEY';
-  ASSERT (SELECT array_agg(column_name ORDER BY column_name) FROM information_schema.columns
+  ASSERT (SELECT array_agg(column_name::text ORDER BY column_name::text) FROM information_schema.columns
           WHERE table_schema='public' AND table_name='parents')
        = ARRAY['created_at','display_name','id','requires_reconsent','updated_at']::text[],
     'IDENT-01 FAIL: parents column set mismatch';
@@ -171,7 +171,7 @@ END $$;
 
 -- 2. IDENT-02 child_profiles exact 8-column zero-PII set
 DO $$ BEGIN
-  ASSERT (SELECT array_agg(column_name ORDER BY column_name) FROM information_schema.columns
+  ASSERT (SELECT array_agg(column_name::text ORDER BY column_name::text) FROM information_schema.columns
           WHERE table_schema='public' AND table_name='child_profiles')
        = ARRAY['avatar_id','birth_year','created_at','id','is_active','nickname','parent_id','updated_at']::text[],
     'IDENT-02 FAIL: child_profiles column set != exact 8-column zero-PII set';
