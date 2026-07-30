@@ -31,11 +31,11 @@ These were open questions all four researchers surfaced independently. They are 
 
 ### Identity Schema (IDENT)
 
-- [ ] **IDENT-01**: A `parents` table exists whose PK is the `auth.users` id, mirroring the shape of the existing `teachers` table
-- [ ] **IDENT-02**: A `child_profiles` table exists holding only nickname, preset avatar reference, and optional birth year — no email, phone, real name, photo, or location column
-- [ ] **IDENT-03**: `child_profiles.parent_id` is nullable, so teacher-created profiles with no parent remain valid (D-06)
-- [ ] **IDENT-04**: Every migrated child profile reuses its legacy `students.id` UUID, so no downstream FK value changes
-- [ ] **IDENT-05**: All 30 identity-bearing FK columns across the 26 downstream tables resolve to `child_profiles`, verified against one authoritative `information_schema` checklist rather than table-by-table review
+- [x] **IDENT-01**: A `parents` table exists whose PK is the `auth.users` id, mirroring the shape of the existing `teachers` table
+- [x] **IDENT-02**: A `child_profiles` table exists holding only nickname, preset avatar reference, and optional birth year — no email, phone, real name, photo, or location column
+- [x] **IDENT-03**: `child_profiles.parent_id` is nullable, so teacher-created profiles with no parent remain valid (D-06)
+- [x] **IDENT-04**: Every migrated child profile reuses its legacy `students.id` UUID, so no downstream FK value changes
+- [x] **IDENT-05**: Every child-scoped identity-bearing FK column gains a dual `child_profiles` FK, verified against one authoritative `pg_constraint` checklist (17 in-scope FKs: 16 swept + `parent_subscriptions` carve-out, D-06). Legacy `students(id)` FKs retained (D-02); their removal is Phase 8. [DEVIATION, owner-signed Plan 03: original "30 FKs/26 tables/information_schema" estimate corrected to live-verified 17 via `pg_constraint` — `information_schema` returns `[]` under the non-owner role.]
 
 ### Access Control (RLS)
 
@@ -116,48 +116,48 @@ These were open questions all four researchers surfaced independently. They are 
 
 ## Traceability
 
-| Requirement | Phase                                                    | Status  |
-| ----------- | -------------------------------------------------------- | ------- |
-| IDENT-01    | Phase 1 — Identity Schema Expand                         | Pending |
-| IDENT-02    | Phase 1 — Identity Schema Expand                         | Pending |
-| IDENT-03    | Phase 1 — Identity Schema Expand                         | Pending |
-| IDENT-04    | Phase 1 — Identity Schema Expand                         | Pending |
-| IDENT-05    | Phase 1 — Identity Schema Expand                         | Pending |
-| RLS-01      | Phase 2 — RLS Rewrite                                    | Pending |
-| RLS-02      | Phase 2 — RLS Rewrite                                    | Pending |
-| RLS-03      | Phase 2 — RLS Rewrite                                    | Pending |
-| RLS-04      | Phase 2 — RLS Rewrite                                    | Pending |
-| RLS-05      | Phase 2 — RLS Rewrite                                    | Pending |
-| RLS-06      | Phase 2 — RLS Rewrite                                    | Pending |
-| SIGNUP-01   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
-| SIGNUP-02   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
-| SIGNUP-03   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
-| SIGNUP-04   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
-| SIGNUP-05   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending |
-| PROFILE-01  | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| PROFILE-02  | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| PROFILE-03  | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| PROFILE-04  | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| PROFILE-05  | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| PROFILE-06  | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| COPPA-01    | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| COPPA-02    | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| COPPA-03    | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| COPPA-04    | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| COPPA-05    | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| COPPA-06    | Phase 4 — Child Profiles & Parental Gating               | Pending |
-| MIGRATE-04  | Phase 5 — Subscription Re-Pointing                       | Pending |
-| MIGRATE-01  | Phase 6 — Live Migration & Re-Consent                    | Pending |
-| MIGRATE-02  | Phase 6 — Live Migration & Re-Consent                    | Pending |
-| MIGRATE-03  | Phase 6 — Live Migration & Re-Consent                    | Pending |
-| MIGRATE-06  | Phase 6 — Live Migration & Re-Consent                    | Pending |
-| RECORD-01   | Phase 7 — Audio Recording Removal                        | Pending |
-| RECORD-02   | Phase 7 — Audio Recording Removal                        | Pending |
-| RECORD-03   | Phase 7 — Audio Recording Removal                        | Pending |
-| RECORD-04   | Phase 7 — Audio Recording Removal                        | Pending |
-| RECORD-05   | Phase 7 — Audio Recording Removal                        | Pending |
-| RECORD-06   | Phase 7 — Audio Recording Removal                        | Pending |
-| RECORD-07   | Phase 7 — Audio Recording Removal                        | Pending |
-| MIGRATE-05  | Phase 8 — Contract — Legacy Cleanup & Final Verification | Pending |
+| Requirement | Phase                                                    | Status   |
+| ----------- | -------------------------------------------------------- | -------- |
+| IDENT-01    | Phase 1 — Identity Schema Expand                         | Complete |
+| IDENT-02    | Phase 1 — Identity Schema Expand                         | Complete |
+| IDENT-03    | Phase 1 — Identity Schema Expand                         | Complete |
+| IDENT-04    | Phase 1 — Identity Schema Expand                         | Complete |
+| IDENT-05    | Phase 1 — Identity Schema Expand                         | Complete |
+| RLS-01      | Phase 2 — RLS Rewrite                                    | Pending  |
+| RLS-02      | Phase 2 — RLS Rewrite                                    | Pending  |
+| RLS-03      | Phase 2 — RLS Rewrite                                    | Pending  |
+| RLS-04      | Phase 2 — RLS Rewrite                                    | Pending  |
+| RLS-05      | Phase 2 — RLS Rewrite                                    | Pending  |
+| RLS-06      | Phase 2 — RLS Rewrite                                    | Pending  |
+| SIGNUP-01   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
+| SIGNUP-02   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
+| SIGNUP-03   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
+| SIGNUP-04   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
+| SIGNUP-05   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
+| PROFILE-01  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| PROFILE-02  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| PROFILE-03  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| PROFILE-04  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| PROFILE-05  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| PROFILE-06  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| COPPA-01    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| COPPA-02    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| COPPA-03    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| COPPA-04    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| COPPA-05    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| COPPA-06    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| MIGRATE-04  | Phase 5 — Subscription Re-Pointing                       | Pending  |
+| MIGRATE-01  | Phase 6 — Live Migration & Re-Consent                    | Pending  |
+| MIGRATE-02  | Phase 6 — Live Migration & Re-Consent                    | Pending  |
+| MIGRATE-03  | Phase 6 — Live Migration & Re-Consent                    | Pending  |
+| MIGRATE-06  | Phase 6 — Live Migration & Re-Consent                    | Pending  |
+| RECORD-01   | Phase 7 — Audio Recording Removal                        | Pending  |
+| RECORD-02   | Phase 7 — Audio Recording Removal                        | Pending  |
+| RECORD-03   | Phase 7 — Audio Recording Removal                        | Pending  |
+| RECORD-04   | Phase 7 — Audio Recording Removal                        | Pending  |
+| RECORD-05   | Phase 7 — Audio Recording Removal                        | Pending  |
+| RECORD-06   | Phase 7 — Audio Recording Removal                        | Pending  |
+| RECORD-07   | Phase 7 — Audio Recording Removal                        | Pending  |
+| MIGRATE-05  | Phase 8 — Contract — Legacy Cleanup & Final Verification | Pending  |
 
 **Coverage: 41/41 v4.0 requirements mapped, 0 orphans, 0 duplicates.**

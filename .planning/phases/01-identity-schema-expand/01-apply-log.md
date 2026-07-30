@@ -83,7 +83,8 @@ Ran against production via MCP `execute_sql` (SELECT-only):
 
 **Identical.** D-29 zero-visible-change satisfied at the test-suite level. Exit code 0.
 
-## 5. Owner smoke test — PENDING
+## 5. Owner smoke test — PASS (2026-07-30)
 
-Owner to confirm on a real student account: dashboard, trail map, one completed
-exercise (XP + stars award), streak intact. Phase close is gated on this confirmation.
+Owner confirmed on a real student account ("smoke test good"): dashboard, trail map,
+a completed exercise (XP + stars award), and streak all render/behave unchanged. D-29
+zero-visible-change confirmed end-to-end (test suite + live UX). **Wave 4 gate cleared.**

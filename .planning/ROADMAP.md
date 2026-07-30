@@ -61,7 +61,7 @@ feature is removed entirely so no child voice data is collected at all.
   paying customers — late, isolated, sandbox-tested before any of the 3 live subscriptions are
   touched.
 
-- [ ] **Phase 1: Identity Schema Expand** - Additive `parents`/`child_profiles` schema with UUID-reuse backfill, fully reversible, zero client-visible change
+- [x] **Phase 1: Identity Schema Expand** - Additive `parents`/`child_profiles` schema with UUID-reuse backfill, fully reversible, zero client-visible change — APPLIED + VERIFIED 2026-07-30 (verifier PASS)
 - [ ] **Phase 2: RLS Rewrite — Ownership-Based Access Control** - All 62 policies across 32 tables rewritten to authorize by parent ownership via a tested `SECURITY DEFINER` helper, rolled out dual-policy, own security-review gate
 - [ ] **Phase 3: Parent-Only Signup & Age Gate** - Neutral DOB gate blocks under-18 self-signup through every entry point including OAuth; registration collects only parent data
 - [ ] **Phase 4: Child Profiles & Parental Gating** - Parent-managed child profile CRUD, ungated sibling switching, and a route-level parental gate covering settings/billing/profile management/data rights
@@ -81,13 +81,13 @@ feature is removed entirely so no child voice data is collected at all.
 2. A `child_profiles` table exists holding only nickname/avatar/birth_year — schema inspection confirms zero PII columns (no email, phone, real name, photo, location)
 3. Every one of the 15 auth-having students has a `child_profiles` row whose `id` exactly matches its legacy `students.id`, and `parent_id` resolves correctly
 4. The 5 teacher-created, auth-less student rows have valid `child_profiles` rows with `parent_id = NULL`
-5. A single authoritative `information_schema` query confirms all 30 identity-bearing FK columns across the 26 downstream tables resolve to `child_profiles`, with zero unaccounted-for references to `students(id)`
+5. A single authoritative `pg_constraint` query confirms every child-scoped identity-bearing FK column has a dual `child_profiles` FK added (17 in-scope FKs: 16 swept + `parent_subscriptions` carve-out per D-06). Legacy `students(id)` FKs are RETAINED here (D-02) — the "zero unaccounted-for references to `students(id)`" contract is the removal half, owned by Phase 8. **[DEVIATION, owner-signed Plan 03: original "30 FKs / 26 tables / information_schema" estimate → live-verified 17 FKs via `pg_constraint`; `information_schema` returns `[]` under Supabase's non-owner role.]**
    **Plans**: 5 plans across 4 waves
    - [x] 01-01-PLAN.md — Wave 1: generate FK checklist + function inventory + confirm rehearsal env
    - [x] 01-02-PLAN.md — Wave 1: account-segmentation table + SQL assertion suite
    - [x] 01-03-PLAN.md — Wave 2: owner gates (FK scope sign-off + segmentation sign-off)
    - [x] 01-04-PLAN.md — Wave 3: atomic up-migration + committed down-migration
-   - [ ] 01-05-PLAN.md — Wave 4: owner-gated apply/rehearse + IDENT-05 verify + D-29 smoke test
+   - [x] 01-05-PLAN.md — Wave 4: no-branch dry-run → owner apply + IDENT-05 verify (12/12) + D-29 smoke test
          **Pitfalls to avoid**: Pitfall 2 (FK target drift — this exact bug class has already shipped 3 times in this codebase; repoint from one authoritative checklist, not memory/grep). Open Question 1 (owner for the 5 auth-less students) must be resolved before backfill completes — resolved by D-06 (`parent_id` nullable, stays teacher-owned).
          **UI hint**: no
 
