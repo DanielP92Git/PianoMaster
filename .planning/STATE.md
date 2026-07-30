@@ -153,9 +153,9 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-**Stopped at:** Phase 1 — Waves 1–3 executed (plans 01-01…01-04 complete, 4/5), PAUSED at the Wave 4 production-apply gate (Plan 01-05, autonomous:false, [BLOCKING]). No DDL applied to production; all artifacts + migration committed.
-**Resume file:** .planning/phases/01-identity-schema-expand/01-05-PLAN.md
-**Resume note:** Wave 4 needs owner-driven branch rehearsal (`npx supabase`, billed branch) + explicit "apply to production" authorization. MCP is `--read-only` (cannot apply DDL). Owner-gate decisions already captured: FK sweep = 16 child-scoped + `parent_subscriptions` carve-out; verifier = `pg_constraint`; `requires_reconsent=true` count = 1 (hallellu). Migration file: `supabase/migrations/20260722120000_add_parents_and_child_profiles.sql` (+ `.down.sql`).
+**Stopped at:** Phase 1 — all 5 plans executed (01-01…01-05 complete). Migration APPLIED to production (owner-run, 2026-07-30) and verified. Only the owner smoke test remains before phase close.
+**Resume file:** .planning/phases/01-identity-schema-expand/01-apply-log.md (§5 = pending owner smoke test)
+**Resume note:** Wave 4 done via no-branch dry-run (SQL-Editor `BEGIN…ROLLBACK`, not a billed branch — owner's call). Dry-run caught a harness-only bug (`sql_identifier[] = text[]`, fixed `ba95f36e`; migration unchanged). Owner applied `20260722120000_add_parents_and_child_profiles.sql` — "no errors". Read-only verification: **12/12 structural checks PASS** (IDENT-01..05, UUID reuse, 5 parent-less, 15 parents/1 re-consent, 16 dual FKs, legacy students FKs retained per D-02, RLS deny-all), all sync/cascade triggers present (SECURITY DEFINER), pre-existing students triggers untouched. Test suite identical pre/post (2160 passed / 0 failed — D-29). **Next:** once owner confirms smoke test → run gsd-verifier phase verification, mark Phase 1 complete in ROADMAP/STATE, then code-review gate. `.down.sql` is the clean reverse path if needed.
 
 ---
 
