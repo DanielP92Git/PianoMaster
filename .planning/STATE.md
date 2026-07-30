@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
 status: executing
-stopped_at: Phase 1 planned & plan-checker verified
-last_updated: "2026-07-22T14:12:05.945Z"
+stopped_at: Phase 2 context gathered
+last_updated: "2026-07-30T16:47:19.157Z"
 last_activity: 2026-07-22 -- Phase 01 execution started
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 0
-  percent: 0
+  completed_plans: 5
+  percent: 100
 ---
 
 # Project State
@@ -153,7 +153,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-**Stopped at:** Phase 1 — **COMPLETE** (applied to production + verified + owner smoke test PASS, 2026-07-30). gsd-verifier verdict PASS (11/11 must-haves; see `01-VERIFICATION.md`). IDENT-01..05 all Complete. ROADMAP/REQUIREMENTS updated; IDENT-05 doc-wording corrected to the owner-signed reality (17 FKs via `pg_constraint`, not "30 via information_schema").
+**Stopped at:** Phase 2 context gathered
 **Next action:** `/gsd-discuss-phase 2` (RLS Rewrite) to capture design decisions, THEN `/gsd-plan-phase 2`. Owner chose discuss-first (Phase 2 is high-blast-radius: 62 policies / 32 tables). Phase dir `.planning/phases/02-rls-rewrite-ownership-based-access-control/` already created (empty). Owner skipped the optional Phase 1 code-review gate. Phase 1 `.down.sql` remains the clean reverse path if ever needed. Key Phase 2 traps (from milestone memory): design the `SECURITY DEFINER STABLE` ownership helper BEFORE rewriting any of the 62 policies; use non-correlated `IN` subqueries (initPlan-cacheable) not inline correlated subqueries; avoid recursion (42P17) in teacher→connection→child→parent chains; prove child-profile isolation with an adversarial test; every rewritten INSERT/UPDATE needs explicit `WITH CHECK`.
 **Resume note (evidence):** No-branch dry-run (SQL-Editor `BEGIN…ROLLBACK`) caught a harness-only bug (`sql_identifier[] = text[]`, fixed `ba95f36e`; migration file unchanged since `d4ce32e8`). Owner applied `20260722120000_add_parents_and_child_profiles.sql` ("no errors"). Live read-only verification 12/12 PASS; all sync/cascade triggers present (SECURITY DEFINER), pre-existing students triggers untouched; test suite identical pre/post (2160 passed / 0 failed — D-29). Full trail in `01-apply-log.md`.
 
