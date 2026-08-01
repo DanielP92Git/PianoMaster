@@ -103,10 +103,15 @@ feature is removed entirely so no child voice data is collected at all.
 3. A `pg_policies` audit confirms every rewritten UPDATE/INSERT policy has an explicit, correct `WITH CHECK` clause (not silently inherited from `USING`, not stale)
 4. An adversarial test proves a parent's session returns zero rows for another family's child profile or child-scoped data — proof, not inspection
 5. Supabase Advisors/logs show no `42P17` recursion errors, and `EXPLAIN ANALYZE` against real 20-student row counts shows no measurable regression versus the legacy policies
-   **Plans**: TBD
-   **Pitfalls to avoid**: Pitfall 1 (USING/WITH CHECK mismatch on UPDATE/INSERT), Pitfall 3 (recursive RLS via the parent→child_profiles→teacher chain), Pitfall 4 (ownership-subquery performance cliff — use the owner-first non-correlated `IN` pattern, never a correlated `EXISTS`).
-   **Research flag**: Highest-stakes phase in the milestone. Needs a dedicated `/gsd-secure-phase` pass — this project already ran one for v3.7's much smaller `note_mastery` JSONB column change; this phase is 62 policies across 32 tables and must not be folded into feature work.
-   **UI hint**: no
+   **Plans**: 5 plans across 4 waves
+   - [ ] 02-01-PLAN.md — Wave 1: committed policy inventory (~24 tables/~39 policies) + SQL-assertion suite + 2nd-family seed
+   - [ ] 02-02-PLAN.md — Wave 1: owned_child_ids() helper + EXPLAIN ANALYZE inlining verdict (RLS-01 gate)
+   - [ ] 02-03-PLAN.md — Wave 2: the atomic additive dual-policy migration + down-migration (helper + ~39 siblings + edge cases + award_xp/check_rate_limit re-point)
+   - [ ] 02-04-PLAN.md — Wave 3: [BLOCKING] rehearsal-branch apply + RLS-01..RLS-06 verification (adversarial + EXPLAIN + test:run)
+   - [ ] 02-05-PLAN.md — Wave 4: /gsd-secure-phase 2 + owner-gated production apply + D-29 smoke test + Phase 8 handoff (autonomous:no)
+         **Pitfalls to avoid**: Pitfall 1 (USING/WITH CHECK mismatch on UPDATE/INSERT), Pitfall 3 (recursive RLS via the parent→child_profiles→teacher chain), Pitfall 4 (ownership-subquery performance cliff — use the owner-first non-correlated `IN` pattern, never a correlated `EXISTS`).
+         **Research flag**: Highest-stakes phase in the milestone. Needs a dedicated `/gsd-secure-phase` pass — this project already ran one for v3.7's much smaller `note_mastery` JSONB column change; this phase is 62 policies across 32 tables and must not be folded into feature work.
+         **UI hint**: no
 
 #### Phase 3: Parent-Only Signup & Age Gate
 
@@ -282,7 +287,7 @@ Full details: `.planning/milestones/v3.6-ROADMAP.md` · Requirements: `.planning
 | Phase                                             | Milestone | Plans Complete | Status      | Completed |
 | ------------------------------------------------- | --------- | -------------- | ----------- | --------- |
 | 1. Identity Schema Expand                         | v4.0      | 0/TBD          | Not started | -         |
-| 2. RLS Rewrite — Ownership-Based Access Control   | v4.0      | 0/TBD          | Not started | -         |
+| 2. RLS Rewrite — Ownership-Based Access Control   | v4.0      | 0/5            | Not started | -         |
 | 3. Parent-Only Signup & Age Gate                  | v4.0      | 0/TBD          | Not started | -         |
 | 4. Child Profiles & Parental Gating               | v4.0      | 0/TBD          | Not started | -         |
 | 5. Subscription Re-Pointing                       | v4.0      | 0/TBD          | Not started | -         |

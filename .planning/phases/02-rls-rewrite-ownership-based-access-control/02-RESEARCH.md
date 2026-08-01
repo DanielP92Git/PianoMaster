@@ -780,9 +780,12 @@ Supabase logs.
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED 2026-08-01 — see 02-CONTEXT.md D-31/D-32/D-33)
 
-1. **Are the 7 Group B tables' `auth.users`-targeting FKs corrected in this phase or deferred?**
+> All three open questions below were resolved by owner decision during plan-phase and are
+> implemented in plans 02-01/02-03. Retained for traceability.
+
+1. **(RESOLVED — D-33: rewrite policies, document FK gap, do NOT fix FK this phase)** Are the 7 Group B tables' `auth.users`-targeting FKs corrected in this phase or deferred?
    - What we know: the RLS predicate works correctly without fixing the FK (UUID reuse means the values
      are valid regardless of constraint target); CONTEXT.md scopes Phase 2 as RLS-only.
    - What's unclear: whether leaving a 7-table FK gap live through Phases 2-7 creates any risk this
@@ -792,14 +795,14 @@ Supabase logs.
      should explicitly note this gap in the phase's SUMMARY/handoff artifact so Phase 8 (or an inserted
      phase) inherits it as a known, documented item rather than rediscovering it from scratch.
 
-2. **`user_preferences` scope classification (child vs. parent).**
+2. **(RESOLVED — D-31: CHILD-scoped, add `_parent_owner` sibling)** `user_preferences` scope classification (child vs. parent).
    - What we know: FK → `auth.users`, columns are notification/reminder/sound settings.
    - What's unclear: whether this app's product intent treats these as per-learner or per-family
      settings — no existing code comment or schema documentation resolves it.
    - Recommendation: explicit owner/planner decision before the migration is written, mirroring Phase
      1's D-07 process. Do not default.
 
-3. **Should `accessories` and `assignments` be included in this phase's literal worklist?**
+3. **(RESOLVED — D-32: YES, include both)** Should `accessories` and `assignments` be included in this phase's literal worklist?
    - What we know: both have live `student_id`-shaped identity checks that will break for multi-child/
      new-signup parents if left unrewritten; both are low-risk, mechanically similar rewrites.
    - What's unclear: whether the owner wants Phase 2 scoped strictly to the literal

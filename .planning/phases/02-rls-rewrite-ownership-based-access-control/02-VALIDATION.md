@@ -1,8 +1,8 @@
 ---
 phase: 2
 slug: rls-rewrite-ownership-based-access-control
-status: draft
-nyquist_compliant: false
+status: approved
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-08-01
 ---
@@ -79,4 +79,4 @@ _Status legend: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 - [ ] Feedback latency < 90s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-08-02 (plan-checker VERIFICATION PASSED; Nyquist Dimension 8 satisfied — `wave_0_complete` flips true once Wave 0 executes)
