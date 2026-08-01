@@ -99,6 +99,32 @@ is a planning-time scoping call against that inventory — not re-opened here.
   - (b) a **non-connected** teacher returns zero rows,
   - (c) the **connected** teacher still sees it.
 
+### Owner Decisions (resolved during plan-phase research, 2026-08-01)
+
+Research live-verified the worklist against production (`hdltcvgqrtxuxgjdvzzu`) and corrected the
+kickoff estimate: the real RLS-02 worklist is **~24 tables / ~39 new sibling policies**, not
+"32 tables / 62 policies" (same disclosure discipline as Phase 1's 30→17 FK correction). Three
+edge cases the research flagged were resolved by the owner:
+
+- **D-31 — `user_preferences` is CHILD-scoped.** Add a parent-ownership sibling policy
+  (`student_id IN (SELECT owned_child_ids())`) alongside its legacy `student_id = auth.uid()`
+  policy, exactly like the other child-scoped tables. Rationale: notification/reminder/sound
+  settings are per-learner, not one-per-account. (Resolves RESEARCH Open Question 2; the research
+  said "do not default" — this is the owner default.)
+- **D-32 — `accessories` and `assignments` are IN scope.** Both carry live identity checks that
+  break for multi-child / new-signup parents even though their shape differs from the literal
+  `student_id = auth.uid()` pattern (accessories uses an `EXISTS` gate; assignments a correlated
+  check into `class_enrollments`). Sweep them in now — low rewrite cost, and deferring leaves a
+  known "looks-done-but-isn't" breakage live. (Resolves RESEARCH Open Question 3.)
+- **D-33 — Group B FK-target gap is documented, not fixed here.** The 7 Group B tables
+  (`class_enrollments`, `current_streak`, `highest_streak`, `last_practiced_date`,
+  `practice_sessions`, `student_achievements`, `student_profiles`) have `student_id` FK'd to
+  `auth.users` rather than `students`/`child_profiles`. Their **policies are still rewritten this
+  phase** (the predicate works via UUID reuse regardless of FK target), but the FK-target
+  correction itself stays OUT of scope (matches the RLS-only phase boundary). The planner MUST
+  record this gap in the phase SUMMARY/handoff so Phase 8 inherits it as a documented known item,
+  not a rediscovery. (Resolves RESEARCH Open Question 1 with the researcher's recommended default.)
+
 ### Claude's Discretion
 
 Resolve during research/planning without returning to the owner:
