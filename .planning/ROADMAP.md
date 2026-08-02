@@ -106,7 +106,7 @@ feature is removed entirely so no child voice data is collected at all.
    **Plans**: 5 plans across 4 waves
    - [x] 02-01-PLAN.md — Wave 1: committed policy inventory (~24 tables/~39 policies) + SQL-assertion suite + 2nd-family seed
    - [x] 02-02-PLAN.md — Wave 1: owned_child_ids() helper + EXPLAIN ANALYZE inlining verdict (RLS-01 gate)
-   - [ ] 02-03-PLAN.md — Wave 2: the atomic additive dual-policy migration + down-migration (helper + ~39 siblings + edge cases + award_xp/check_rate_limit re-point)
+   - [x] 02-03-PLAN.md — Wave 2: the atomic additive dual-policy migration + down-migration (helper + ~39 siblings + edge cases + award_xp/check_rate_limit re-point)
    - [ ] 02-04-PLAN.md — Wave 3: [BLOCKING] rehearsal-branch apply + RLS-01..RLS-06 verification (adversarial + EXPLAIN + test:run)
    - [ ] 02-05-PLAN.md — Wave 4: /gsd-secure-phase 2 + owner-gated production apply + D-29 smoke test + Phase 8 handoff (autonomous:no)
          **Pitfalls to avoid**: Pitfall 1 (USING/WITH CHECK mismatch on UPDATE/INSERT), Pitfall 3 (recursive RLS via the parent→child_profiles→teacher chain), Pitfall 4 (ownership-subquery performance cliff — use the owner-first non-correlated `IN` pattern, never a correlated `EXISTS`).
