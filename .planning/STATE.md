@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
 status: executing
-stopped_at: Phase 2 context gathered
-last_updated: "2026-08-02T06:27:28.253Z"
-last_activity: 2026-08-02 -- Phase 02 execution started
+stopped_at: Phase 2 Wave 3 complete (rehearsal PASS) — Wave 4 (owner-gated) next
+last_updated: "2026-08-03T00:00:00.000Z"
+last_activity: 2026-08-03 -- Phase 02 Wave 3 (plan 02-04) rehearsal PASS
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 10
-  completed_plans: 5
-  percent: 50
+  completed_plans: 9
+  percent: 90
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 ## Current Position
 
 Phase: 02 (rls-rewrite-ownership-based-access-control) — EXECUTING
-Plan: 1 of 5
-Status: Executing Phase 02
-Last activity: 2026-08-02 -- Phase 02 execution started
+Plan: 4 of 5 complete (Wave 3 done); Wave 4 (plan 02-05, owner-gated) next
+Status: Executing Phase 02 — Wave 3 rehearsal PASS
+Last activity: 2026-08-03 -- Phase 02 Wave 3 (plan 02-04) rehearsal PASS
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████████░] ~90% (4 of 5 plans; Wave 4 = production apply, owner-gated)
 
 ## Performance Metrics
 
@@ -153,10 +153,11 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-**Stopped at:** Phase 2 context gathered
-**Next action:** `/gsd-discuss-phase 2` (RLS Rewrite) to capture design decisions, THEN `/gsd-plan-phase 2`. Owner chose discuss-first (Phase 2 is high-blast-radius: 62 policies / 32 tables). Phase dir `.planning/phases/02-rls-rewrite-ownership-based-access-control/` already created (empty). Owner skipped the optional Phase 1 code-review gate. Phase 1 `.down.sql` remains the clean reverse path if ever needed. Key Phase 2 traps (from milestone memory): design the `SECURITY DEFINER STABLE` ownership helper BEFORE rewriting any of the 62 policies; use non-correlated `IN` subqueries (initPlan-cacheable) not inline correlated subqueries; avoid recursion (42P17) in teacher→connection→child→parent chains; prove child-profile isolation with an adversarial test; every rewritten INSERT/UPDATE needs explicit `WITH CHECK`.
-**Resume note (evidence):** No-branch dry-run (SQL-Editor `BEGIN…ROLLBACK`) caught a harness-only bug (`sql_identifier[] = text[]`, fixed `ba95f36e`; migration file unchanged since `d4ce32e8`). Owner applied `20260722120000_add_parents_and_child_profiles.sql` ("no errors"). Live read-only verification 12/12 PASS; all sync/cascade triggers present (SECURITY DEFINER), pre-existing students triggers untouched; test suite identical pre/post (2160 passed / 0 failed — D-29). Full trail in `01-apply-log.md`.
+**Stopped at:** Phase 2 Wave 3 complete — plan 02-04 rehearsal PASS (owner-run, transaction-wrapped, rolled back on production).
+**Next action:** Execute Wave 4 = plan 02-05 (`autonomous: false`, owner-gated). This is `/gsd-secure-phase 2` (security review) → the actual owner-gated production apply of `20260801120000_rls_ownership_rewrite.sql` → post-apply D-29 verification (empirical EXPLAIN before/after, Supabase Advisors, `get_logs` 42P17 check — the pieces the rehearsal explicitly deferred) → Phase 8 handoff doc. Requires human checkpoints; do not auto-apply to production.
+**Resume note (evidence — Wave 3):** The consolidated rehearsal script `02-rehearsal-runbook.sql` was run by the owner in the Supabase SQL Editor as one execution (`BEGIN … ROLLBACK` wrapping up-migration → synthetic seed → assertion suite → down-migration → re-apply). All ASSERTs passed (reaching the final post-rollback `SELECT`, which returned all-zeros, proves it — any failed ASSERT raises P0004 first). Verdicts: RLS-01/02/03/04 + all 6 RLS-06 adversarial cases PASS; exactly 50 `_parent_owner` policies (matches `02-policy-inventory.md`); down-migration clean-reverses; re-apply idempotent. Nothing persisted in production. Full trail + per-req verdict table in `02-apply-log.md`; harness-only fixes (temp-table GRANT, synthetic teachers, correlated parent/child CTE, 51→50 count) documented there — migration/down-migration files unchanged. Commit `e86b4316`.
+**Still to run separately:** `npm run test:run` (DB-independent, mocked) per CLAUDE.md.
 
 ---
 
-_State updated: 2026-07-22 — Phase 1 (Identity Schema Expand) planned: 5 plans across 4 waves, IDENT-01…05 fully covered, plan-checker verified (no blockers), 5 robustness fixes applied. Next: `/gsd-execute-phase 1`._
+_State updated: 2026-08-03 — Phase 2 Wave 3 (plan 02-04) rehearsal PASS. 9/10 plans complete. Next: Wave 4 (plan 02-05, owner-gated production apply). Prior: 2026-07-22 Phase 1 planned/executed._
