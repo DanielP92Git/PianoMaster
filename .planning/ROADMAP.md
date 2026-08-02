@@ -104,8 +104,8 @@ feature is removed entirely so no child voice data is collected at all.
 4. An adversarial test proves a parent's session returns zero rows for another family's child profile or child-scoped data — proof, not inspection
 5. Supabase Advisors/logs show no `42P17` recursion errors, and `EXPLAIN ANALYZE` against real 20-student row counts shows no measurable regression versus the legacy policies
    **Plans**: 5 plans across 4 waves
-   - [ ] 02-01-PLAN.md — Wave 1: committed policy inventory (~24 tables/~39 policies) + SQL-assertion suite + 2nd-family seed
-   - [ ] 02-02-PLAN.md — Wave 1: owned_child_ids() helper + EXPLAIN ANALYZE inlining verdict (RLS-01 gate)
+   - [x] 02-01-PLAN.md — Wave 1: committed policy inventory (~24 tables/~39 policies) + SQL-assertion suite + 2nd-family seed
+   - [x] 02-02-PLAN.md — Wave 1: owned_child_ids() helper + EXPLAIN ANALYZE inlining verdict (RLS-01 gate)
    - [ ] 02-03-PLAN.md — Wave 2: the atomic additive dual-policy migration + down-migration (helper + ~39 siblings + edge cases + award_xp/check_rate_limit re-point)
    - [ ] 02-04-PLAN.md — Wave 3: [BLOCKING] rehearsal-branch apply + RLS-01..RLS-06 verification (adversarial + EXPLAIN + test:run)
    - [ ] 02-05-PLAN.md — Wave 4: /gsd-secure-phase 2 + owner-gated production apply + D-29 smoke test + Phase 8 handoff (autonomous:no)
