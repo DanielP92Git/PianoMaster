@@ -40,11 +40,11 @@ These were open questions all four researchers surfaced independently. They are 
 ### Access Control (RLS)
 
 - [ ] **RLS-01**: A single `SECURITY DEFINER STABLE` ownership helper function is the one source of truth for "does this parent own this child profile", designed and tested before any policy is rewritten
-- [ ] **RLS-02**: Every policy that previously read `student_id = auth.uid()` authorizes by ownership instead, using a non-correlated `IN` subquery Postgres can cache as an initPlan
-- [ ] **RLS-03**: Every rewritten INSERT and UPDATE policy declares `WITH CHECK` explicitly, verified by querying `pg_policies` across all 32 tables rather than by reading diffs
-- [ ] **RLS-04**: No policy chain produces recursion (`42P17`) once teacher → connection → child profile → parent is in place
-- [ ] **RLS-05**: Rewritten policies are measured against real row counts and show no per-row performance regression
-- [ ] **RLS-06**: A child profile is unreachable by any authenticated user who does not own it, proven by an adversarial test rather than inspection
+- [x] **RLS-02**: Every policy that previously read `student_id = auth.uid()` authorizes by ownership instead, using a non-correlated `IN` subquery Postgres can cache as an initPlan
+- [x] **RLS-03**: Every rewritten INSERT and UPDATE policy declares `WITH CHECK` explicitly, verified by querying `pg_policies` across all 32 tables rather than by reading diffs
+- [x] **RLS-04**: No policy chain produces recursion (`42P17`) once teacher → connection → child profile → parent is in place
+- [x] **RLS-05**: Rewritten policies are measured against real row counts and show no per-row performance regression
+- [x] **RLS-06**: A child profile is unreachable by any authenticated user who does not own it, proven by an adversarial test rather than inspection
 
 ### Signup & Age Gate (SIGNUP)
 
@@ -124,11 +124,11 @@ These were open questions all four researchers surfaced independently. They are 
 | IDENT-04    | Phase 1 — Identity Schema Expand                         | Complete |
 | IDENT-05    | Phase 1 — Identity Schema Expand                         | Complete |
 | RLS-01      | Phase 2 — RLS Rewrite                                    | Pending  |
-| RLS-02      | Phase 2 — RLS Rewrite                                    | Pending  |
-| RLS-03      | Phase 2 — RLS Rewrite                                    | Pending  |
-| RLS-04      | Phase 2 — RLS Rewrite                                    | Pending  |
-| RLS-05      | Phase 2 — RLS Rewrite                                    | Pending  |
-| RLS-06      | Phase 2 — RLS Rewrite                                    | Pending  |
+| RLS-02      | Phase 2 — RLS Rewrite                                    | Complete |
+| RLS-03      | Phase 2 — RLS Rewrite                                    | Complete |
+| RLS-04      | Phase 2 — RLS Rewrite                                    | Complete |
+| RLS-05      | Phase 2 — RLS Rewrite                                    | Complete |
+| RLS-06      | Phase 2 — RLS Rewrite                                    | Complete |
 | SIGNUP-01   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
 | SIGNUP-02   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
 | SIGNUP-03   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
