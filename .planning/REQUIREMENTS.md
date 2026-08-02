@@ -39,7 +39,7 @@ These were open questions all four researchers surfaced independently. They are 
 
 ### Access Control (RLS)
 
-- [ ] **RLS-01**: A single `SECURITY DEFINER STABLE` ownership helper function is the one source of truth for "does this parent own this child profile", designed and tested before any policy is rewritten
+- [x] **RLS-01**: A single `SECURITY DEFINER STABLE` ownership helper function is the one source of truth for "does this parent own this child profile", designed and tested before any policy is rewritten
 - [x] **RLS-02**: Every policy that previously read `student_id = auth.uid()` authorizes by ownership instead, using a non-correlated `IN` subquery Postgres can cache as an initPlan
 - [x] **RLS-03**: Every rewritten INSERT and UPDATE policy declares `WITH CHECK` explicitly, verified by querying `pg_policies` across all 32 tables rather than by reading diffs
 - [x] **RLS-04**: No policy chain produces recursion (`42P17`) once teacher → connection → child profile → parent is in place
@@ -123,7 +123,7 @@ These were open questions all four researchers surfaced independently. They are 
 | IDENT-03    | Phase 1 — Identity Schema Expand                         | Complete |
 | IDENT-04    | Phase 1 — Identity Schema Expand                         | Complete |
 | IDENT-05    | Phase 1 — Identity Schema Expand                         | Complete |
-| RLS-01      | Phase 2 — RLS Rewrite                                    | Pending  |
+| RLS-01      | Phase 2 — RLS Rewrite                                    | Complete |
 | RLS-02      | Phase 2 — RLS Rewrite                                    | Complete |
 | RLS-03      | Phase 2 — RLS Rewrite                                    | Complete |
 | RLS-04      | Phase 2 — RLS Rewrite                                    | Complete |
