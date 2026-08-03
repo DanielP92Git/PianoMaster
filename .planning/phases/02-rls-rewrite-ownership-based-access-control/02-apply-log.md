@@ -193,3 +193,12 @@ behind the owner gate. Rehearsal branch: none was created (owner declined
 `supabase branches create`, billed) — nothing to delete.
 
 Proceeding to Task 3 (D-29 zero-visible-change verification + Phase 8 handoff).
+
+## Task 3 — D-29 zero-visible-change verification
+
+`npm run test:run`: **2160 passed, 0 failed** (112 test files passed, 2 skipped
+pre-existing/unrelated, 12 todo pre-existing). No new failures vs baseline.
+
+**Awaiting:** owner smoke-test sign-off on a real production account (parent +
+child) — trail progress, XP, streak, dashboard render identically; parent can
+read/write their own child's data through the app.
