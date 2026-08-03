@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
 status: executing
-stopped_at: Phase 2 Wave 3 complete (rehearsal PASS) — Wave 4 (owner-gated) next
+stopped_at: Phase 2 COMPLETE (production apply verified) — Phase 3 next
 last_updated: "2026-08-03T00:00:00.000Z"
-last_activity: 2026-08-03 -- Phase 02 Wave 3 (plan 02-04) rehearsal PASS
+last_activity: 2026-08-03 -- Phase 02 Wave 4 (plan 02-05) complete, Phase 2 closed
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 10
-  completed_plans: 9
-  percent: 90
+  completed_plans: 10
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 02 — rls-rewrite-ownership-based-access-control
+**Current focus:** Phase 03 — parent-only-signup-age-gate (next, not yet planned)
 
 ## Current Position
 
-Phase: 02 (rls-rewrite-ownership-based-access-control) — EXECUTING
-Plan: 4 of 5 complete (Wave 3 done); Wave 4 (plan 02-05, owner-gated) next
-Status: Executing Phase 02 — Wave 3 rehearsal PASS
-Last activity: 2026-08-03 -- Phase 02 Wave 3 (plan 02-04) rehearsal PASS
+Phase: 02 (rls-rewrite-ownership-based-access-control) — COMPLETE
+Plan: 5 of 5 complete (all waves done); Phase 2 closed 2026-08-03
+Status: Phase 02 COMPLETE — production apply verified, Phase 8 handoff written
+Last activity: 2026-08-03 -- Phase 02 Wave 4 (plan 02-05) complete: secure-phase PASS, production apply verified, D-29 smoke test approved
 
-Progress: [█████████░] ~90% (4 of 5 plans; Wave 4 = production apply, owner-gated)
+Progress: [██████████] 100% (5 of 5 plans; Phase 2 fully complete)
 
 ## Performance Metrics
 
@@ -153,11 +153,11 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-**Stopped at:** Phase 2 Wave 3 complete — plan 02-04 rehearsal PASS (owner-run, transaction-wrapped, rolled back on production).
-**Next action:** Execute Wave 4 = plan 02-05 (`autonomous: false`, owner-gated). This is `/gsd-secure-phase 2` (security review) → the actual owner-gated production apply of `20260801120000_rls_ownership_rewrite.sql` → post-apply D-29 verification (empirical EXPLAIN before/after, Supabase Advisors, `get_logs` 42P17 check — the pieces the rehearsal explicitly deferred) → Phase 8 handoff doc. Requires human checkpoints; do not auto-apply to production.
-**Resume note (evidence — Wave 3):** The consolidated rehearsal script `02-rehearsal-runbook.sql` was run by the owner in the Supabase SQL Editor as one execution (`BEGIN … ROLLBACK` wrapping up-migration → synthetic seed → assertion suite → down-migration → re-apply). All ASSERTs passed (reaching the final post-rollback `SELECT`, which returned all-zeros, proves it — any failed ASSERT raises P0004 first). Verdicts: RLS-01/02/03/04 + all 6 RLS-06 adversarial cases PASS; exactly 50 `_parent_owner` policies (matches `02-policy-inventory.md`); down-migration clean-reverses; re-apply idempotent. Nothing persisted in production. Full trail + per-req verdict table in `02-apply-log.md`; harness-only fixes (temp-table GRANT, synthetic teachers, correlated parent/child CTE, 51→50 count) documented there — migration/down-migration files unchanged. Commit `e86b4316`.
-**Still to run separately:** `npm run test:run` (DB-independent, mocked) per CLAUDE.md.
+**Stopped at:** Phase 2 COMPLETE (2026-08-03) — plan 02-05 (Wave 4) closed all three blocking tasks.
+**Next action:** Begin Phase 3 (Parent-Only Signup & Age Gate). Plans are TBD — run `/gsd-plan-phase 3` (research + planning) before executing. Depends on Phase 1 only (already done); no blockers.
+**Resume note (evidence — Wave 4 / Phase 2 close):** `/gsd-secure-phase 2` closed 19/19 threats (`02-SECURITY.md`, `threats_open: 0`). Production apply: owner ran `20260801120000_rls_ownership_rewrite.sql` directly in the Supabase SQL Editor (both the CLI `db push` path and the MCP `apply_migration` path were blocked by design — auto-mode classifier and read-only MCP connection respectively), no errors. Post-apply read-only audits all PASS: 50 `_parent_owner` policies live, `owned_child_ids()` confirmed SECURITY INVOKER + STABLE, RLS-02/03/04 structural assertions PASS, Supabase Advisors show zero ERROR and zero 42P17 anywhere (460 `multiple_permissive_policies` WARNs are the expected additive dual-policy design, not a regression). `npm run test:run`: 2160/2160 passed. Owner smoke-tested `danieltest@gmail.com` (parent, 1 child, 71 skill-progress rows, 33,093 XP/level 25, active streak, 50 practice sessions) — approved, zero visible change, parent read/write confirmed. `02-phase8-handoff.md` written (D-33 Group B FK gap, legacy-drop candidate query, A2 finding). Full trail in `02-apply-log.md`, `02-05-SUMMARY.md`. Also discovered (not fixed — out of this phase's scope) a pre-existing migration-history drift: 5 earlier migrations show unrecorded in `npx supabase migration list` despite being live in production (applied out-of-band via SQL Editor in prior phases) — documented in `02-05-SUMMARY.md` deviations, does not affect Phase 2's own correctness.
+**Note for Phase 8:** `02-phase8-handoff.md` is the authoritative handoff doc — read it before planning Phase 8's legacy-policy-drop step.
 
 ---
 
-_State updated: 2026-08-03 — Phase 2 Wave 3 (plan 02-04) rehearsal PASS. 9/10 plans complete. Next: Wave 4 (plan 02-05, owner-gated production apply). Prior: 2026-07-22 Phase 1 planned/executed._
+_State updated: 2026-08-03 — Phase 2 COMPLETE (plan 02-05, Wave 4: secure-phase PASS, production apply verified, D-29 smoke test approved, Phase 8 handoff written). 10/10 plans complete for Phases 1-2. Next: Phase 3 (Parent-Only Signup & Age Gate) — needs planning. Prior: 2026-07-22 Phase 1 planned/executed._

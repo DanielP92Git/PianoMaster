@@ -62,7 +62,7 @@ feature is removed entirely so no child voice data is collected at all.
   touched.
 
 - [x] **Phase 1: Identity Schema Expand** - Additive `parents`/`child_profiles` schema with UUID-reuse backfill, fully reversible, zero client-visible change — APPLIED + VERIFIED 2026-07-30 (verifier PASS)
-- [ ] **Phase 2: RLS Rewrite — Ownership-Based Access Control** - All 62 policies across 32 tables rewritten to authorize by parent ownership via a tested `SECURITY DEFINER` helper, rolled out dual-policy, own security-review gate
+- [x] **Phase 2: RLS Rewrite — Ownership-Based Access Control** - All 62 policies across 32 tables rewritten to authorize by parent ownership via a tested `SECURITY DEFINER` helper, rolled out dual-policy, own security-review gate — APPLIED + VERIFIED 2026-08-03 (secure-phase PASS 19/19, post-apply audits PASS, owner smoke test approved)
 - [ ] **Phase 3: Parent-Only Signup & Age Gate** - Neutral DOB gate blocks under-18 self-signup through every entry point including OAuth; registration collects only parent data
 - [ ] **Phase 4: Child Profiles & Parental Gating** - Parent-managed child profile CRUD, ungated sibling switching, and a route-level parental gate covering settings/billing/profile management/data rights
 - [ ] **Phase 5: Subscription Re-Pointing** - `parent_subscriptions` becomes family-wide, sandbox-verified against Lemon Squeezy before the 3 live subscriptions are touched
@@ -108,7 +108,7 @@ feature is removed entirely so no child voice data is collected at all.
    - [x] 02-02-PLAN.md — Wave 1: owned_child_ids() helper + EXPLAIN ANALYZE inlining verdict (RLS-01 gate)
    - [x] 02-03-PLAN.md — Wave 2: the atomic additive dual-policy migration + down-migration (helper + ~39 siblings + edge cases + award_xp/check_rate_limit re-point)
    - [x] 02-04-PLAN.md — Wave 3: [BLOCKING] transaction-wrapped rehearsal (owner-run, production, rolled back) — RLS-01..RLS-06 PASS; RLS-05 empirical EXPLAIN deferred to Wave 4 (D-29)
-   - [ ] 02-05-PLAN.md — Wave 4: /gsd-secure-phase 2 + owner-gated production apply + D-29 smoke test + Phase 8 handoff (autonomous:no)
+   - [x] 02-05-PLAN.md — Wave 4: /gsd-secure-phase 2 + owner-gated production apply + D-29 smoke test + Phase 8 handoff (autonomous:no)
          **Pitfalls to avoid**: Pitfall 1 (USING/WITH CHECK mismatch on UPDATE/INSERT), Pitfall 3 (recursive RLS via the parent→child_profiles→teacher chain), Pitfall 4 (ownership-subquery performance cliff — use the owner-first non-correlated `IN` pattern, never a correlated `EXISTS`).
          **Research flag**: Highest-stakes phase in the milestone. Needs a dedicated `/gsd-secure-phase` pass — this project already ran one for v3.7's much smaller `note_mastery` JSONB column change; this phase is 62 policies across 32 tables and must not be folded into feature work.
          **UI hint**: no
