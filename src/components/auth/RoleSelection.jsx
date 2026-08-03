@@ -3,22 +3,60 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
 import supabase from "../../services/supabase";
+import { logout } from "../../services/apiAuth";
 import { AuthLanguageToggle } from "./AuthLanguageToggle";
 import AuthShell from "./AuthShell";
 import AuthCta from "./AuthCta";
 import BrandTile from "./BrandTile";
 import RoleCard from "./RoleCard";
+import { AgeGate } from "./AgeGate";
+import { AgeBlockScreen } from "./AgeBlockScreen";
+
+// Two-step internal flow: role pick, then the 18+ DOB gate (D-05/D-06).
+// Mirrors SignupForm's StepDots progress affordance so this reads as one
+// continuous step-flow rather than two disconnected screens (UI-SPEC).
+const STEPS = ["role", "dob-gate"];
+
+function StepDots({ step, className = "" }) {
+  const currentIndex = STEPS.indexOf(step);
+  return (
+    <div className={`flex gap-2 ${className}`}>
+      {STEPS.map((s, i) => (
+        <div
+          key={s}
+          className={`h-2 w-2 rounded-full transition-all duration-300 ${
+            i === currentIndex
+              ? "scale-125 bg-indigo-400"
+              : i < currentIndex
+                ? "bg-indigo-400/50"
+                : "bg-white/20"
+          }`}
+        />
+      ))}
+    </div>
+  );
+}
 
 /**
  * Full-screen interrupt for an authenticated user with no profile row — in
  * practice, a new OAuth sign-up. Rendered by AuthenticatedWrapper ahead of the
  * router, so it has no route of its own.
  *
- * There is deliberately no back affordance: the user has a session but no
- * profile, so returning to /login would only bounce them straight back here.
+ * Retrofitted (Phase 3, D-05/D-06/D-07) into a gated role -> DOB completion
+ * flow: a returning user (has a profile — resolved by getCurrentUser) never
+ * reaches this screen. A brand-new user must pick a role, then pass the 18+
+ * DOB gate BEFORE any profile row is inserted. An under-18 user is signed out
+ * via logout() and shown the block screen; no profile row is ever created for
+ * them, leaving the Google-created auth.users row profile-less and inert.
+ *
+ * There is deliberately no back affordance to /login: the user has a session
+ * but no profile, so returning to /login would only bounce them straight
+ * back here.
  */
 export function RoleSelection({ user, onRoleSelected }) {
-  const [selectedRole, setSelectedRole] = useState(null);
+  const [step, setStep] = useState("role"); // "role" | "dob-gate"
+  const [selectedRole, setSelectedRole] = useState(null); // "parent" | "teacher"
+  const [blocked, setBlocked] = useState(false);
   const queryClient = useQueryClient();
   const { t, i18n } = useTranslation("common");
   const isHebrew = i18n.language?.startsWith("he");
@@ -27,7 +65,7 @@ export function RoleSelection({ user, onRoleSelected }) {
   const headingFont = isHebrew ? "font-hebrew font-extrabold" : "font-playful";
 
   const { mutate: createProfile, isPending } = useMutation({
-    mutationFn: async (role) => {
+    mutationFn: async ({ role }) => {
       const firstName =
         user.user_metadata?.full_name?.split(" ")[0] ||
         user.email?.split("@")[0] ||
@@ -53,15 +91,17 @@ export function RoleSelection({ user, onRoleSelected }) {
         if (error) throw error;
         return data;
       } else {
+        // Parent branch (D-06) — the only insert reachable is downstream of
+        // the AgeGate's onSubmit (18+ verified). No child data is written
+        // here; the parent row takes only display_name + the age-verified
+        // marker (D-09 — the DOB itself is never persisted).
         const { data, error } = await supabase
-          .from("students")
+          .from("parents")
           .insert([
             {
               id: user.id,
-              first_name: firstName,
-              email: user.email,
-              username: `user${Math.random().toString(36).substr(2, 4)}`,
-              level: "Beginner",
+              display_name: firstName || null,
+              age_verified_at: new Date().toISOString(),
             },
           ])
           .select()
@@ -83,10 +123,39 @@ export function RoleSelection({ user, onRoleSelected }) {
     },
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleRoleContinue = () => {
     if (!selectedRole) return;
-    createProfile(selectedRole);
+    setStep("dob-gate"); // D-05: every new OAuth account must pass the DOB gate
+  };
+
+  const handleDobSubmit = () => {
+    // D-09: the DOB itself is discarded here — only the 18+ pass/fail result
+    // (already evaluated inside AgeGate) reaches this callback.
+    createProfile({ role: selectedRole });
+  };
+
+  const handleUnder18 = async () => {
+    // D-07: sign out via the project's logout() wrapper (not raw signOut) so
+    // a blocked user's session leaves no trace on a shared device. No profile
+    // row is ever inserted, so the auth.users row stays profile-less and
+    // inert. No navigation needed — losing the session re-renders to /login;
+    // the block screen below is just a local state reset.
+    await logout();
+    setBlocked(true);
+  };
+
+  const handleTryAgain = () => {
+    setBlocked(false);
+    setStep("dob-gate");
+  };
+
+  const handleBackToLogin = () => {
+    // The block screen's "Back to login" is a state reset — losing the
+    // session (already done in handleUnder18) is what actually returns the
+    // user to /login at the app level.
+    setBlocked(false);
+    setStep("role");
+    setSelectedRole(null);
   };
 
   const heading = (
@@ -131,40 +200,56 @@ export function RoleSelection({ user, onRoleSelected }) {
             className="mb-4 h-16 w-16 short:mb-2 short:h-12 short:w-12"
             emojiClassName="text-[32px] leading-none short:text-[24px]"
           />
+          {!blocked && <StepDots step={step} className="mb-3 justify-center" />}
           {heading}
         </div>
       }
     >
-      <div className="mb-6 hidden lg:block">{heading}</div>
+      <div className="mb-6 hidden lg:block">
+        {!blocked && <StepDots step={step} className="mb-4 justify-start" />}
+        {heading}
+      </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <RoleCard
-          selected={selectedRole === "student"}
-          onClick={() => setSelectedRole("student")}
-          tileClassName="from-[#4f46e5] to-[#3b82f6]"
-          emoji="🎹"
-          label={t("auth.roleSelection.student")}
-          description={t("auth.roleSelection.studentDesc")}
+      {blocked ? (
+        <AgeBlockScreen
+          onTryAgain={handleTryAgain}
+          onBackToLogin={handleBackToLogin}
         />
-        <RoleCard
-          selected={selectedRole === "teacher"}
-          onClick={() => setSelectedRole("teacher")}
-          tileClassName="from-[#c026d3] to-[#a21caf]"
-          emoji="🎓"
-          label={t("auth.roleSelection.teacher")}
-          description={t("auth.roleSelection.teacherDesc")}
-        />
+      ) : step === "role" ? (
+        <div className="flex flex-col gap-3">
+          <RoleCard
+            selected={selectedRole === "parent"}
+            onClick={() => setSelectedRole("parent")}
+            tileClassName="from-[#4f46e5] to-[#3b82f6]"
+            emoji="🎹"
+            label={t("auth.signup.role.parent")}
+            description={t("auth.signup.role.parentDesc")}
+          />
+          <RoleCard
+            selected={selectedRole === "teacher"}
+            onClick={() => setSelectedRole("teacher")}
+            tileClassName="from-[#c026d3] to-[#a21caf]"
+            emoji="🎓"
+            label={t("auth.signup.role.teacher")}
+            description={t("auth.signup.role.teacherDesc")}
+          />
 
-        <AuthCta
-          variant="secondary"
-          type="submit"
-          loading={isPending}
-          disabled={!selectedRole}
-          className="mt-2"
-        >
-          {t("auth.roleSelection.continue")}
-        </AuthCta>
-      </form>
+          <AuthCta
+            variant="secondary"
+            onClick={handleRoleContinue}
+            disabled={!selectedRole}
+            className="mt-2"
+          >
+            {t("auth.signup.role.continue")}
+          </AuthCta>
+        </div>
+      ) : (
+        <AgeGate
+          onSubmit={handleDobSubmit}
+          onUnder18={handleUnder18}
+          disabled={isPending}
+        />
+      )}
     </AuthShell>
   );
 }
