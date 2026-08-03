@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { SocialLogin } from "./SocialLogin";
 import { useSignup } from "../../features/authentication/useSignup";
 import { AgeGate } from "./AgeGate";
-import { ParentEmailStep } from "./ParentEmailStep";
+import { AgeBlockScreen } from "./AgeBlockScreen";
 import { AuthLanguageToggle } from "./AuthLanguageToggle";
 import AuthShell from "./AuthShell";
 import AuthInput from "./AuthInput";
@@ -12,9 +12,11 @@ import AuthCta from "./AuthCta";
 import CircleIconButton from "./CircleIconButton";
 import RoleCard from "./RoleCard";
 
-// Step sequences per role (D-01, D-02, D-03)
-const STUDENT_STEPS = ["role", "birth-year", "parent-email", "credentials"];
-const TEACHER_STEPS = ["role", "credentials"];
+// Step sequences per role (D-01: role -> dob-gate -> credentials for BOTH
+// branches, so the age gate cannot be dodged by picking Teacher; D-04 removes
+// the old pre-gate/pre-credentials steps entirely)
+const PARENT_STEPS = ["role", "dob-gate", "credentials"];
+const TEACHER_STEPS = ["role", "dob-gate", "credentials"];
 
 const BENEFIT_KEYS = [
   "auth.signup.benefits.games",
@@ -24,11 +26,10 @@ const BENEFIT_KEYS = [
 
 /**
  * StepDots — progress indicator showing current position in the wizard.
- * Shows 4 dots for students, 2 for teachers.
- * Before role is selected, optimistically shows 4 dots (common student path).
+ * Shows 3 dots for both roles now that both go through the dob-gate (D-01).
  */
 function StepDots({ step, role, className = "" }) {
-  const steps = role === "teacher" ? TEACHER_STEPS : STUDENT_STEPS;
+  const steps = role === "teacher" ? TEACHER_STEPS : PARENT_STEPS;
   const currentIndex = steps.indexOf(step);
   return (
     <div className={`flex gap-2 ${className}`}>
@@ -56,103 +57,69 @@ function SignupForm({ onBackToLogin }) {
   // arbitrary system face. Use the app's Hebrew stack at a heavy weight instead.
   const headingFont = isHebrew ? "font-hebrew font-extrabold" : "font-playful";
 
-  // Step state: 'role' | 'birth-year' | 'parent-email' | 'credentials'
+  // Step state: 'role' | 'dob-gate' | 'age-block' | 'credentials'
   const [step, setStep] = useState("role");
 
   // Data collected across steps
-  const [role, setRole] = useState(null); // 'student' | 'teacher' | null
-  const [birthYear, setBirthYear] = useState(null); // integer | null
-  const [parentEmail, setParentEmail] = useState(null); // string | null
+  const [role, setRole] = useState(null); // 'parent' | 'teacher' | null
 
   // Credentials form state (credentials step)
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [parentName, setParentName] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const { signup, isPending } = useSignup();
   const [error, setError] = useState(null);
 
-  // Derived: is the student under 13? (per D-10 January 1st convention)
-  const isUnder13 =
-    birthYear != null && new Date().getFullYear() - birthYear < 13;
-
   // --- Step navigation handlers ---
 
-  // Step 1: Role selection (D-02, D-03) — selection only; `handleRoleContinue`
+  // Step 1: Role selection (D-02) — selection only; `handleRoleContinue`
   // performs the navigation so the card design can show a selected state.
   const handleRoleSelect = (selectedRole) => {
     setRole(selectedRole);
-    // Reset downstream state when role changes (pitfall 1 from RESEARCH.md)
-    setBirthYear(null);
-    setParentEmail(null);
   };
 
   const handleRoleContinue = () => {
     if (!role) return;
-    if (role === "teacher") {
-      setStep("credentials"); // D-03: teachers skip birth year + parent email
-    } else {
-      setStep("birth-year"); // D-02: students go to birth year
-    }
+    setStep("dob-gate"); // D-01: every role goes through the DOB gate — a
+    // minor cannot pick Teacher to dodge the age check
   };
 
-  // Step 2: Birth year (students only, D-02)
-  const handleBirthYearSubmit = (year) => {
-    setBirthYear(year);
-    const under13 = new Date().getFullYear() - year < 13;
-    if (under13) {
-      setStep("parent-email"); // D-07: under-13 sees parent email step
-    } else {
-      setStep("credentials"); // 13+ skips parent email
-    }
-  };
-
-  // Step 3: Parent email (under-13 students only, D-06, D-07)
-  const handleParentEmailSubmit = (parentEmailValue) => {
-    setParentEmail(parentEmailValue);
+  // Step 2: DOB gate (both roles, D-01). DOB itself is never stored in
+  // component state beyond this call (D-09) — AgeGate discards it internally.
+  const handleDobSubmit = () => {
     setStep("credentials");
   };
 
-  const handleParentEmailSkip = () => {
-    setParentEmail(null); // D-07: skip sets null
-    setStep("credentials");
-  };
-
-  // Back navigation (D-04)
-  const handleBackFromCredentials = () => {
-    if (role === "teacher") {
-      setStep("role"); // Teacher: back to role
-    } else if (isUnder13) {
-      setStep("parent-email"); // Under-13 student: back to parent email
-    } else {
-      setStep("birth-year"); // 13+ student: back to birth year
-    }
-  };
+  // Under-18 dead-end (D-10) — no data persisted, no account created.
+  const handleUnder18 = () => setStep("age-block");
+  const handleTryAgain = () => setStep("dob-gate");
 
   // The shell owns the single back affordance; each step just names its target.
   const backTargets = {
     role: onBackToLogin,
-    "birth-year": () => setStep("role"),
-    "parent-email": () => setStep("birth-year"),
-    credentials: handleBackFromCredentials,
+    "dob-gate": () => setStep("role"),
+    "age-block": handleTryAgain,
+    credentials: () => setStep("dob-gate"),
   };
 
   // Credentials form submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!email || !password || !firstName) return;
+    if (!email || !password) return;
+    if (role === "teacher" && !firstName) return;
 
     try {
       await signup({
         email,
         password,
-        firstName,
-        lastName: lastName || "",
-        role: role || "student",
-        birthYear: role === "teacher" ? null : birthYear, // D-15: teachers have no birth year
-        parentEmail: parentEmail || null,
+        role, // "parent" | "teacher"
+        parentName: role === "parent" ? parentName || null : null,
+        firstName: role === "teacher" ? firstName : null,
+        lastName: role === "teacher" ? lastName || "" : null,
       });
     } catch (err) {
       setError(err.message);
@@ -162,8 +129,8 @@ function SignupForm({ onBackToLogin }) {
   // --- Title and subtitle per step ---
   const STEP_KEYS = {
     role: "role",
-    "birth-year": "birthYear",
-    "parent-email": "parentEmail",
+    "dob-gate": "dobGate",
+    "age-block": "dobGate",
     credentials: "credentials",
   };
   const stepKey = STEP_KEYS[step] || "credentials";
@@ -265,16 +232,16 @@ function SignupForm({ onBackToLogin }) {
         </div>
       )}
 
-      {/* STEP 1: Role Selection (D-01, D-02, D-03) */}
+      {/* STEP 1: Role Selection (D-01, D-02) */}
       {step === "role" && (
         <div className="flex flex-col gap-3">
           <RoleCard
-            selected={role === "student"}
-            onClick={() => handleRoleSelect("student")}
+            selected={role === "parent"}
+            onClick={() => handleRoleSelect("parent")}
             tileClassName="from-[#4f46e5] to-[#3b82f6]"
             emoji="🎹"
-            label={t("auth.signup.role.student")}
-            description={t("auth.signup.role.studentDesc")}
+            label={t("auth.signup.role.parent")}
+            description={t("auth.signup.role.parentDesc")}
           />
           <RoleCard
             selected={role === "teacher"}
@@ -294,56 +261,90 @@ function SignupForm({ onBackToLogin }) {
             {t("auth.signup.role.continue")}
           </AuthCta>
 
+          {/* Entry-screen Privacy link (D-12, SIGNUP-05) — same markup/classes
+              as the existing credentials-step Terms/Privacy line below. */}
+          <p className="text-center text-[11.5px] leading-[1.5] text-white/50">
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-white/75 underline transition-colors hover:text-white"
+            >
+              {t("auth.signup.terms.privacyLink")}
+            </a>
+          </p>
+
           {alreadyHaveAccount}
         </div>
       )}
 
-      {/* STEP 2: Birth Year (students only, D-02) */}
-      {step === "birth-year" && (
-        <AgeGate onSubmit={handleBirthYearSubmit} disabled={isPending} />
-      )}
-
-      {/* STEP 3: Parent Email (under-13 students only, D-06, D-07) */}
-      {step === "parent-email" && (
-        <ParentEmailStep
-          onSubmit={handleParentEmailSubmit}
-          onSkip={handleParentEmailSkip}
+      {/* STEP 2: DOB Gate (both roles, D-01) */}
+      {step === "dob-gate" && (
+        <AgeGate
+          onSubmit={handleDobSubmit}
+          onUnder18={handleUnder18}
           disabled={isPending}
         />
       )}
 
-      {/* STEP 4: Credentials + Name (D-08, D-09) */}
+      {/* STEP 2b: Under-18 dead-end (D-10, SIGNUP-02) */}
+      {step === "age-block" && (
+        <AgeBlockScreen
+          onTryAgain={handleTryAgain}
+          onBackToLogin={onBackToLogin}
+        />
+      )}
+
+      {/* STEP 3: Credentials (parent-only fields, D-04/SIGNUP-04) */}
       {step === "credentials" && (
         <>
           <form
             onSubmit={handleSubmit}
             className="flex flex-col gap-[14px] short:gap-2.5"
           >
-            <div className="grid grid-cols-2 gap-3">
+            {role === "teacher" ? (
+              <div className="grid grid-cols-2 gap-3">
+                <AuthInput
+                  id="signup-firstName"
+                  type="text"
+                  label={t("auth.signup.credentials.firstName")}
+                  icon={User}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder={t(
+                    "auth.signup.credentials.firstNamePlaceholder"
+                  )}
+                  disabled={isPending}
+                  autoComplete="given-name"
+                  required
+                />
+                <AuthInput
+                  id="signup-lastName"
+                  type="text"
+                  label={t("auth.signup.credentials.lastName")}
+                  icon={User}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder={t("auth.signup.credentials.lastNamePlaceholder")}
+                  disabled={isPending}
+                  autoComplete="family-name"
+                />
+              </div>
+            ) : (
+              // Parent path (D-04/SIGNUP-04): optional parent name only —
+              // no child first/last name is ever collected.
               <AuthInput
-                id="signup-firstName"
+                id="signup-parentName"
                 type="text"
-                label={t("auth.signup.credentials.firstName")}
+                label={t("auth.signup.parentNameLabel")}
                 icon={User}
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder={t("auth.signup.credentials.firstNamePlaceholder")}
+                value={parentName}
+                onChange={(e) => setParentName(e.target.value)}
+                placeholder={t("auth.signup.parentNameLabel")}
                 disabled={isPending}
-                autoComplete="given-name"
-                required
+                autoComplete="name"
               />
-              <AuthInput
-                id="signup-lastName"
-                type="text"
-                label={t("auth.signup.credentials.lastName")}
-                icon={User}
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder={t("auth.signup.credentials.lastNamePlaceholder")}
-                disabled={isPending}
-                autoComplete="family-name"
-              />
-            </div>
+            )}
 
             <AuthInput
               id="signup-email"
@@ -394,7 +395,7 @@ function SignupForm({ onBackToLogin }) {
               {t(
                 role === "teacher"
                   ? "auth.signup.credentials.submitTeacher"
-                  : "auth.signup.credentials.submitStudent"
+                  : "auth.signup.credentials.submitParent"
               )}
             </AuthCta>
           </form>
@@ -407,7 +408,7 @@ function SignupForm({ onBackToLogin }) {
             <span className="h-px flex-1 bg-white/15" />
           </div>
 
-          <SocialLogin mode="signup" role={role || "student"} />
+          <SocialLogin mode="signup" role={role || "parent"} />
 
           {alreadyHaveAccount}
 
