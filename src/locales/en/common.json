@@ -97,14 +97,12 @@
     "signup": {
       "titles": {
         "role": "Join PianoMaster!",
-        "birthYear": "Let's Get Started",
-        "parentEmail": "Almost There!",
+        "dobGate": "Let's Get Started",
         "credentials": "Create Account"
       },
       "subtitles": {
         "role": "How will you use PianoMaster?",
-        "birthYear": "Tell us a bit about yourself",
-        "parentEmail": "One more optional step",
+        "dobGate": "Tell us a bit about yourself",
         "credentials": "Join the musical journey!"
       },
       "role": {

@@ -97,14 +97,12 @@
     "signup": {
       "titles": {
         "role": "הצטרפו ל-PianoMaster!",
-        "birthYear": "בואו נתחיל",
-        "parentEmail": "כמעט סיימנו!",
+        "dobGate": "בואו נתחיל",
         "credentials": "יצירת חשבון"
       },
       "subtitles": {
         "role": "איך תשתמשו ב-PianoMaster?",
-        "birthYear": "ספרו לנו קצת על עצמכם",
-        "parentEmail": "עוד צעד אחד (לא חובה)",
+        "dobGate": "ספרו לנו קצת על עצמכם",
         "credentials": "הצטרפו למסע המוזיקלי!"
       },
       "role": {
