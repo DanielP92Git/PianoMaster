@@ -204,3 +204,27 @@ not a live risk. Recorded for awareness only; **D-30 is locked and this is not r
 **A2 resolved:** `students_total_score` confirmed NOT an in-scope RLS-02 table (dropped 2025-12-07,
 never recreated) — see "A2 Resolution" section above. 24 tables remains the correct in-scope count
 (no 25th table added).
+
+---
+
+## POST-APPLY PRODUCTION VERIFIER
+
+**Verified:** 2026-08-03 (post `20260801120000_rls_ownership_rewrite` production apply) · **PASS**
+
+Read-only re-query against `hdltcvgqrtxuxgjdvzzu` after the owner applied the migration via the
+Supabase SQL Editor:
+
+- `_parent_owner` policy count: **50** (matches this inventory's count exactly)
+- `owned_child_ids()`: `SECURITY INVOKER` (`prosecdef=false`), `STABLE` (`provolatile='s'`) — RLS-01 PASS
+- RLS-02 dual-policy coverage (46 table:cmd pairs, 24-table inventory): PASS, zero uncovered pairs
+- RLS-03 (every `_parent_owner` INSERT/UPDATE has non-null, non-trivial `WITH CHECK`): PASS, count = 0
+- RLS-04 static recursion guard (`child_profiles` never references `owned_child_ids()`): PASS, count = 0
+- Supabase Advisors (security + performance): zero `ERROR`, zero `42P17` recursion errors anywhere;
+  460 `multiple_permissive_policies` WARNs are the expected, by-design consequence of the additive
+  dual-policy rollout (resolved when Phase 8 drops the legacy half)
+- `npm run test:run`: 2160/2160 passed, zero new failures
+- Owner real-account smoke test (`danieltest@gmail.com`, parent with 1 child, 71 skill-progress rows,
+  33,093 XP / level 25, active streak, 50 practice sessions): APPROVED — trail/XP/streak/dashboard
+  render identically, parent read/write of own child's data confirmed working
+
+Full detail: `02-apply-log.md` §"Wave 4 Gate Log".

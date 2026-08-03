@@ -199,6 +199,14 @@ Proceeding to Task 3 (D-29 zero-visible-change verification + Phase 8 handoff).
 `npm run test:run`: **2160 passed, 0 failed** (112 test files passed, 2 skipped
 pre-existing/unrelated, 12 todo pre-existing). No new failures vs baseline.
 
-**Awaiting:** owner smoke-test sign-off on a real production account (parent +
-child) — trail progress, XP, streak, dashboard render identically; parent can
-read/write their own child's data through the app.
+**Owner smoke-test sign-off (2026-08-03):** APPROVED. Owner tested
+`danieltest@gmail.com` (parent, 1 linked child "Spirited Treble" — 71
+skill-progress rows, 33,093 XP / level 25, active streak, 50 practice
+sessions). Trail progress, XP, streak, and dashboard render identically to
+pre-apply; parent read/write of own child's data confirmed working.
+
+**Task 3 complete.** All three Plan 05 tasks closed:
+
+- Task 1: `/gsd-secure-phase 2` — PASS (19/19 threats closed)
+- Task 2: production apply — CONFIRMED, all structural audits PASS
+- Task 3: `npm run test:run` PASS (2160/2160) + owner real-account smoke test APPROVED
