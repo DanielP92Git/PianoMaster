@@ -36,6 +36,17 @@ export function isUnder13(birthDate) {
 }
 
 /**
+ * Check if a person is under 18 years old.
+ * Used by the Phase 3 signup/OAuth age gate (D-08) — the gate checks 18+,
+ * not COPPA's 13, because every new account belongs to an adult.
+ * @param {Date} birthDate - The date of birth
+ * @returns {boolean} True if under 18
+ */
+export function isUnder18(birthDate) {
+  return calculateAge(birthDate) < 18;
+}
+
+/**
  * Format DOB parts (month, day, year) into a Date object.
  * @param {{month: number, day: number, year: number}} dob - DOB parts (month is 1-12)
  * @returns {Date} Date object
