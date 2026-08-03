@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: verifying
+status: ready_to_plan
 stopped_at: "Phase 3 (parent-only-signup-age-gate) COMPLETE — plan 03-09 (WR-01 gap closure) executed 2026-08-03. 9/9 plans done. `handleUnder18` in `RoleSelection.jsx` is now a pure `setBlocked(true)` (logout deferred to `handleBackToLogin`), closing the OAuth under-18 block-screen race from `03-VERIFICATION.md`. Full suite green (114 files / 2186 tests). Outstanding: the human_verification checkpoint carried in `03-VERIFICATION.md` (live Google OAuth round-trip as a brand-new under-18 account) is still open — JSDOM tests can't fully replicate the `AuthenticatedWrapper`/`SIGNED_OUT` unmount race."
 last_updated: "2026-08-03T20:16:13.526Z"
 last_activity: 2026-08-03 -- Plan 03-09 (WR-01 gap closure) executed
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 19
   completed_plans: 19
-  percent: 100
+  percent: 50
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 
 ## Current Position
 
-Phase: 03 (parent-only-signup-age-gate) — COMPLETE
-Plan: 9 of 9
-Status: Phase complete — ready for verification
-Last activity: 2026-08-03 -- Plan 03-09 (WR-01 gap closure) executed
+Phase: 4
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-03
 
 Progress: [██████████] 100%
 
