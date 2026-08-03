@@ -45,9 +45,11 @@ function StepDots({ step, className = "" }) {
  * Retrofitted (Phase 3, D-05/D-06/D-07) into a gated role -> DOB completion
  * flow: a returning user (has a profile — resolved by getCurrentUser) never
  * reaches this screen. A brand-new user must pick a role, then pass the 18+
- * DOB gate BEFORE any profile row is inserted. An under-18 user is signed out
- * via logout() and shown the block screen; no profile row is ever created for
- * them, leaving the Google-created auth.users row profile-less and inert.
+ * DOB gate BEFORE any profile row is inserted. An under-18 user is shown the
+ * block screen FIRST with their session still intact (WR-01 fix) and is only
+ * signed out via logout() on explicit "Back to login" dismissal; no profile
+ * row is ever created for them, leaving the Google-created auth.users row
+ * profile-less and inert.
  *
  * There is deliberately no back affordance to /login: the user has a session
  * but no profile, so returning to /login would only bounce them straight
@@ -134,13 +136,15 @@ export function RoleSelection({ user, onRoleSelected }) {
     createProfile({ role: selectedRole });
   };
 
-  const handleUnder18 = async () => {
-    // D-07: sign out via the project's logout() wrapper (not raw signOut) so
-    // a blocked user's session leaves no trace on a shared device. No profile
-    // row is ever inserted, so the auth.users row stays profile-less and
-    // inert. No navigation needed — losing the session re-renders to /login;
-    // the block screen below is just a local state reset.
-    await logout();
+  const handleUnder18 = () => {
+    // WR-01 fix: show the block screen FIRST, with the session still intact.
+    // A pure state update (mirroring SignupForm's reliable email path) keeps
+    // AuthenticatedWrapper (App.jsx:202) matching `user && !profile && !userRole`,
+    // so this component — and the AgeBlockScreen below — stays mounted. The
+    // sign-out is deferred to handleBackToLogin so the resulting SIGNED_OUT →
+    // ["user"] invalidation → unmount/redirect chain can't race the screen off
+    // the page before the under-18 user reads the guidance (SIGNUP-02).
+    // No profile row is ever inserted, so no account is created for them.
     setBlocked(true);
   };
 
@@ -149,13 +153,13 @@ export function RoleSelection({ user, onRoleSelected }) {
     setStep("dob-gate");
   };
 
-  const handleBackToLogin = () => {
-    // The block screen's "Back to login" is a state reset — losing the
-    // session (already done in handleUnder18) is what actually returns the
-    // user to /login at the app level.
-    setBlocked(false);
-    setStep("role");
-    setSelectedRole(null);
+  const handleBackToLogin = async () => {
+    // D-07: sign out via the project's logout() wrapper (not raw signOut) so
+    // the blocked under-18 session leaves no trace on a shared device. Deferred
+    // to this explicit dismissal (WR-01 fix): the SIGNED_OUT event invalidates
+    // the ["user"] query, which unmounts this screen and lets ProtectedRoute
+    // redirect to /login — now AFTER the user has seen the guidance, not before.
+    await logout();
   };
 
   const heading = (
