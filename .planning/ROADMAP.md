@@ -125,7 +125,7 @@ feature is removed entirely so no child voice data is collected at all.
 3. The OAuth signup button in `useSocialAuth.js` is gated by the same age check as the email/password form — no unguarded path to account creation exists
 4. Completing registration collects only parent email, password or OAuth token, and optionally the parent's name — zero child data is requested at this step
 5. A direct link to the Privacy Policy is visible on the registration screen and in parent settings
-   **Plans**: 8 plans across 3 waves
+   **Plans**: 9 plans across 4 waves
    - [x] 03-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) + isUnder18 age util + Wave 0 ageUtils.test.js
    - [x] 03-02-PLAN.md — Wave 1: [BLOCKING] add parents.age_verified_at marker migration + owner-gated apply
    - [x] 03-03-PLAN.md — Wave 1: getCurrentUser() parents probe + useUser isParent + Wave 0 apiAuth.test.js
@@ -134,6 +134,7 @@ feature is removed entirely so no child voice data is collected at all.
    - [x] 03-06-PLAN.md — Wave 2: TeacherRedirect isParent branch + ParentPlaceholder landing page
    - [x] 03-07-PLAN.md — Wave 3: SignupForm role->dob->credentials wizard + Privacy link + delete ParentEmailStep
    - [x] 03-08-PLAN.md — Wave 3: RoleSelection OAuth DOB+role completion (closes OAuth-bypass) + test rewrite
+   - [ ] 03-09-PLAN.md — Wave 4: [GAP] defer under-18 logout() to dismissal so AgeBlockScreen renders reliably (fixes WR-01 race, SIGNUP-02)
          **Pitfalls to avoid**: The OAuth-bypass gap — gate at the router/page level before any signup CTA renders, not just in front of form fields.
          **UI hint**: yes
 
