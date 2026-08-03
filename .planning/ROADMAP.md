@@ -126,9 +126,9 @@ feature is removed entirely so no child voice data is collected at all.
 4. Completing registration collects only parent email, password or OAuth token, and optionally the parent's name — zero child data is requested at this step
 5. A direct link to the Privacy Policy is visible on the registration screen and in parent settings
    **Plans**: 8 plans across 3 waves
-   - [ ] 03-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) + isUnder18 age util + Wave 0 ageUtils.test.js
-   - [ ] 03-02-PLAN.md — Wave 1: [BLOCKING] add parents.age_verified_at marker migration + owner-gated apply
-   - [ ] 03-03-PLAN.md — Wave 1: getCurrentUser() parents probe + useUser isParent + Wave 0 apiAuth.test.js
+   - [x] 03-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) + isUnder18 age util + Wave 0 ageUtils.test.js
+   - [x] 03-02-PLAN.md — Wave 1: [BLOCKING] add parents.age_verified_at marker migration + owner-gated apply
+   - [x] 03-03-PLAN.md — Wave 1: getCurrentUser() parents probe + useUser isParent + Wave 0 apiAuth.test.js
    - [ ] 03-04-PLAN.md — Wave 2: open-field M/D/Y AgeGate rewrite + AgeBlockScreen + AgeGate.test rewrite
    - [ ] 03-05-PLAN.md — Wave 2: useSignup parent branch (parents-only, zero child data) + fill useSignup.test
    - [ ] 03-06-PLAN.md — Wave 2: TeacherRedirect isParent branch + ParentPlaceholder landing page
