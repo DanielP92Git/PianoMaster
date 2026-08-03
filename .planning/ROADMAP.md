@@ -129,9 +129,9 @@ feature is removed entirely so no child voice data is collected at all.
    - [x] 03-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) + isUnder18 age util + Wave 0 ageUtils.test.js
    - [x] 03-02-PLAN.md — Wave 1: [BLOCKING] add parents.age_verified_at marker migration + owner-gated apply
    - [x] 03-03-PLAN.md — Wave 1: getCurrentUser() parents probe + useUser isParent + Wave 0 apiAuth.test.js
-   - [ ] 03-04-PLAN.md — Wave 2: open-field M/D/Y AgeGate rewrite + AgeBlockScreen + AgeGate.test rewrite
-   - [ ] 03-05-PLAN.md — Wave 2: useSignup parent branch (parents-only, zero child data) + fill useSignup.test
-   - [ ] 03-06-PLAN.md — Wave 2: TeacherRedirect isParent branch + ParentPlaceholder landing page
+   - [x] 03-04-PLAN.md — Wave 2: open-field M/D/Y AgeGate rewrite + AgeBlockScreen + AgeGate.test rewrite
+   - [x] 03-05-PLAN.md — Wave 2: useSignup parent branch (parents-only, zero child data) + fill useSignup.test
+   - [x] 03-06-PLAN.md — Wave 2: TeacherRedirect isParent branch + ParentPlaceholder landing page
    - [ ] 03-07-PLAN.md — Wave 3: SignupForm role->dob->credentials wizard + Privacy link + delete ParentEmailStep
    - [ ] 03-08-PLAN.md — Wave 3: RoleSelection OAuth DOB+role completion (closes OAuth-bypass) + test rewrite
          **Pitfalls to avoid**: The OAuth-bypass gap — gate at the router/page level before any signup CTA renders, not just in front of form fields.
