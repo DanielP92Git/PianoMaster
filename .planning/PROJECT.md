@@ -339,6 +339,8 @@ These capabilities exist, are working, and have been shipped:
 - **Under-18 self-signup is blocked** (not just under-13). One account-creation path, one data model; also satisfies Google Play Families.
 - **Existing users auto-migrate** to a parent account owning one child profile, preserving logins and the 3 active subscriptions. Where a child originally registered with their own email, that email ends up owning a "parent" account — this needs a re-consent prompt, not a silent conversion.
 
+**Progress:** Phase 1 (identity schema expand) and Phase 2 (RLS rewrite) complete. **Phase 3 (parent-only signup & age gate) complete 2026-08-03** — SIGNUP-01 through SIGNUP-05 verified (9/9 plans, incl. gap-closure plan 03-09 fixing the OAuth under-18 block-screen race, WR-01). Verification passed 5/5 must-haves; code review found 0 critical / 5 warning / 6 info (non-blocking, carried forward). A live Google OAuth round-trip with an under-18 DOB is recommended as manual UAT before considering the OAuth entry point fully closed out, though two independent code traces already confirm the fix. Next: Phase 4 (child profiles & parental gating).
+
 **Key context — measured, not estimated:**
 
 - `students.id` has **no** FK to `auth.users(id)`; it was deliberately dropped across five migrations (`20250115000005` exists solely for this) so teachers could create placeholder students with no auth account. Login-less profile rows already work in production — this milestone re-points that proven pattern at parents instead of teachers.
@@ -718,4 +720,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-07-18 after v3.7 milestone — Sight-Reading Engagement & Pedagogy shipped (10/12 requirements; HUD-02 + PRAC-02 deferred). Phase 02 device UAT completed at close (items 1/3/4 pass; mic-review item 2 accepted-open). Milestone audit PASSED; secure-phase 03 closed 12/12 threats. Ships via PR #13._
+_Last updated: 2026-08-03 after v4.0 Phase 3 (parent-only-signup-age-gate) completion — 9/9 plans, verification passed 5/5 must-haves, gap-closure plan 03-09 fixed the OAuth under-18 block-screen race (WR-01). Next: Phase 4 (child profiles & parental gating)._
