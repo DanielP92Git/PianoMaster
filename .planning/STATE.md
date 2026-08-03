@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: executing
-stopped_at: Phase 2 COMPLETE (production apply verified) — Phase 3 next
-last_updated: "2026-08-03T00:00:00.000Z"
-last_activity: 2026-08-03 -- Phase 02 Wave 4 (plan 02-05) complete, Phase 2 closed
+status: verifying
+stopped_at: Phase 3 context gathered
+last_updated: "2026-08-03T11:21:20.326Z"
+last_activity: "2026-08-03 -- Phase 02 Wave 4 (plan 02-05) complete: secure-phase PASS, production apply verified, D-29 smoke test approved"
 progress:
   total_phases: 8
   completed_phases: 2
@@ -153,7 +153,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
-**Stopped at:** Phase 2 COMPLETE (2026-08-03) — plan 02-05 (Wave 4) closed all three blocking tasks.
+**Stopped at:** Phase 3 context gathered
 **Next action:** Begin Phase 3 (Parent-Only Signup & Age Gate). Plans are TBD — run `/gsd-plan-phase 3` (research + planning) before executing. Depends on Phase 1 only (already done); no blockers.
 **Resume note (evidence — Wave 4 / Phase 2 close):** `/gsd-secure-phase 2` closed 19/19 threats (`02-SECURITY.md`, `threats_open: 0`). Production apply: owner ran `20260801120000_rls_ownership_rewrite.sql` directly in the Supabase SQL Editor (both the CLI `db push` path and the MCP `apply_migration` path were blocked by design — auto-mode classifier and read-only MCP connection respectively), no errors. Post-apply read-only audits all PASS: 50 `_parent_owner` policies live, `owned_child_ids()` confirmed SECURITY INVOKER + STABLE, RLS-02/03/04 structural assertions PASS, Supabase Advisors show zero ERROR and zero 42P17 anywhere (460 `multiple_permissive_policies` WARNs are the expected additive dual-policy design, not a regression). `npm run test:run`: 2160/2160 passed. Owner smoke-tested `danieltest@gmail.com` (parent, 1 child, 71 skill-progress rows, 33,093 XP/level 25, active streak, 50 practice sessions) — approved, zero visible change, parent read/write confirmed. `02-phase8-handoff.md` written (D-33 Group B FK gap, legacy-drop candidate query, A2 finding). Full trail in `02-apply-log.md`, `02-05-SUMMARY.md`. Also discovered (not fixed — out of this phase's scope) a pre-existing migration-history drift: 5 earlier migrations show unrecorded in `npx supabase migration list` despite being live in production (applied out-of-band via SQL Editor in prior phases) — documented in `02-05-SUMMARY.md` deviations, does not affect Phase 2's own correctness.
 **Note for Phase 8:** `02-phase8-handoff.md` is the authoritative handoff doc — read it before planning Phase 8's legacy-policy-drop step.
