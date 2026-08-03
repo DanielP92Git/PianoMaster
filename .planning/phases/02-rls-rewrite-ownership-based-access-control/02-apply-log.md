@@ -169,3 +169,27 @@ Supabase SQL Editor for `hdltcvgqrtxuxgjdvzzu` and run it directly (same
 method used for the Wave 3 rehearsal and for the earlier out-of-band
 migrations above). Report back here (or in-session) once applied so the
 post-apply read-only audits (RLS-02/03/04 + advisors) can run.
+
+## Task 2 — PRODUCTION APPLY CONFIRMED (2026-08-03)
+
+Owner ran `20260801120000_rls_ownership_rewrite.sql` directly in the Supabase
+SQL Editor against `hdltcvgqrtxuxgjdvzzu`. Reported: no errors.
+
+### Post-apply structural verification (live production, read-only)
+
+| Check                                                                              | Result                                                                                                                                                                                                                                       | Verdict                              |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `_parent_owner` policy count                                                       | 50                                                                                                                                                                                                                                           | PASS (matches rehearsal + inventory) |
+| `owned_child_ids()` SECURITY INVOKER + STABLE                                      | `prosecdef=false`, `provolatile='s'`                                                                                                                                                                                                         | PASS (RLS-01)                        |
+| RLS-02 dual-policy coverage (46 table:cmd pairs, 24-table inventory)               | `uncovered IS NULL` — ASSERT passed, no exception                                                                                                                                                                                            | PASS                                 |
+| RLS-03 — every `_parent_owner` INSERT/UPDATE has non-null, non-trivial WITH CHECK  | count = 0 — ASSERT passed                                                                                                                                                                                                                    | PASS                                 |
+| RLS-04 — static recursion guard (`child_profiles` never calls `owned_child_ids()`) | count = 0 — ASSERT passed                                                                                                                                                                                                                    | PASS                                 |
+| Supabase Advisors — security                                                       | 118 WARN + 1 INFO, zero ERROR; no new finding tied to `owned_child_ids()`/`_parent_owner` (pre-existing `rls_enabled_no_policy` on `parents` from Phase 1, unrelated)                                                                        | PASS                                 |
+| Supabase Advisors — performance                                                    | 460 `multiple_permissive_policies` WARN (expected/by-design — dual-policy additive rollout, resolved when Phase 8 drops the legacy half); only 1 `auth_rls_initplan` WARN total, not on any `_parent_owner` policy (pre-existing, unrelated) | PASS                                 |
+| `get_logs` / runtime 42P17 (recursion) check                                       | zero occurrences of `42P17` anywhere in either advisor dump                                                                                                                                                                                  | PASS                                 |
+
+**No BLOCKING finding.** Task 2 complete. Migration is live on production
+behind the owner gate. Rehearsal branch: none was created (owner declined
+`supabase branches create`, billed) — nothing to delete.
+
+Proceeding to Task 3 (D-29 zero-visible-change verification + Phase 8 handoff).
