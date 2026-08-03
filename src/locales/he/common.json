@@ -112,6 +112,8 @@
         "studentDesc": "ללמוד ולתרגל פסנתר",
         "teacher": "מורה",
         "teacherDesc": "ללמד ולעקוב אחרי תלמידים",
+        "parent": "אני הורה",
+        "parentDesc": "מגדיר זאת עבור הילד שלי",
         "continue": "המשך"
       },
       "ageGate": {
@@ -121,6 +123,19 @@
         "continue": "המשך",
         "errorRequired": "אנא בחרו שנת לידה",
         "errorInvalid": "אנא בחרו שנת לידה תקינה"
+      },
+      "dobGate": {
+        "heading": "מה תאריך הלידה שלך?",
+        "month": "חודש",
+        "day": "יום",
+        "year": "שנה",
+        "selectMonth": "בחר חודש"
+      },
+      "ageBlock": {
+        "title": "חשבונות PianoMaster מיועדים להורים ואפוטרופוסים",
+        "body": "כדי לשמור על המידע של הילדים בטוח, חשבונות נוצרים על ידי הורה או אפוטרופוס. אנא בקש מהורה או אפוטרופוס להגדיר זאת עבורך.",
+        "tryAgain": "נסה תאריך אחר",
+        "backToLogin": "חזרה להתחברות"
       },
       "parentEmail": {
         "title": "רוצים לשתף הורה?",
@@ -142,7 +157,8 @@
         "password": "סיסמה",
         "passwordPlaceholder": "צרו סיסמה",
         "submitStudent": "יצירת חשבון תלמיד/ה",
-        "submitTeacher": "יצירת חשבון מורה"
+        "submitTeacher": "יצירת חשבון מורה",
+        "submitParent": "צור את החשבון שלי"
       },
       "social": {
         "divider": "או הצטרפו עם",
@@ -164,8 +180,10 @@
         "privacyLink": "מדיניות הפרטיות",
         "and": "ול"
       },
+      "parentNameLabel": "השם שלך (אופציונלי)",
       "successStudent": "החשבון שלכם מוכן — בואו נשחק!",
-      "successTeacher": "חשבון המורה שלכם מוכן!"
+      "successTeacher": "חשבון המורה שלכם מוכן!",
+      "successParent": "החשבון נוצר! ברוכים הבאים ל-PianoMaster."
     },
     "roleSelection": {
       "title": "ברוכים הבאים ל-PianoMaster!",
@@ -2283,5 +2301,9 @@
     },
     "play": "השמיעו את הקצב שלכם",
     "done": "סיימתי!"
+  },
+  "parentPlaceholder": {
+    "heading": "הכול מוכן!",
+    "body": "פרופילי הילדים בדרך — חזור בקרוב כדי להוסיף את הילד שלך ולהתחיל יחד את מסע הפסנתר."
   }
 }
