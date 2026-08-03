@@ -121,3 +121,26 @@ BUFFERS)` before (STEP 0) and after (Task 3) the migration, but the Supabase
 **No production or branch DDL persisted at any point.** The rehearsal proves the
 migration applies cleanly, is fully reversible, is idempotent on re-apply, and
 enforces the ownership model correctly against real production data shape.
+
+---
+
+# 02-05 — Wave 4 Gate Log
+
+## Task 1 — `/gsd-secure-phase 2` adversarial security review (PASSED, 2026-08-03)
+
+Verdict recorded in `02-SECURITY.md`: **THREAT-SECURE — threats_open: 0 (19/19 closed)**.
+All 5 ASVS-V4 STRIDE patterns from `02-RESEARCH.md` §Security Domain are closed
+(cross-family read, cross-family write, recursive self-reference, stale
+SECURITY DEFINER identity check, dropped business-rule clause). T-02-16/T-02-17
+are closed at the "control defined and procedurally intact, not yet exercised"
+level appropriate to their Plan-05 timing (production apply hasn't run yet —
+that's Task 2 below). T-02-19 (D-33 Group B FK-target gap) is closed via the
+Accepted Risks entry `AR-02-01` in `02-SECURITY.md`.
+
+**No BLOCKING finding open.** Gate satisfied — proceeding to Task 2 requires
+explicit owner authorization (see below).
+
+## Task 2 — Owner-gated production apply
+
+**Status: NOT YET RUN.** Awaiting explicit owner authorization ("apply to
+production") before `npx supabase db push` runs against `hdltcvgqrtxuxgjdvzzu`.
