@@ -29,35 +29,39 @@ created: 2026-08-03
 
 ## Spacing Scale
 
-This phase does **not** introduce a new spacing scale — it must match the exact bespoke values already established by the auth wizard's existing primitives, which are the direct visual neighbors of every new screen in this phase. Generic 8-point spacing does not apply here; use these exact tokens.
+This phase does **not** introduce a new spacing scale — it must match the exact bespoke values already established by the auth wizard's existing primitives, which are the direct visual neighbors of every new screen in this phase.
 
-| Token                        | Value                     | Usage                                                                                                                 |
-| ---------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Field/step gap               | `14px` (`gap-[14px]`)     | Vertical rhythm between stacked form fields (matches `SignupForm`'s credentials form, `AuthShell`'s `sheetClassName`) |
-| Compact gap                  | `12px` (`gap-3`)          | Role/step-option stacks (matches `RoleCard` list spacing), button-row gaps                                            |
-| Loose gap                    | `16px` (`gap-4`)          | Existing `AgeGate`/`ParentEmailStep` form wrapper spacing — carry forward for the new DOB gate's outer wrapper        |
-| Card/field radius            | `14px` (`rounded-[14px]`) | Inputs, error/info banners, CTA buttons                                                                               |
-| Card radius (role/selection) | `16px` (`rounded-[16px]`) | `RoleCard`, any new selectable card                                                                                   |
-| Control height               | `52px` (`h-[52px]`)       | Every `AuthInput`, `AuthSelect`, and `AuthCta` — non-negotiable, matches every existing auth control                  |
-| Icon tile                    | `44px` (`h-11 w-11`)      | `RoleCard`'s emoji tile                                                                                               |
-| Hero/desktop padding         | `52px` (`p-[52px]`)       | Desktop hero panel — unchanged, not touched by this phase                                                             |
+> **Locked exception — `CONTEXT.md` D-13:** The auth-wizard pixel scale below (14px field/step gap, 14px card/field radius, 12px compact gap, 44px icon tile, 52px control height/desktop padding) is a **user-signed-off, deliberate exception** to the project's generic 8-point grid (`docs/DESIGN_SYSTEM.md`'s xs/sm/md/lg/xl), not an undocumented deviation. It is sourced directly from the existing `AuthShell`/`AuthCta`/`AuthInput`/`RoleCard` primitives and is locked for this phase — do not conform these values to the generic grid.
 
-Exceptions: the whole scale above **is** the exception to the project's generic 8-point token set (`docs/DESIGN_SYSTEM.md`'s xs/sm/md/lg/xl) — the auth wizard has always used its own bespoke pixel values (52px controls, 14px radii) rather than the generic scale, and every new screen in this phase (DOB gate, block screen, OAuth completion screen) MUST continue that precedent rather than reintroducing the generic scale into auth.
+| Token                        | Value                     | Usage                                                                                                                 | Locked by                                   |
+| ---------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Field/step gap               | `14px` (`gap-[14px]`)     | Vertical rhythm between stacked form fields (matches `SignupForm`'s credentials form, `AuthShell`'s `sheetClassName`) | `CONTEXT.md` D-13 (off-grid exception)      |
+| Compact gap                  | `12px` (`gap-3`)          | Role/step-option stacks (matches `RoleCard` list spacing), button-row gaps                                            | `CONTEXT.md` D-13 (off-grid exception)      |
+| Loose gap                    | `16px` (`gap-4`)          | Existing `AgeGate`/`ParentEmailStep` form wrapper spacing — carry forward for the new DOB gate's outer wrapper        | on-grid (standard `md` token, no exception) |
+| Card/field radius            | `14px` (`rounded-[14px]`) | Inputs, error/info banners, CTA buttons                                                                               | `CONTEXT.md` D-13 (off-grid exception)      |
+| Card radius (role/selection) | `16px` (`rounded-[16px]`) | `RoleCard`, any new selectable card                                                                                   | `CONTEXT.md` D-13 (off-grid exception)      |
+| Control height               | `52px` (`h-[52px]`)       | Every `AuthInput`, `AuthSelect`, and `AuthCta` — non-negotiable, matches every existing auth control                  | `CONTEXT.md` D-13 (off-grid exception)      |
+| Icon tile                    | `44px` (`h-11 w-11`)      | `RoleCard`'s emoji tile                                                                                               | `CONTEXT.md` D-13 (off-grid exception)      |
+| Hero/desktop padding         | `52px` (`p-[52px]`)       | Desktop hero panel — unchanged, not touched by this phase                                                             | `CONTEXT.md` D-13 (off-grid exception)      |
+
+Exceptions: the off-grid rows above are locked per `CONTEXT.md` D-13 (owner-signed-off 2026-08-03) — the auth wizard has always used its own bespoke pixel values (52px controls, 14px radii) rather than the generic scale, and every new screen in this phase (DOB gate, block screen, OAuth completion screen) MUST continue that precedent rather than reintroducing the generic scale into auth. No other exceptions.
 
 ---
 
 ## Typography
 
-| Role                              | Size                       | Weight                                                         | Line Height |
-| --------------------------------- | -------------------------- | -------------------------------------------------------------- | ----------- |
-| Body                              | 14px                       | 400 (regular)                                                  | 1.5         |
-| Label                             | 13px                       | 500 (medium — existing `AuthInput` label exception, see note)  | 1.4         |
-| Heading (step title)              | 26px mobile / 30px desktop | 600 (semibold) via `font-playful`/`font-hebrew font-extrabold` | 1.2         |
-| Display (desktop hero, unchanged) | 44px                       | 600 (semibold) via `font-playful`/`font-hebrew font-extrabold` | 1.1         |
+> **Locked exception — `CONTEXT.md` D-14:** The 500-weight (medium) field label below is a **user-signed-off, accepted third font weight** alongside the 400/600 pair, matching the existing `AuthInput`/`AuthSelect` label treatment used everywhere in the wizard today. It is locked for this phase, not an undocumented deviation.
 
-**2-weight declaration:** regular (400) for body/description/helper text, semibold (600) for headings, CTA button labels, and `RoleCard` labels. **Accepted existing exception:** `AuthInput`/`AuthSelect` field labels use medium (500) — this is an established primitive already used everywhere in the wizard; do not introduce a third new weight anywhere else.
+| Role                              | Size                       | Weight                                                                           | Line Height |
+| --------------------------------- | -------------------------- | -------------------------------------------------------------------------------- | ----------- |
+| Body                              | 14px                       | 400 (regular)                                                                    | 1.5         |
+| Label                             | 13px                       | 500 (medium — locked exception, `CONTEXT.md` D-14; matches existing `AuthInput`) | 1.4         |
+| Heading (step title)              | 26px mobile / 30px desktop | 600 (semibold) via `font-playful`/`font-hebrew font-extrabold`                   | 1.2         |
+| Display (desktop hero, unchanged) | 44px                       | 600 (semibold) via `font-playful`/`font-hebrew font-extrabold`                   | 1.1         |
 
-- New DOB-gate field labels ("Month" / "Day" / "Year"): 13px / 500 / 1.4 (reuse `AuthInput`/`AuthSelect` label exactly)
+**2-weight declaration:** regular (400) for body/description/helper text, semibold (600) for headings, CTA button labels, and `RoleCard` labels. **Locked exception (`CONTEXT.md` D-14):** `AuthInput`/`AuthSelect` field labels use medium (500) as an accepted third weight — this is an established primitive already used everywhere in the wizard, owner-signed-off; do not introduce a fourth new weight anywhere else in this phase.
+
+- New DOB-gate field labels ("Month" / "Day" / "Year"): 13px / 500 (D-14 locked exception) / 1.4 (reuse `AuthInput`/`AuthSelect` label exactly)
 - New block-screen heading: 26px mobile / 30px desktop / 600 / 1.2 (matches existing step-title treatment)
 - New block-screen body copy: 14px / 400 / 1.5, color `text-white/[0.82]` (matches existing `AgeGate` question copy)
 
@@ -78,14 +82,22 @@ Accent reserved for: selected-state indicators (RoleCard border/check), input fo
 
 ---
 
+## Visual Hierarchy (per new/modified screen)
+
+- **DOB gate:** The three open date fields (Month/Day/Year) are the focal point, sized and centered as the primary interactive group; the "Continue" CTA is secondary, sitting below in the established `AuthCta variant="secondary"` treatment and only enabled once all three fields are valid.
+- **Under-18 block screen:** The guidance heading + body copy (in the blue informational banner) is the focal point — this is a message-first screen, not an action-first one; "Try a different date" and "Back to login" are both secondary, low-emphasis affordances (ghost/plain-link styling) so neither reads as a punitive or urgent action.
+- **OAuth completion screen:** The two `RoleCard` options (Parent / Teacher) are the focal point on the role step, and the three open DOB fields are the focal point on the DOB step — each step shows exactly one focal group at a time via the existing `StepDots` sequencing, with "Continue" always secondary underneath.
+
+---
+
 ## Copywriting Contract
 
 | Element                                                | Copy                                                                                                                                                                                                                                            |
 | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Primary CTA (DOB gate submit)                          | "Continue" (`auth.signup.dobGate.continue` — mirrors existing `ageGate.continue` key, i18n EN+HE)                                                                                                                                               |
+| Primary CTA (DOB gate submit)                          | "Continue" (`auth.signup.dobGate.continue`) — deliberately reuses the existing `ageGate.continue` i18n key/copy rather than inventing new wording; same action (advance the wizard), same visual slot, defensible reuse rather than a gap.      |
 | Primary CTA (parent credentials submit)                | "Create My Account" (`auth.signup.credentials.submitParent` — replaces `submitStudent`; role card relabel per D-02 means the visible CTA copy must say "parent," not "student")                                                                 |
 | Primary CTA (teacher credentials submit)               | "Create Teacher Account" (existing `submitTeacher`, unchanged)                                                                                                                                                                                  |
-| Primary CTA (OAuth completion submit)                  | "Continue" (mirrors DOB gate submit copy — same action, same screen family)                                                                                                                                                                     |
+| Primary CTA (OAuth completion submit)                  | "Continue" — same deliberate reuse rationale as the DOB gate submit CTA above (mirrors DOB gate submit copy — same action, same screen family, one i18n key covers both surfaces)                                                               |
 | Role card — parent                                     | Label: "I'm a parent" · Description: "Setting this up for my child" (`auth.signup.role.parent` / `parentDesc` — replaces `role.student`/`studentDesc`)                                                                                          |
 | Role card — teacher                                    | Label: "I'm a teacher" · Description: unchanged from existing `role.teacherDesc`                                                                                                                                                                |
 | Empty state heading (post-signup parent landing)       | "You're all set!"                                                                                                                                                                                                                               |
