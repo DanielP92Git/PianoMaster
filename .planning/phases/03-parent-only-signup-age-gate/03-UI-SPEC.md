@@ -1,10 +1,11 @@
 ---
 phase: 3
 slug: parent-only-signup-age-gate
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-08-03
+reviewed_at: 2026-08-03
 ---
 
 # Phase 3 — UI Design Contract
@@ -132,11 +133,11 @@ Accent reserved for: selected-state indicators (RoleCard border/check), input fo
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: FLAG (non-blocking — "Continue" CTAs reuse `ageGate.continue` key, rationale documented)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS (500-weight label locked via CONTEXT.md D-14)
+- [x] Dimension 5 Spacing: PASS (off-grid auth-wizard scale locked via CONTEXT.md D-13)
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-08-03 (revision 1) — 5 PASS, 1 non-blocking FLAG

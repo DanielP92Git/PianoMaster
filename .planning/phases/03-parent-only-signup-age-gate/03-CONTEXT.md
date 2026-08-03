@@ -102,6 +102,24 @@ link (second half of SIGNUP-05) rides along with Phase 4's settings surface.
   **parent-settings** placement (the second half of SIGNUP-05) is deferred to Phase 4's settings
   surface. Recorded as a default the user accepted rather than a discussed topic.
 
+### Design System Contract (auth-wizard grid exception)
+
+- **D-13:** **The new signup screens (DOB gate, under-18 block, OAuth completion) follow the existing
+  auth-wizard pixel scale, NOT the project's generic 8-point token grid.** This is a locked, deliberate
+  exception. The new screens are built from the shipped `AuthShell` / `AuthCta` / `AuthInput` /
+  `RoleCard` primitives (D-02, D-08, code-context "Reusable Assets"), and must match them pixel-for-pixel
+  to stay visually consistent with the live auth surface. The bespoke values — **14px** field/step gap,
+  **14px** card/field radius, **12px** compact gap, **44px** icon tile, **52px** control height /
+  desktop padding — are sourced directly from those existing components and are therefore accepted as-is
+  even though they fall outside the standard `{4, 8, 16, 24, 32, 48, 64}` set. Conforming these to the
+  generic grid would make the new screens visually mismatch the existing auth flow, which is the wrong
+  trade-off in this mature codebase. (User sign-off, 2026-08-03.)
+- **D-14:** **A 500-weight (medium) field label is a locked, accepted third font weight** on the auth
+  screens, alongside 400 (body) and 600 (heading/CTA). This matches the existing `AuthInput` label
+  styling; it is not a new weight introduced by this phase. Accepted as an explicit exception to the
+  "max 2 weights" heuristic for the same design-system-parity reason as D-13. (User sign-off,
+  2026-08-03.)
+
 ### Claude's Discretion
 
 Resolve these during planning without returning to the user:
