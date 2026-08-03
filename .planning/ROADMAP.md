@@ -125,9 +125,17 @@ feature is removed entirely so no child voice data is collected at all.
 3. The OAuth signup button in `useSocialAuth.js` is gated by the same age check as the email/password form — no unguarded path to account creation exists
 4. Completing registration collects only parent email, password or OAuth token, and optionally the parent's name — zero child data is requested at this step
 5. A direct link to the Privacy Policy is visible on the registration screen and in parent settings
-   **Plans**: TBD
-   **Pitfalls to avoid**: The OAuth-bypass gap — gate at the router/page level before any signup CTA renders, not just in front of form fields.
-   **UI hint**: yes
+   **Plans**: 8 plans across 3 waves
+   - [ ] 03-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) + isUnder18 age util + Wave 0 ageUtils.test.js
+   - [ ] 03-02-PLAN.md — Wave 1: [BLOCKING] add parents.age_verified_at marker migration + owner-gated apply
+   - [ ] 03-03-PLAN.md — Wave 1: getCurrentUser() parents probe + useUser isParent + Wave 0 apiAuth.test.js
+   - [ ] 03-04-PLAN.md — Wave 2: open-field M/D/Y AgeGate rewrite + AgeBlockScreen + AgeGate.test rewrite
+   - [ ] 03-05-PLAN.md — Wave 2: useSignup parent branch (parents-only, zero child data) + fill useSignup.test
+   - [ ] 03-06-PLAN.md — Wave 2: TeacherRedirect isParent branch + ParentPlaceholder landing page
+   - [ ] 03-07-PLAN.md — Wave 3: SignupForm role->dob->credentials wizard + Privacy link + delete ParentEmailStep
+   - [ ] 03-08-PLAN.md — Wave 3: RoleSelection OAuth DOB+role completion (closes OAuth-bypass) + test rewrite
+         **Pitfalls to avoid**: The OAuth-bypass gap — gate at the router/page level before any signup CTA renders, not just in front of form fields.
+         **UI hint**: yes
 
 #### Phase 4: Child Profiles & Parental Gating
 
@@ -288,7 +296,7 @@ Full details: `.planning/milestones/v3.6-ROADMAP.md` · Requirements: `.planning
 | ------------------------------------------------- | --------- | -------------- | ----------- | --------- |
 | 1. Identity Schema Expand                         | v4.0      | 0/TBD          | Not started | -         |
 | 2. RLS Rewrite — Ownership-Based Access Control   | v4.0      | 0/5            | Not started | -         |
-| 3. Parent-Only Signup & Age Gate                  | v4.0      | 0/TBD          | Not started | -         |
+| 3. Parent-Only Signup & Age Gate                  | v4.0      | 0/8            | Planned     | -         |
 | 4. Child Profiles & Parental Gating               | v4.0      | 0/TBD          | Not started | -         |
 | 5. Subscription Re-Pointing                       | v4.0      | 0/TBD          | Not started | -         |
 | 6. Live Migration & Re-Consent                    | v4.0      | 0/TBD          | Not started | -         |

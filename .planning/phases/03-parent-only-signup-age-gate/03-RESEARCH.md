@@ -455,7 +455,13 @@ Pattern: `YYYYMMDDHHMMSS_snake_case_description.sql`, always paired with a `.dow
 
 **If this table is empty:** N/A — see above; all three are low-risk framing/scope suggestions, not factual claims about external systems.
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> **All three resolved during planning (Phase 3, 2026-08-03); threaded through 03-PATTERNS.md and the plans.**
+>
+> - **Q1 — RESOLVED:** Rename the internal role end-to-end `"student"` → `"parent"` (Plans 03-05 and 03-07 rename `STUDENT_STEPS`, `role === "student"` checks, and the `role.*`/`submit*` i18n keys in both locales).
+> - **Q2 — RESOLVED:** Retrofit `RoleSelection.jsx` as a two-step internal state machine (role → DOB), mirroring the email path's step order — not a new split component (Plan 03-08).
+> - **Q3 — RESOLVED:** The block screen is local component state with no router navigation ("Back to login" is a state reset; losing the session naturally routes to `/login`) — email path in Plans 03-04/03-07, OAuth path in Plan 03-08.
 
 1. **Does the internal `role` value get renamed from `"student"` to `"parent"`, or does the string stay `"student"` while only the UI label changes?**
    - What we know: D-02 only decides the card's visible label and which table the branch writes to.

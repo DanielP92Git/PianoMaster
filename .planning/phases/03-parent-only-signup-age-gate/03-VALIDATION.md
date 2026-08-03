@@ -1,9 +1,9 @@
 ---
 phase: 3
 slug: parent-only-signup-age-gate
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-08-03
 ---
 
@@ -46,16 +46,16 @@ created: 2026-08-03
 > Planner fills Task IDs / Plan / Wave columns. Requirement → behavior → test-type
 > mapping below is locked from RESEARCH §"Phase Requirements → Test Map".
 
-| Task ID | Plan | Wave | Requirement | Secure Behavior                                                       | Test Type        | Automated Command                                                     | File Exists                    | Status     |
-| ------- | ---- | ---- | ----------- | --------------------------------------------------------------------- | ---------------- | --------------------------------------------------------------------- | ------------------------------ | ---------- |
-| TBD     | TBD  | TBD  | SIGNUP-01   | Neutral open-field DOB accepts valid M/D/Y, rejects invalid/future    | unit + component | `npx vitest run src/utils/ageUtils.test.js` + DOB gate `.test.jsx`    | ❌ W0 (`ageUtils.test.js` new) | ⬜ pending |
-| TBD     | TBD  | TBD  | SIGNUP-01   | `isUnder18` boundary classification (18 today / 17y364d / 18y0d)      | unit             | `npx vitest run src/utils/ageUtils.test.js`                           | ❌ W0                          | ⬜ pending |
-| TBD     | TBD  | TBD  | SIGNUP-02   | Under-18 shows block screen, creates no account                       | component        | `npx vitest run src/components/auth/SignupForm.test.jsx`              | ✅ add cases                   | ⬜ pending |
-| TBD     | TBD  | TBD  | SIGNUP-02   | Block screen "try again" returns to DOB entry                         | component        | SignupForm/block-screen `.test.jsx`                                   | ⚠ if split → W0               | ⬜ pending |
-| TBD     | TBD  | TBD  | SIGNUP-03   | OAuth completion (no profile) blocks under-18 + signs out             | component        | `npx vitest run src/components/auth/RoleSelection.test.jsx` (rewrite) | ✅ rewrite                     | ⬜ pending |
-| TBD     | TBD  | TBD  | SIGNUP-03   | `getCurrentUser()` detects a `parents` row as "has profile"           | unit             | `npx vitest run src/services/apiAuth.test.js`                         | ❌ W0 (verify/create)          | ⬜ pending |
-| TBD     | TBD  | TBD  | SIGNUP-04   | Parent signup writes only `parents`, never `students`                 | unit             | `npx vitest run src/features/authentication/useSignup.test.js`        | ✅ fill stubs                  | ⬜ pending |
-| TBD     | TBD  | TBD  | SIGNUP-05   | Privacy Policy link present → `/privacy` on registration entry screen | component        | `npx vitest run src/components/auth/SignupForm.test.jsx`              | ✅ add assertion               | ⬜ pending |
+| Task ID     | Plan  | Wave | Requirement | Secure Behavior                                                       | Test Type        | Automated Command                                                                             | File Exists                           | Status     |
+| ----------- | ----- | ---- | ----------- | --------------------------------------------------------------------- | ---------------- | --------------------------------------------------------------------------------------------- | ------------------------------------- | ---------- |
+| 04-T1       | 04    | 2    | SIGNUP-01   | Neutral open-field DOB accepts valid M/D/Y, rejects invalid/future    | unit + component | `npx vitest run src/utils/ageUtils.test.js src/components/auth/AgeGate.test.jsx`              | ❌→W0 in 01 (`ageUtils.test.js`)      | ⬜ pending |
+| 01-T1       | 01    | 1    | SIGNUP-01   | `isUnder18` boundary classification (18 today / 17y364d / 18y0d)      | unit             | `npx vitest run src/utils/ageUtils.test.js`                                                   | ❌→W0 created in 01                   | ⬜ pending |
+| 07-T2       | 07    | 3    | SIGNUP-02   | Under-18 shows block screen, creates no account                       | component        | `npx vitest run src/components/auth/SignupForm.test.jsx`                                      | ✅ add cases (07)                     | ⬜ pending |
+| 04-T1/07-T2 | 04/07 | 2/3  | SIGNUP-02   | Block screen "try again" returns to DOB entry                         | component        | `npx vitest run src/components/auth/AgeGate.test.jsx src/components/auth/SignupForm.test.jsx` | ✅ AgeBlockScreen in 04, wiring in 07 | ⬜ pending |
+| 08-T2       | 08    | 3    | SIGNUP-03   | OAuth completion (no profile) blocks under-18 + signs out             | component        | `npx vitest run src/components/auth/RoleSelection.test.jsx` (rewrite)                         | ✅ rewrite (08)                       | ⬜ pending |
+| 03-T1       | 03    | 1    | SIGNUP-03   | `getCurrentUser()` detects a `parents` row as "has profile"           | unit             | `npx vitest run src/services/apiAuth.test.js`                                                 | ❌→W0 created in 03                   | ⬜ pending |
+| 05-T1       | 05    | 2    | SIGNUP-04   | Parent signup writes only `parents`, never `students`                 | unit             | `npx vitest run src/features/authentication/useSignup.test.js`                                | ✅ fill stubs (05)                    | ⬜ pending |
+| 07-T2       | 07    | 3    | SIGNUP-05   | Privacy Policy link present → `/privacy` on registration entry screen | component        | `npx vitest run src/components/auth/SignupForm.test.jsx`                                      | ✅ add assertion (07)                 | ⬜ pending |
 
 _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 
@@ -89,4 +89,4 @@ _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 - [ ] Feedback latency acceptable
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved by planner 2026-08-03 — all rows mapped to plan tasks; Wave 0 gaps (ageUtils.test.js in Plan 01, apiAuth.test.js in Plan 03) assigned; no 3 consecutive tasks without automated verify.
