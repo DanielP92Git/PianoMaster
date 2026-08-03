@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: ready_to_plan
-stopped_at: "Phase 3 (parent-only-signup-age-gate) COMPLETE — plan 03-09 (WR-01 gap closure) executed 2026-08-03. 9/9 plans done. `handleUnder18` in `RoleSelection.jsx` is now a pure `setBlocked(true)` (logout deferred to `handleBackToLogin`), closing the OAuth under-18 block-screen race from `03-VERIFICATION.md`. Full suite green (114 files / 2186 tests). Outstanding: the human_verification checkpoint carried in `03-VERIFICATION.md` (live Google OAuth round-trip as a brand-new under-18 account) is still open — JSDOM tests can't fully replicate the `AuthenticatedWrapper`/`SIGNED_OUT` unmount race."
-last_updated: "2026-08-03T20:16:13.526Z"
-last_activity: 2026-08-03 -- Plan 03-09 (WR-01 gap closure) executed
+status: planning
+stopped_at: Phase 4 context gathered
+last_updated: "2026-08-03T21:50:01.841Z"
+last_activity: 2026-08-03
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 3
   total_plans: 19
   completed_plans: 19
-  percent: 50
+  percent: 100
 ---
 
 # Project State
@@ -151,7 +151,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Stopped at:** Phase 3 (parent-only-signup-age-gate) COMPLETE — plan 03-09 (WR-01 gap closure) executed 2026-08-03. 9/9 plans done. `handleUnder18` in `RoleSelection.jsx` is now a pure `setBlocked(true)` (logout deferred to `handleBackToLogin`), closing the OAuth under-18 block-screen race from `03-VERIFICATION.md`. Full suite green (114 files / 2186 tests). Outstanding: the human_verification checkpoint carried in `03-VERIFICATION.md` (live Google OAuth round-trip as a brand-new under-18 account) is still open — JSDOM tests can't fully replicate the `AuthenticatedWrapper`/`SIGNED_OUT` unmount race.
+**Stopped at:** Phase 4 context gathered
 **Next action:** Run milestone/phase verification for Phase 3, then proceed to Phase 4 (Profile CRUD + COPPA parental gate) per the roadmap.
 
 **Next action (historical, superseded):** Run `/gsd-execute-phase 1` to execute Phase 1 (Identity Schema Expand). 5 plans across 4 waves: W1 = 01-01 (FK checklist + function inventory) ∥ 01-02 (segmentation table + SQL assertion suite); W2 = 01-03 (owner scope/segmentation sign-off gate, autonomous:no); W3 = 01-04 (atomic up-migration + down-migration); W4 = 01-05 (owner-gated branch rehearsal → production apply + live IDENT-05 verifier + D-29 smoke, autonomous:no, [BLOCKING]). Plan-checker verdict: no BLOCKING issues; 5 robustness fixes folded in (per-row `requires_reconsent` VALUES encoding, parents count/true-count + positive parent-match assertions, real PASS/FAIL gating on the production apply verify, RESEARCH open-questions marked resolved, VALIDATION nyquist_compliant flipped true). Two owner gates during execution: segmentation/FK-scope sign-off (W2) and the production apply (W4).
