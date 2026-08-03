@@ -3,9 +3,13 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "../../i18n";
 import SignupForm from "./SignupForm";
 
+// Captures the signup mutation so tests can assert it was (or wasn't) called
+// — e.g. the under-18 dead-end must create no account (D-10/SIGNUP-02).
+const signupSpy = vi.hoisted(() => vi.fn());
+
 // Mock useSignup hook
 vi.mock("../../features/authentication/useSignup", () => ({
-  useSignup: () => ({ signup: vi.fn(), isPending: false }),
+  useSignup: () => ({ signup: signupSpy, isPending: false }),
 }));
 
 // Mock SocialLogin — renders role prop as text so tests can assert it
@@ -13,30 +17,34 @@ vi.mock("./SocialLogin", () => ({
   SocialLogin: ({ role }) => <div data-testid="social-login">{role}</div>,
 }));
 
-// Mock AgeGate — renders buttons to drive wizard through the age step.
-// Back navigation is owned by the shell, so these mocks expose no back button.
+// Mock AgeGate — renders buttons to drive the wizard through the dob-gate
+// step, exercising both the 18+ and under-18 branches (D-01, D-10).
+// Back navigation is owned by the shell, so this mock exposes no back button.
 vi.mock("./AgeGate", () => ({
   AgeGate: (props) => (
     <div data-testid="age-gate">
-      <button onClick={() => props.onSubmit(2016)}>Select year</button>
-      <button onClick={() => props.onSubmit(2010)}>Select year 13+</button>
-    </div>
-  ),
-}));
-
-// Mock ParentEmailStep — renders buttons to drive wizard through the parent email step
-vi.mock("./ParentEmailStep", () => ({
-  ParentEmailStep: (props) => (
-    <div data-testid="parent-email-step">
-      <button onClick={() => props.onSubmit("parent@test.com")}>
-        Submit email
+      <button onClick={() => props.onSubmit({ month: 6, day: 1, year: 2000 })}>
+        Submit 18+ DOB
       </button>
-      <button onClick={() => props.onSkip && props.onSkip()}>Skip email</button>
+      <button onClick={() => props.onUnder18()}>Submit under-18 DOB</button>
     </div>
   ),
 }));
 
-// Mock react-router-dom
+// Mock AgeBlockScreen — renders the friendly under-18 dead-end with its two
+// ghost actions (D-10).
+vi.mock("./AgeBlockScreen", () => ({
+  AgeBlockScreen: (props) => (
+    <div data-testid="age-block">
+      <p>PianoMaster accounts are for parents &amp; guardians</p>
+      <button onClick={() => props.onTryAgain()}>Try a different date</button>
+      <button onClick={() => props.onBackToLogin()}>Back to login</button>
+    </div>
+  ),
+}));
+
+// Mock react-router-dom (defensive — nothing in this tree calls it directly
+// once useSignup/SocialLogin are mocked, but keeps the test hermetic)
 vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
 }));
@@ -57,10 +65,10 @@ describe("SignupForm Wizard", () => {
     vi.clearAllMocks();
   });
 
-  // Step 1: Role selection is the initial step (D-01, D-02, D-03)
+  // Step 1: Role selection is the initial step (D-01, D-02)
   it("renders role selection as the first step", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
-    expect(screen.getByText("Student")).toBeInTheDocument();
+    expect(screen.getByText("I'm a parent")).toBeInTheDocument();
     expect(screen.getByText("Teacher")).toBeInTheDocument();
     expect(screen.queryByTestId("age-gate")).not.toBeInTheDocument();
   });
@@ -68,7 +76,7 @@ describe("SignupForm Wizard", () => {
   it("requires a role before continuing", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
-    fireEvent.click(screen.getByText("Student"));
+    fireEvent.click(screen.getByText("I'm a parent"));
     expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
   });
 
@@ -79,86 +87,131 @@ describe("SignupForm Wizard", () => {
     expect(onBackToLogin).toHaveBeenCalled();
   });
 
-  it("student role selection navigates to birth year step", () => {
+  // D-12/SIGNUP-05: a direct Privacy Policy link on the registration entry screen
+  it("shows a Privacy Policy link on the role-entry screen", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
-    chooseRole("Student");
+    const privacyLink = screen.getByRole("link", { name: "Privacy Policy" });
+    expect(privacyLink).toHaveAttribute("href", "/privacy");
+  });
+
+  // D-01: the dob-gate sits between role and credentials on BOTH branches so
+  // a minor cannot pick Teacher to dodge the age gate (T-03-17)
+  it("parent role selection navigates to the dob-gate step", () => {
+    render(<SignupForm onBackToLogin={vi.fn()} />);
+    chooseRole("I'm a parent");
     expect(screen.getByTestId("age-gate")).toBeInTheDocument();
   });
 
-  it("teacher role selection navigates directly to credentials step", () => {
+  it("teacher role selection also navigates to the dob-gate step", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
     chooseRole("Teacher");
+    expect(screen.getByTestId("age-gate")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("First name")).not.toBeInTheDocument();
+  });
+
+  // Under-18 dead-end (D-10, SIGNUP-02)
+  it("an under-18 DOB shows the age-block screen and creates no account", () => {
+    render(<SignupForm onBackToLogin={vi.fn()} />);
+    chooseRole("I'm a parent");
+    fireEvent.click(screen.getByText("Submit under-18 DOB"));
+
+    expect(screen.getByTestId("age-block")).toBeInTheDocument();
+    expect(
+      screen.getByText("PianoMaster accounts are for parents & guardians")
+    ).toBeInTheDocument();
     expect(screen.queryByTestId("age-gate")).not.toBeInTheDocument();
-    expect(screen.getByPlaceholderText("First name")).toBeInTheDocument();
+    expect(signupSpy).not.toHaveBeenCalled();
   });
 
-  // Age branching (D-02, D-07)
-  it("birth year under-13 navigates to parent email step", () => {
+  it("'Try a different date' from the age-block screen returns to the dob-gate step", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
-    chooseRole("Student");
-    fireEvent.click(screen.getByText("Select year")); // 2016 (under 13)
-    expect(screen.getByTestId("parent-email-step")).toBeInTheDocument();
+    chooseRole("I'm a parent");
+    fireEvent.click(screen.getByText("Submit under-18 DOB"));
+    expect(screen.getByTestId("age-block")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Try a different date"));
+    expect(screen.getByTestId("age-gate")).toBeInTheDocument();
+    expect(screen.queryByTestId("age-block")).not.toBeInTheDocument();
+    expect(signupSpy).not.toHaveBeenCalled();
   });
 
-  it("birth year 13+ skips parent email and goes to credentials", () => {
+  it("an 18+ DOB advances from the dob-gate to the credentials step", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
-    chooseRole("Student");
-    fireEvent.click(screen.getByText("Select year 13+")); // 2010 (13+)
-    expect(screen.queryByTestId("parent-email-step")).not.toBeInTheDocument();
-    expect(screen.getByPlaceholderText("First name")).toBeInTheDocument();
+    chooseRole("I'm a parent");
+    fireEvent.click(screen.getByText("Submit 18+ DOB"));
+    expect(screen.queryByTestId("age-gate")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
   });
 
-  // Back navigation (D-04)
-  it("back from birth-year returns to role selection", () => {
+  // Back navigation
+  it("back from dob-gate returns to role selection", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
-    chooseRole("Student");
+    chooseRole("I'm a parent");
     expect(screen.getByTestId("age-gate")).toBeInTheDocument();
     clickBack();
-    expect(screen.getByText("Student")).toBeInTheDocument();
+    expect(screen.getByText("I'm a parent")).toBeInTheDocument();
     expect(screen.queryByTestId("age-gate")).not.toBeInTheDocument();
   });
 
-  it("back from parent-email returns to birth-year", () => {
+  it("back from credentials returns to the dob-gate step", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
-    chooseRole("Student");
-    fireEvent.click(screen.getByText("Select year")); // under 13
-    expect(screen.getByTestId("parent-email-step")).toBeInTheDocument();
+    chooseRole("I'm a parent");
+    fireEvent.click(screen.getByText("Submit 18+ DOB"));
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
     clickBack();
     expect(screen.getByTestId("age-gate")).toBeInTheDocument();
   });
 
-  it("back from credentials (teacher) returns to role", () => {
+  // Parent-only credentials, no child data (D-04, SIGNUP-04)
+  it("the parent credentials step renders only an optional parent-name field, no child name fields", () => {
+    render(<SignupForm onBackToLogin={vi.fn()} />);
+    chooseRole("I'm a parent");
+    fireEvent.click(screen.getByText("Submit 18+ DOB"));
+
+    expect(screen.getByText("Your name (optional)")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("First name")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Last name")).not.toBeInTheDocument();
+  });
+
+  it("the teacher credentials step still renders first/last name fields", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
     chooseRole("Teacher");
+    fireEvent.click(screen.getByText("Submit 18+ DOB"));
+
     expect(screen.getByPlaceholderText("First name")).toBeInTheDocument();
-    clickBack();
-    expect(screen.getByText("Student")).toBeInTheDocument();
-    expect(screen.getByText("Teacher")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Last name")).toBeInTheDocument();
+    expect(screen.queryByText("Your name (optional)")).not.toBeInTheDocument();
   });
 
-  it("back from credentials (under-13 student) returns to parent-email", () => {
+  it("submits the parent branch with role and optional parentName, no birthYear/parentEmail", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
-    chooseRole("Student");
-    fireEvent.click(screen.getByText("Select year")); // under 13
-    fireEvent.click(screen.getByText("Submit email"));
-    expect(screen.getByPlaceholderText("First name")).toBeInTheDocument();
-    clickBack();
-    expect(screen.getByTestId("parent-email-step")).toBeInTheDocument();
+    chooseRole("I'm a parent");
+    fireEvent.click(screen.getByText("Submit 18+ DOB"));
+
+    fireEvent.change(screen.getByLabelText("Email"), {
+      target: { value: "parent@test.com" },
+    });
+    fireEvent.change(screen.getByLabelText("Password"), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create My Account" }));
+
+    expect(signupSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "parent@test.com",
+        password: "password123",
+        role: "parent",
+        firstName: null,
+        lastName: null,
+      })
+    );
   });
 
-  it("back from credentials (13+ student) returns to birth-year", () => {
-    render(<SignupForm onBackToLogin={vi.fn()} />);
-    chooseRole("Student");
-    fireEvent.click(screen.getByText("Select year 13+"));
-    expect(screen.getByPlaceholderText("First name")).toBeInTheDocument();
-    clickBack();
-    expect(screen.getByTestId("age-gate")).toBeInTheDocument();
-  });
-
-  // Google OAuth (D-08, D-09)
+  // Google OAuth
   it("SocialLogin receives role prop on credentials step", () => {
     render(<SignupForm onBackToLogin={vi.fn()} />);
     chooseRole("Teacher");
+    fireEvent.click(screen.getByText("Submit 18+ DOB"));
     const socialLogin = screen.getByTestId("social-login");
     expect(socialLogin.textContent).toBe("teacher");
   });
