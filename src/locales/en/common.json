@@ -112,6 +112,8 @@
         "studentDesc": "Learn and practice piano",
         "teacher": "Teacher",
         "teacherDesc": "Teach and track students",
+        "parent": "I'm a parent",
+        "parentDesc": "Setting this up for my child",
         "continue": "Continue"
       },
       "ageGate": {
@@ -121,6 +123,19 @@
         "continue": "Continue",
         "errorRequired": "Please select your birth year",
         "errorInvalid": "Please select a valid birth year"
+      },
+      "dobGate": {
+        "heading": "What's your date of birth?",
+        "month": "Month",
+        "day": "Day",
+        "year": "Year",
+        "selectMonth": "Select month"
+      },
+      "ageBlock": {
+        "title": "PianoMaster accounts are for parents & guardians",
+        "body": "To keep kids' information safe, accounts are created by a parent or guardian. Please ask a parent or guardian to set this up for you.",
+        "tryAgain": "Try a different date",
+        "backToLogin": "Back to login"
       },
       "parentEmail": {
         "title": "Want to keep a parent in the loop?",
@@ -142,7 +157,8 @@
         "password": "Password",
         "passwordPlaceholder": "Create a password",
         "submitStudent": "Create Student Account",
-        "submitTeacher": "Create Teacher Account"
+        "submitTeacher": "Create Teacher Account",
+        "submitParent": "Create My Account"
       },
       "social": {
         "divider": "Or join with",
@@ -164,8 +180,10 @@
         "privacyLink": "Privacy Policy",
         "and": "and"
       },
+      "parentNameLabel": "Your name (optional)",
       "successStudent": "Your account is ready — let's play!",
-      "successTeacher": "Your teacher account is ready!"
+      "successTeacher": "Your teacher account is ready!",
+      "successParent": "Account created! Welcome to PianoMaster."
     },
     "roleSelection": {
       "title": "Welcome to PianoMaster!",
@@ -2276,5 +2294,9 @@
     },
     "play": "Play your rhythm",
     "done": "I'm done!"
+  },
+  "parentPlaceholder": {
+    "heading": "You're all set!",
+    "body": "Child profiles are on their way — check back soon to add your child and start their piano journey together."
   }
 }
