@@ -49,7 +49,7 @@ These were open questions all four researchers surfaced independently. They are 
 ### Signup & Age Gate (SIGNUP)
 
 - [ ] **SIGNUP-01**: A neutral, open-field date-of-birth entry gates account creation — not a knowledge question, which the FTC has rejected as an age gate
-- [ ] **SIGNUP-02**: Users under 18 cannot create an account and are shown guidance to ask a parent or guardian
+- [x] **SIGNUP-02**: Users under 18 cannot create an account and are shown guidance to ask a parent or guardian
 - [ ] **SIGNUP-03**: The age gate fronts _every_ signup entry point, including the OAuth button in `useSocialAuth.js`, not only the email/password form
 - [ ] **SIGNUP-04**: Registration collects parent email, password or OAuth token, and optionally the parent's name — and never collects data about the child at this step
 - [ ] **SIGNUP-05**: A direct link to the Privacy Policy is visible on the registration screen and in parent settings
@@ -130,7 +130,7 @@ These were open questions all four researchers surfaced independently. They are 
 | RLS-05      | Phase 2 — RLS Rewrite                                    | Complete |
 | RLS-06      | Phase 2 — RLS Rewrite                                    | Complete |
 | SIGNUP-01   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
-| SIGNUP-02   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
+| SIGNUP-02   | Phase 3 — Parent-Only Signup & Age Gate                  | Complete |
 | SIGNUP-03   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
 | SIGNUP-04   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
 | SIGNUP-05   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |

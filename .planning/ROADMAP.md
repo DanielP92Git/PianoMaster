@@ -134,7 +134,7 @@ feature is removed entirely so no child voice data is collected at all.
    - [x] 03-06-PLAN.md — Wave 2: TeacherRedirect isParent branch + ParentPlaceholder landing page
    - [x] 03-07-PLAN.md — Wave 3: SignupForm role->dob->credentials wizard + Privacy link + delete ParentEmailStep
    - [x] 03-08-PLAN.md — Wave 3: RoleSelection OAuth DOB+role completion (closes OAuth-bypass) + test rewrite
-   - [ ] 03-09-PLAN.md — Wave 4: [GAP] defer under-18 logout() to dismissal so AgeBlockScreen renders reliably (fixes WR-01 race, SIGNUP-02)
+   - [x] 03-09-PLAN.md — Wave 4: [GAP] defer under-18 logout() to dismissal so AgeBlockScreen renders reliably (fixes WR-01 race, SIGNUP-02)
          **Pitfalls to avoid**: The OAuth-bypass gap — gate at the router/page level before any signup CTA renders, not just in front of form fields.
          **UI hint**: yes
 

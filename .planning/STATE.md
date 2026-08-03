@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: executing
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-08-03T19:01:59.826Z"
-last_activity: 2026-08-03 -- Phase 3 planning complete
+status: verifying
+stopped_at: "Phase 3 (parent-only-signup-age-gate) COMPLETE — plan 03-09 (WR-01 gap closure) executed 2026-08-03. 9/9 plans done. `handleUnder18` in `RoleSelection.jsx` is now a pure `setBlocked(true)` (logout deferred to `handleBackToLogin`), closing the OAuth under-18 block-screen race from `03-VERIFICATION.md`. Full suite green (114 files / 2186 tests). Outstanding: the human_verification checkpoint carried in `03-VERIFICATION.md` (live Google OAuth round-trip as a brand-new under-18 account) is still open — JSDOM tests can't fully replicate the `AuthenticatedWrapper`/`SIGNED_OUT` unmount race."
+last_updated: "2026-08-03T20:16:13.526Z"
+last_activity: 2026-08-03 -- Plan 03-09 (WR-01 gap closure) executed
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 19
-  completed_plans: 18
-  percent: 95
+  completed_plans: 19
+  percent: 100
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 
 ## Current Position
 
-Phase: 03 (parent-only-signup-age-gate) — EXECUTING
-Plan: 1 of 8
-Status: Ready to execute
-Last activity: 2026-08-03 -- Phase 3 planning complete
+Phase: 03 (parent-only-signup-age-gate) — COMPLETE
+Plan: 9 of 9
+Status: Phase complete — ready for verification
+Last activity: 2026-08-03 -- Plan 03-09 (WR-01 gap closure) executed
 
-Progress: [██████████] 100% (5 of 5 plans; Phase 2 fully complete)
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -41,10 +41,11 @@ Progress: [██████████] 100% (5 of 5 plans; Phase 2 fully com
 
 ### Phase 01 Execution Metrics (v3.7)
 
-| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                                                                              |
-| ----- | -------- | ----- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01-01 | 6 min    | 3     | 2     | Session-wide combo/on-fire state added to `SightReadingSessionContext` (ref+state double-write, D-06). Task 3 (HUD-02 deferral) already satisfied from context-gathering, no edit needed.                                          |
-| 01-02 | 15 min   | 2     | 3     | Wired `incrementCombo()`/`resetCombo()` into the two existing record sites in `SightReadingGame.jsx`; rendered `ComboPill`/`OnFireBadge`/`OnFireSplash` in HUD + root. No fire sound (mic-safety). Full suite green (1975 passed). |
+| Plan         | Duration | Tasks   | Files   | Notes                                                                                                                                                                                                                              |
+| ------------ | -------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01-01        | 6 min    | 3       | 2       | Session-wide combo/on-fire state added to `SightReadingSessionContext` (ref+state double-write, D-06). Task 3 (HUD-02 deferral) already satisfied from context-gathering, no edit needed.                                          |
+| 01-02        | 15 min   | 2       | 3       | Wired `incrementCombo()`/`resetCombo()` into the two existing record sites in `SightReadingGame.jsx`; rendered `ComboPill`/`OnFireBadge`/`OnFireSplash` in HUD + root. No fire sound (mic-safety). Full suite green (1975 passed). |
+| Phase 03 P09 | 10min    | 2 tasks | 2 files |
 
 ## Deferred Items
 
@@ -126,6 +127,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - **Roadmap:** Added a Phase 8 (Contract — Legacy Cleanup) not explicitly itemized in research's phase list, to give MIGRATE-05 ("reversible until the final contract step") a concrete home and to formally close the expand/contract cycle (drop legacy RLS policies only after verified zero traffic).
 - **Roadmap:** PROFILE (6 reqs) and COPPA (6 reqs) combined into one Phase 4 — the parental gate (COPPA-01/02) and the profile CRUD/switcher it protects (PROFILE-01-06) are the same coherent capability; splitting them would create an artificial layer boundary.
 - **Roadmap:** Billing re-pointing isolated as its own Phase 5, sandwiched between RLS (Phase 2) and the full live-account migration (Phase 6), per instruction that MIGRATE-04 is the highest-blast-radius single item and must be sandbox-tested before touching the 3 live subscriptions.
+- **03-09:** `handleUnder18` in `RoleSelection.jsx` made a pure `setBlocked(true)` (no `logout()`); `logout()` moved into `handleBackToLogin`, deferring sign-out to explicit dismissal — closes WR-01 (OAuth under-18 block-screen race from `03-VERIFICATION.md`) by keeping the session alive so `AuthenticatedWrapper` doesn't unmount the block screen before SIGNUP-02's guidance is seen. Chosen over lifting a `blockedUnder18` flag into `App.jsx` — smaller blast radius, mirrors `SignupForm.jsx`'s already-reliable email-path pattern.
 
 ## Decisions (v3.7)
 
@@ -149,7 +151,10 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** Run `/gsd-execute-phase 1` to execute Phase 1 (Identity Schema Expand). 5 plans across 4 waves: W1 = 01-01 (FK checklist + function inventory) ∥ 01-02 (segmentation table + SQL assertion suite); W2 = 01-03 (owner scope/segmentation sign-off gate, autonomous:no); W3 = 01-04 (atomic up-migration + down-migration); W4 = 01-05 (owner-gated branch rehearsal → production apply + live IDENT-05 verifier + D-29 smoke, autonomous:no, [BLOCKING]). Plan-checker verdict: no BLOCKING issues; 5 robustness fixes folded in (per-row `requires_reconsent` VALUES encoding, parents count/true-count + positive parent-match assertions, real PASS/FAIL gating on the production apply verify, RESEARCH open-questions marked resolved, VALIDATION nyquist_compliant flipped true). Two owner gates during execution: segmentation/FK-scope sign-off (W2) and the production apply (W4).
+**Stopped at:** Phase 3 (parent-only-signup-age-gate) COMPLETE — plan 03-09 (WR-01 gap closure) executed 2026-08-03. 9/9 plans done. `handleUnder18` in `RoleSelection.jsx` is now a pure `setBlocked(true)` (logout deferred to `handleBackToLogin`), closing the OAuth under-18 block-screen race from `03-VERIFICATION.md`. Full suite green (114 files / 2186 tests). Outstanding: the human_verification checkpoint carried in `03-VERIFICATION.md` (live Google OAuth round-trip as a brand-new under-18 account) is still open — JSDOM tests can't fully replicate the `AuthenticatedWrapper`/`SIGNED_OUT` unmount race.
+**Next action:** Run milestone/phase verification for Phase 3, then proceed to Phase 4 (Profile CRUD + COPPA parental gate) per the roadmap.
+
+**Next action (historical, superseded):** Run `/gsd-execute-phase 1` to execute Phase 1 (Identity Schema Expand). 5 plans across 4 waves: W1 = 01-01 (FK checklist + function inventory) ∥ 01-02 (segmentation table + SQL assertion suite); W2 = 01-03 (owner scope/segmentation sign-off gate, autonomous:no); W3 = 01-04 (atomic up-migration + down-migration); W4 = 01-05 (owner-gated branch rehearsal → production apply + live IDENT-05 verifier + D-29 smoke, autonomous:no, [BLOCKING]). Plan-checker verdict: no BLOCKING issues; 5 robustness fixes folded in (per-row `requires_reconsent` VALUES encoding, parents count/true-count + positive parent-match assertions, real PASS/FAIL gating on the production apply verify, RESEARCH open-questions marked resolved, VALIDATION nyquist_compliant flipped true). Two owner gates during execution: segmentation/FK-scope sign-off (W2) and the production apply (W4).
 
 **Historical context (v3.7, retained for reference):** Shipped and archived 2026-07-18. PR #13 merged. Outstanding: PRAC-04 mic-review device UAT (item 2) — owner testing separately, tracked as a deferred item above.
 
