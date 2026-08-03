@@ -76,6 +76,9 @@ const ComingSoon = lazyWithRetry(
 const TeacherDashboard = lazyWithRetry(
   () => import("./components/layout/TeacherDashboard")
 );
+const ParentPlaceholder = lazyWithRetry(
+  () => import("./pages/ParentPlaceholder")
+);
 
 // Lazy-loaded game components
 const NotesMasterMode = lazyWithRetry(() =>
@@ -238,10 +241,13 @@ function AuthenticatedWrapper({ children }) {
 
 // Component to redirect teachers to their dashboard
 export function TeacherRedirect() {
-  const { isTeacher } = useUser();
+  const { isTeacher, isParent } = useUser();
 
   if (isTeacher) {
     return <Navigate to="/teacher" replace />;
+  }
+  if (isParent) {
+    return <ParentPlaceholder />;
   }
 
   return <TrailMapPage />;
