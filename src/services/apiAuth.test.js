@@ -53,7 +53,9 @@ describe("getCurrentUser", () => {
 
     expect(result.userRole).toBe("parent");
     expect(result.isParent).toBe(true);
-    expect(result.needsRoleSelection).toBe(false);
+    // The resolved-role branch (mirroring teacher/student) never sets this
+    // key at all — it's simply falsy/absent, not an explicit `false`.
+    expect(result.needsRoleSelection).toBeFalsy();
   });
 
   it("still resolves a teacher-only session exactly as before (no regression)", async () => {
