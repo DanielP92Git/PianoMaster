@@ -152,7 +152,7 @@ describe("RoleSelection", () => {
     expect(logoutMock).not.toHaveBeenCalled();
   });
 
-  it("submitting an under-18 DOB signs out once and inserts nothing", async () => {
+  it("submitting an under-18 DOB shows the block screen WITHOUT signing out (logout deferred)", async () => {
     renderWithClient(<RoleSelection user={user} />);
     fireEvent.click(screen.getByText("I'm a parent"));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
@@ -160,16 +160,58 @@ describe("RoleSelection", () => {
     fillDob(dobPartsForAge(17));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
-    await waitFor(() => expect(logoutMock).toHaveBeenCalledTimes(1));
+    // Block screen must render (SIGNUP-02 guidance) with NO insert and NO logout.
+    await waitFor(() =>
+      expect(
+        screen.getByText("PianoMaster accounts are for parents & guardians")
+      ).toBeInTheDocument()
+    );
+    expect(logoutMock).not.toHaveBeenCalled();
     expect(inserted.table).toBeNull();
-
-    // Renders the AgeBlockScreen copy, not a Supabase-inserting form.
-    expect(
-      screen.getByText("PianoMaster accounts are for parents & guardians")
-    ).toBeInTheDocument();
   });
 
-  it("an under-18 teacher branch also signs out and inserts nothing", async () => {
+  it("signs out exactly once when the blocked user clicks 'Back to login'", async () => {
+    renderWithClient(<RoleSelection user={user} />);
+    fireEvent.click(screen.getByText("I'm a parent"));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    fillDob(dobPartsForAge(17));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("PianoMaster accounts are for parents & guardians")
+      ).toBeInTheDocument()
+    );
+    expect(logoutMock).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Back to login" }));
+    await waitFor(() => expect(logoutMock).toHaveBeenCalledTimes(1));
+    expect(inserted.table).toBeNull();
+  });
+
+  it("'Try a different date' returns to the DOB gate without signing out", async () => {
+    renderWithClient(<RoleSelection user={user} />);
+    fireEvent.click(screen.getByText("I'm a parent"));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    fillDob(dobPartsForAge(17));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("PianoMaster accounts are for parents & guardians")
+      ).toBeInTheDocument()
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Try a different date" })
+    );
+    expect(screen.getByLabelText("Month")).toBeInTheDocument();
+    expect(logoutMock).not.toHaveBeenCalled();
+  });
+
+  it("an under-18 teacher branch also shows the block screen without inserting or signing out", async () => {
     renderWithClient(<RoleSelection user={user} />);
     fireEvent.click(screen.getByText("Teacher"));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
@@ -177,7 +219,12 @@ describe("RoleSelection", () => {
     fillDob(dobPartsForAge(15));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
-    await waitFor(() => expect(logoutMock).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(
+        screen.getByText("PianoMaster accounts are for parents & guardians")
+      ).toBeInTheDocument()
+    );
+    expect(logoutMock).not.toHaveBeenCalled();
     expect(inserted.table).toBeNull();
   });
 });
