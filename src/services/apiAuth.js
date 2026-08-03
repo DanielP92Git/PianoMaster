@@ -124,6 +124,19 @@ export async function getCurrentUser() {
         }
         // If not in either table, userRole remains null
       }
+
+      // Final fallback: check parents table (never overrides a teacher/student match)
+      if (!userRole) {
+        const { data: parentData, error: parentError } = await supabase
+          .from("parents")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (parentData && !parentError) {
+          userRole = "parent";
+          profile = parentData;
+        }
+      }
     } else {
       // Check students table first (default or metadata hint says student)
       const { data: studentData, error: studentError } = await supabase
@@ -151,6 +164,19 @@ export async function getCurrentUser() {
         }
         // If not in either table, userRole remains null
       }
+
+      // Final fallback: check parents table (never overrides a teacher/student match)
+      if (!userRole) {
+        const { data: parentData, error: parentError } = await supabase
+          .from("parents")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
+        if (parentData && !parentError) {
+          userRole = "parent";
+          profile = parentData;
+        }
+      }
     }
 
     // If user has no profile in either table, they need to complete registration
@@ -165,6 +191,7 @@ export async function getCurrentUser() {
         profile: null,
         isTeacher: false,
         isStudent: false,
+        isParent: false,
         needsRoleSelection: true,
       };
     }
@@ -176,6 +203,7 @@ export async function getCurrentUser() {
       profile,
       isTeacher: userRole === "teacher",
       isStudent: userRole === "student",
+      isParent: userRole === "parent",
     };
   } catch (error) {
     console.error("getCurrentUser function error:", error);
@@ -239,7 +267,8 @@ export async function logout() {
 
     // Log cleanup count in development only
     if (import.meta.env.DEV) {
-      console.log( // eslint-disable-line no-console
+      console.log(
+        // eslint-disable-line no-console
         `Logout: Cleared ${keysToRemove.length} user-specific localStorage keys`
       );
     }

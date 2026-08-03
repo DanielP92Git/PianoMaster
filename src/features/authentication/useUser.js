@@ -35,6 +35,7 @@ export function useUser() {
     isAuthenticated: user?.role === "authenticated",
     isTeacher: user?.isTeacher || false,
     isStudent: user?.isStudent || false,
+    isParent: user?.isParent || false,
     userRole: user?.userRole,
     profile: user?.profile,
     isLoading,
