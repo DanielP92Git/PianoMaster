@@ -177,7 +177,18 @@ feature is removed entirely so no child voice data is collected at all.
 2. All 3 live subscriptions resolve to the correct owning parent after backfill, verified individually against each real customer, not by row count alone
 3. A Lemon Squeezy sandbox webhook replaying legacy `student_id`-shaped `custom_data` is correctly resolved to the right parent via the compatibility shim, without any Lemon Squeezy-side changes
 4. `cancel-subscription` and `create-checkout` Edge Functions operate on `parent_id` end-to-end against sandbox before any live subscription is touched
-   **Plans**: TBD
+   **Plans**: 9 plans in 6 waves
+
+   Plans:
+   - [ ] 05-01-PLAN.md — Wave 1: live-schema + Lemon Squeezy test-mode discovery, D-11 pre-backfill capture (owner-gated)
+   - [ ] 05-02-PLAN.md — Wave 2: forward + down migration (parent_id, dual policy, helper swap, dead-letter table) + D-17 Phase 8 handoff
+   - [ ] 05-03-PLAN.md — Wave 2: webhook resolve-chain (D-01) + dead-letter path (D-03)
+   - [ ] 05-04-PLAN.md — Wave 2: cancel-subscription D-06 three-branch, create-checkout D-02, account-deletion lookup fix
+   - [ ] 05-05-PLAN.md — Wave 2: client read paths (D-05 any-active-wins, D-07 detail, Realtime filter swap)
+   - [ ] 05-06-PLAN.md — Wave 3: verification harnesses (rehearsal runbook, HMAC replay script, sandbox seed + runbook)
+   - [ ] 05-07-PLAN.md — Wave 4: production BEGIN...ROLLBACK rehearsal (D-09, owner-gated)
+   - [ ] 05-08-PLAN.md — Wave 5: sandbox verification — replay suite + real LS test-mode checkout (D-10, owner-gated, SC-4 gate)
+   - [ ] 05-09-PLAN.md — Wave 6: [BLOCKING] production apply + D-11 per-row sign-off + Edge Function deploy (owner-gated)
    **Pitfalls to avoid**: Pitfall 13 (billing ownership mismatch — a broken webhook silently failing to renew access on a real paying customer is a support/refund incident, not just a bug).
    **Research flag**: Needs the parent-scoped-vs-child-scoped decision recorded before implementation (already decided as parent-scoped per owner decision D-05) and dedicated Lemon Squeezy sandbox verification before any of the 3 live subscriptions are touched.
    **UI hint**: no

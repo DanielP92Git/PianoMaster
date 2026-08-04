@@ -1,9 +1,9 @@
 ---
 phase: 5
 slug: subscription-re-pointing
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-08-05
 ---
 
@@ -45,9 +45,31 @@ checkout. Do not let a green Vitest suite be read as phase completion.
 > Populated by `gsd-planner` — one row per task across all Phase 5 plans.
 > Every task must resolve to an `<automated>` verify command **or** an explicit manual gate below.
 
-| Task ID   | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status     |
-| --------- | ---- | ---- | ----------- | ---------- | --------------- | --------- | ----------------- | ----------- | ---------- |
-| _pending_ | —    | —    | MIGRATE-04  | —          | —               | —         | —                 | —           | ⬜ pending |
+| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 05-01/T1 | 05-01 | 1 | MIGRATE-04 | T-5-13 | Alert mechanism locked; no key material committed | grep gate | grep on `05-discovery.md` sections 4/5 | created by task | pending |
+| 05-01/T2 | 05-01 | 1 | MIGRATE-04 | T-5-12, T-5-14 | Read-only production introspection; emails redacted in the committed file | manual + grep gate | grep on `05-discovery.md` sections 1/2 + `05-subscription-signoff.md` | created by task | pending |
+| 05-01/T3 | 05-01 | 1 | MIGRATE-04 | T-5-13 | LS key material never written to a file | manual + grep gate | grep on `05-discovery.md` section 3 + key-shape negative grep | created by task | pending |
+| 05-02/T1 | 05-02 | 2 | MIGRATE-04 | T-5-02, T-5-03, T-5-07, T-5-15, T-5-16 | Deny-all dead-letter RLS; SELECT-only plain-equality policy; no unique index (D-08) | SQL static gate | comment-stripped grep pack on the forward migration | created by task | pending |
+| 05-02/T2 | 05-02 | 2 | MIGRATE-04 | T-5-16 | Backout reverses every object with zero data loss | SQL static gate | comment-stripped grep pack on the `.down.sql` | created by task | pending |
+| 05-02/T3 | 05-02 | 2 | MIGRATE-04 | — | Phase 8 cleanup list complete and additions-only | grep gate | grep on `02-phase8-handoff.md` | exists (append) | pending |
+| 05-03/T1 | 05-03 | 2 | MIGRATE-04 | T-5-02, T-5-08 | Resolve-chain never throws; dead-letter alert logs no PII | Vitest unit | `npx vitest run src/services/__tests__/webhookLogic.test.js` | extend | pending |
+| 05-03/T2 | 05-03 | 2 | MIGRATE-04 | — | 9-field whitelist integrity; no `student_id` dual-write (D-14) | Vitest unit | `npx vitest run src/services/__tests__/webhookLogic.test.js` | extend | pending |
+| 05-03/T3 | 05-03 | 2 | MIGRATE-04 | T-5-01, T-5-08 | HMAC verification strictly precedes the first DB probe | source-order gate | bash grep-order check on `lemon-squeezy-webhook/index.ts` | static | pending |
+| 05-04/T1 | 05-04 | 2 | MIGRATE-04 | T-5-19 | 0/1/>1 classification is pure and testable; SQL-parity predicate | Vitest unit | `npx vitest run src/services/__tests__/cancelSubscriptionLogic.test.js` | created by task | pending |
+| 05-04/T2 | 05-04 | 2 | MIGRATE-04 | T-5-05, T-5-19, T-5-20 | Ambiguous branch returns 409 before any LS DELETE | source-order gate | bash grep-order check on `cancel-subscription/index.ts` | static | pending |
+| 05-04/T3 | 05-04 | 2 | MIGRATE-04 | T-5-04, T-5-22 | IDOR 403 check preserved; account deletion still cancels live billing | grep gate + lint | grep pack + `npm run lint` | static | pending |
+| 05-05/T1 | 05-05 | 2 | MIGRATE-04 | T-5-23, T-5-25 | Any-active-row-wins parity with SQL; error still fails closed | Vitest unit | `npx vitest run src/services/__tests__/subscriptionService.test.js` | extend | pending |
+| 05-05/T2 | 05-05 | 2 | MIGRATE-04 | T-5-06, T-5-24 | Realtime filter on `parent_id`; ambiguity copy leaks no ids | grep gate + suite | grep pack + `npm run test:run` | exists | pending |
+| 05-06/T1 | 05-06 | 3 | MIGRATE-04 | T-5-26 | One BEGIN, one ROLLBACK, zero COMMIT; no `information_schema` | SQL static gate | bash grep pack + ASSERT count >= 16 | created by task | pending |
+| 05-06/T2 | 05-06 | 3 | MIGRATE-04 | T-5-11, T-5-01 | Secret from env only; sign-and-send the same string; B8 negative control | syntax + grep gate | `node --check` + grep pack + bare-run refusal check | created by task | pending |
+| 05-06/T3 | 05-06 | 3 | MIGRATE-04 | T-5-09, T-5-27 | Sandbox-only banner; teardown + production safety queries | grep gate | grep pack on the seed and the runbook | created by task | pending |
+| 05-07/T1 | 05-07 | 4 | MIGRATE-04 | T-5-26, T-5-29 | Rehearsal cannot persist; every assertion gets an evidence-backed verdict | manual gate (D-09) | grep on `05-apply-log.md` verdict table | created by task | pending |
+| 05-08/T1 | 05-08 | 5 | MIGRATE-04 | T-5-01, T-5-09 | 10 replay branches incl. signature negative control; production untouched | manual gate (D-10a) | grep on `05-sandbox-log.md` SC-3 section | created by task | pending |
+| 05-08/T2 | 05-08 | 5 | MIGRATE-04 | T-5-04, T-5-19, T-5-30 | Real test-mode checkout; 403 IDOR; 409 with LS dashboard unchanged | manual gate (D-10b) | grep on `05-sandbox-log.md` SC-4 section | created by task | pending |
+| 05-09/T1 | 05-09 | 6 | MIGRATE-04 | T-5-10, T-5-02, T-5-07 | Owner-gated apply; post-apply RLS/helper/dead-letter verification | manual gate (D-13) | grep on `05-apply-log.md` V1-V6 + Advisors | created by task | pending |
+| 05-09/T2 | 05-09 | 6 | MIGRATE-04 | T-5-31, T-5-12 | Three individual per-row signatures, never a row count | manual gate (D-11/SC-2) | grep on `05-subscription-signoff.md` | created by task | pending |
+| 05-09/T3 | 05-09 | 6 | MIGRATE-04 | T-5-32, T-5-33 | Deploy strictly after the apply; rollback versions recorded | manual gate + suite | grep on `05-apply-log.md` deployment table + `npm run test:run` | created by task | pending |
 
 _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 
@@ -68,15 +90,15 @@ _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 
 ## Wave 0 Requirements
 
-- [ ] `05-rehearsal-runbook.sql` — templated from `02-rehearsal-runbook.sql`; covers `ALTER TABLE ADD COLUMN parent_id`, the two-pass resolve-chain backfill `UPDATE`, the dual-policy `CREATE POLICY`, the `has_active_subscription()` `CREATE OR REPLACE`, the down-migration, and re-apply — all inside one `BEGIN … ROLLBACK` against production (D-09)
-- [ ] `supabase/functions/lemon-squeezy-webhook/lib/resolveParent.ts` — the D-01 resolve-chain as a fourth pure, injectable sibling module
-- [ ] Resolve-chain unit tests in `src/services/__tests__/webhookLogic.test.js` (or a new sibling file)
-- [ ] Dead-letter write path (`lib/deadLetter.ts` or inline — discretion) + its test coverage (D-03)
-- [ ] **Pure extraction of `cancel-subscription`'s "select rows → classify active → decide" logic** — currently monolithic in `index.ts`, so D-06's ambiguity branch is not unit-testable at all today
-- [ ] `05-webhook-replay.mjs` — HMAC-signed synthetic replay script reusing `verifySignature.ts`'s scheme (D-10a)
-- [ ] `05-subscription-checklist.md` — owner sign-off before/after table for the 3 live subscriptions, templated on `01-fk-checklist.md` (D-11)
-- [ ] Local Supabase stack seed data (synthetic parent/child/plan row + test-mode LS variant id) for the D-10b real checkout — **local only**, must not touch production `subscription_plans`
-- [ ] Committed down-migration authored in the same commit as the forward migration (D-12), following the `20260803120000_add_parent_age_verified.sql` + `.down.sql` convention
+- [x] `05-rehearsal-runbook.sql` — templated from `02-rehearsal-runbook.sql`; covers `ALTER TABLE ADD COLUMN parent_id`, the two-pass resolve-chain backfill `UPDATE`, the dual-policy `CREATE POLICY`, the `has_active_subscription()` `CREATE OR REPLACE`, the down-migration, and re-apply — all inside one `BEGIN … ROLLBACK` against production (D-09)
+- [x] `supabase/functions/lemon-squeezy-webhook/lib/resolveParent.ts` — the D-01 resolve-chain as a fourth pure, injectable sibling module
+- [x] Resolve-chain unit tests in `src/services/__tests__/webhookLogic.test.js` (or a new sibling file)
+- [x] Dead-letter write path (`lib/deadLetter.ts` or inline — discretion) + its test coverage (D-03)
+- [x] **Pure extraction of `cancel-subscription`'s "select rows → classify active → decide" logic** — currently monolithic in `index.ts`, so D-06's ambiguity branch is not unit-testable at all today
+- [x] `05-webhook-replay.mjs` — HMAC-signed synthetic replay script reusing `verifySignature.ts`'s scheme (D-10a)
+- [x] `05-subscription-checklist.md` — owner sign-off before/after table for the 3 live subscriptions, templated on `01-fk-checklist.md` (D-11)
+- [x] Local Supabase stack seed data (synthetic parent/child/plan row + test-mode LS variant id) for the D-10b real checkout — **local only**, must not touch production `subscription_plans`
+- [x] Committed down-migration authored in the same commit as the forward migration (D-12), following the `20260803120000_add_parent_age_verified.sql` + `.down.sql` convention
 
 ---
 
@@ -101,4 +123,18 @@ _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 - [ ] All four manual gates signed off (SC-2 table, SC-4 checkout, production apply, rehearsal PASS)
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved by gsd-planner 2026-08-05 — all 8 Wave 0 items are assigned to a concrete task.
+
+### Wave 0 item -> task assignment
+
+| Wave 0 item | Authored by | Run by |
+| --- | --- | --- |
+| `05-rehearsal-runbook.sql` | 05-06 Task 1 | 05-07 Task 1 |
+| `lib/resolveParent.ts` + tests | 05-03 Task 1 | CI (`webhookLogic.test.js`) |
+| `lib/deadLetter.ts` + tests | 05-03 Task 1 | CI (`webhookLogic.test.js`) |
+| Pure extraction of `cancel-subscription` decide logic | 05-04 Task 1 | CI (`cancelSubscriptionLogic.test.js`) |
+| `05-webhook-replay.mjs` | 05-06 Task 2 | 05-08 Task 1 |
+| D-11 per-row sign-off doc (`05-subscription-signoff.md`) | 05-01 Task 2 (before half) | 05-09 Task 2 (after half + signature) |
+| Sandbox seed data, local/throwaway only | 05-06 Task 3 | 05-08 Tasks 1-2 |
+| Committed down-migration (D-12) | 05-02 Task 2 | 05-07 Task 1 (rehearsed), 05-09 (live backout path) |
+
