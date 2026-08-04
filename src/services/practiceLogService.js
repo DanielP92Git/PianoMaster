@@ -1,6 +1,6 @@
-import supabase from './supabase';
-import { awardXP } from '../utils/xpSystem';
-import { getCalendarDate } from '../utils/dateUtils';
+import supabase from "./supabase";
+import { awardXP } from "../utils/xpSystem";
+import { getCalendarDate } from "../utils/dateUtils";
 
 const PRACTICE_XP_REWARD = 25;
 
@@ -23,23 +23,22 @@ export const practiceLogService = {
    * On first call: inserts a row and awards 25 XP.
    * On duplicate (same student, same date): returns { inserted: false }, no XP awarded.
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @param {string} localDate - "YYYY-MM-DD" from getCalendarDate() — local timezone, not UTC
    * @returns {Promise<{ inserted: boolean, xpResult?: Object }>}
    * @throws {Error} 'Not authenticated' if no session
    * @throws {Error} Supabase error if non-23505 DB error occurs
    */
-  async logPractice(localDate) {
+  async logPractice(childId, localDate) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
-
-    const userId = session.user.id;
+    if (!session) throw new Error("Not authenticated");
 
     const { data, error } = await supabase
-      .from('instrument_practice_logs')
+      .from("instrument_practice_logs")
       .insert({
-        student_id: userId,
+        student_id: childId,
         practiced_on: localDate,
       })
       .select()
@@ -49,7 +48,7 @@ export const practiceLogService = {
       // PostgreSQL error code 23505 = unique_violation
       // This happens when the student already logged practice today (UNIQUE constraint).
       // Treat as idempotent success — do NOT throw, do NOT award XP again.
-      if (error.code === '23505') {
+      if (error.code === "23505") {
         return { inserted: false };
       }
       throw error;
@@ -58,11 +57,14 @@ export const practiceLogService = {
     // First log of the day — award XP (LOG-03, D-14)
     let xpResult = null;
     try {
-      xpResult = await awardXP(userId, PRACTICE_XP_REWARD);
+      xpResult = await awardXP(childId, PRACTICE_XP_REWARD);
     } catch (xpError) {
       // XP award failure should NOT block or reverse the practice log.
       // Log the error for debugging but return success with no xpResult.
-      console.error('[practiceLogService] XP award failed (log still recorded):', xpError);
+      console.error(
+        "[practiceLogService] XP award failed (log still recorded):",
+        xpError
+      );
     }
 
     return { inserted: true, xpResult };
@@ -71,22 +73,23 @@ export const practiceLogService = {
   /**
    * Check whether the student has already logged practice for a given date.
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @param {string} localDate - "YYYY-MM-DD"
    * @returns {Promise<{ logged: boolean }>}
    * @throws {Error} 'Not authenticated' if no session
    * @throws {Error} Supabase error if query fails
    */
-  async getTodayStatus(localDate) {
+  async getTodayStatus(childId, localDate) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
+    if (!session) throw new Error("Not authenticated");
 
     const { data, error } = await supabase
-      .from('instrument_practice_logs')
-      .select('id')
-      .eq('student_id', session.user.id)
-      .eq('practiced_on', localDate)
+      .from("instrument_practice_logs")
+      .select("id")
+      .eq("student_id", childId)
+      .eq("practiced_on", localDate)
       .maybeSingle();
 
     if (error) throw error;
@@ -99,29 +102,29 @@ export const practiceLogService = {
   /**
    * Fetch 52 weeks of instrument practice logs for the authenticated student.
    *
-   * Uses session.user.id (not passed studentId) to enforce RLS — students
-   * can only query their own logs. The studentId param on the UI component
-   * is used for the TanStack Query key only.
+   * childId is the row target (RLS still enforces the authenticated
+   * session can only reach children it owns / itself).
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @param {string} startDate - "YYYY-MM-DD" (363 days before endDate)
    * @param {string} endDate - "YYYY-MM-DD" (today in local timezone)
    * @returns {Promise<Array<{ practiced_on: string }>>}
    * @throws {Error} 'Not authenticated' if no session
    * @throws {Error} Supabase error if query fails
    */
-  async getHistoricalLogs(startDate, endDate) {
+  async getHistoricalLogs(childId, startDate, endDate) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
+    if (!session) throw new Error("Not authenticated");
 
     const { data, error } = await supabase
-      .from('instrument_practice_logs')
-      .select('practiced_on')
-      .eq('student_id', session.user.id)
-      .gte('practiced_on', startDate)
-      .lte('practiced_on', endDate)
-      .order('practiced_on', { ascending: true });
+      .from("instrument_practice_logs")
+      .select("practiced_on")
+      .eq("student_id", childId)
+      .gte("practiced_on", startDate)
+      .lte("practiced_on", endDate)
+      .order("practiced_on", { ascending: true });
 
     if (error) throw error;
     return data ?? [];
@@ -141,14 +144,14 @@ export function computeLongestStreak(practicedDates) {
   if (!practicedDates || practicedDates.length === 0) return 0;
 
   const sorted = [...practicedDates]
-    .map((r) => (typeof r === 'string' ? r : r.practiced_on))
+    .map((r) => (typeof r === "string" ? r : r.practiced_on))
     .sort();
 
   let longest = 1;
   let current = 1;
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1] + 'T00:00:00');
-    const curr = new Date(sorted[i] + 'T00:00:00');
+    const prev = new Date(sorted[i - 1] + "T00:00:00");
+    const curr = new Date(sorted[i] + "T00:00:00");
     const diffDays = Math.round((curr - prev) / 86400000);
     if (diffDays === 1) {
       current++;
