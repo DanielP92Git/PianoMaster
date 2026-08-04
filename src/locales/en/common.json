@@ -2312,7 +2312,12 @@
       "nicknameHelper": "Use a first name or nickname — please don't use your child's full name.",
       "nicknameFullNameWarning": "That looks like it might be a full name. You can still save — a nickname just keeps things more private."
     },
-    "manage": { "title": "Manage Children" },
+    "manage": {
+      "title": "Manage Children",
+      "statusActive": "Active",
+      "statusPaused": "Paused",
+      "empty": "No children yet."
+    },
     "panel": {
       "sectionProfile": "Profile",
       "sectionDataPrivacy": "Data & Privacy"
