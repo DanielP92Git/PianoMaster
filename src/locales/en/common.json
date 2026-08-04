@@ -31,7 +31,8 @@
     "dashboard": "Dashboard",
     "playAgain": "Play Again",
     "enabled": "On",
-    "disabled": "Off"
+    "disabled": "Off",
+    "errorRetryAskParent": "Something went wrong. Please try again — or ask a parent for help."
   },
   "auth": {
     "logIn": "Log in",
@@ -2296,5 +2297,48 @@
   "parentPlaceholder": {
     "heading": "You're all set!",
     "body": "Child profiles are on their way — check back soon to add your child and start their piano journey together."
+  },
+  "switcher": {
+    "title": "Who's playing?",
+    "addTile": "Add",
+    "emptyHeading": "Let's add your first child!",
+    "emptyBody": "Create a profile to start playing."
+  },
+  "children": {
+    "addChild": "Add a Child",
+    "form": {
+      "createSubmit": "Create Profile",
+      "updateSubmit": "Update Profile",
+      "nicknameHelper": "Use a first name or nickname — please don't use your child's full name.",
+      "nicknameFullNameWarning": "That looks like it might be a full name. You can still save — a nickname just keeps things more private."
+    },
+    "manage": { "title": "Manage Children" },
+    "panel": {
+      "sectionProfile": "Profile",
+      "sectionDataPrivacy": "Data & Privacy"
+    }
+  },
+  "dataRights": {
+    "review": "Review Data",
+    "export": "Download My Child's Data",
+    "deactivate": {
+      "action": "Pause Profile",
+      "confirm": "Pause {{nickname}}'s profile? They won't appear in Who's Playing, and no new activity will be recorded. All their existing progress stays saved — you can turn this back on anytime."
+    },
+    "reactivate": { "action": "Turn Back On" },
+    "delete": {
+      "action": "Delete Profile",
+      "confirm": "Delete {{nickname}} permanently? This cannot be undone — all progress, stats, and stars will be erased forever. Type {{nickname}} below to confirm.",
+      "submit": "Delete Forever"
+    }
+  },
+  "parentGate": {
+    "title": "Are you a grown-up?",
+    "subtitle": "A parent needs to verify to continue",
+    "placeholder": "Type your answer",
+    "submit": "Verify",
+    "cancel": "Cancel",
+    "wrong": "That's not right, try again!",
+    "hint": "Hint: Use mental math to add the two numbers"
   }
 }
