@@ -20,6 +20,7 @@ import {
 } from "./contexts/AccessibilityContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { ActiveChildProvider } from "./contexts/ActiveChildContext";
+import { ParentGateProvider } from "./contexts/ParentGateContext";
 import { SessionTimeoutProvider } from "./contexts/SessionTimeoutContext";
 import { RoleSelection } from "./components/auth/RoleSelection";
 import PWAInstallPrompt from "./components/pwa/PWAInstallPrompt";
@@ -610,29 +611,31 @@ function App() {
         <AccessibilityProvider>
           <SettingsProvider>
             <ActiveChildProvider>
-              <SessionTimeoutProvider>
-                <ModalProvider>
-                  <RhythmProvider>
-                    <SightReadingSessionProvider>
-                      <SubscriptionProvider>
-                        <div className="safe-area-app min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-                          <AccessibleToaster />
-                          <AppRoutes />
+              <ParentGateProvider>
+                <SessionTimeoutProvider>
+                  <ModalProvider>
+                    <RhythmProvider>
+                      <SightReadingSessionProvider>
+                        <SubscriptionProvider>
+                          <div className="safe-area-app min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+                            <AccessibleToaster />
+                            <AppRoutes />
 
-                          {/* PWA Components */}
-                          <PWAInstallPrompt />
-                          <IOSInstallPrompt />
-                          <PWAUpdateNotification />
-                          <NetworkStatus />
+                            {/* PWA Components */}
+                            <PWAInstallPrompt />
+                            <IOSInstallPrompt />
+                            <PWAUpdateNotification />
+                            <NetworkStatus />
 
-                          {/* Alarm Modal */}
-                          <AlarmModal />
-                        </div>
-                      </SubscriptionProvider>
-                    </SightReadingSessionProvider>
-                  </RhythmProvider>
-                </ModalProvider>
-              </SessionTimeoutProvider>
+                            {/* Alarm Modal */}
+                            <AlarmModal />
+                          </div>
+                        </SubscriptionProvider>
+                      </SightReadingSessionProvider>
+                    </RhythmProvider>
+                  </ModalProvider>
+                </SessionTimeoutProvider>
+              </ParentGateProvider>
             </ActiveChildProvider>
           </SettingsProvider>
         </AccessibilityProvider>

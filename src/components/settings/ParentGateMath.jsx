@@ -49,33 +49,35 @@ export function ParentGateMath({ onConsent, onCancel, isRTL = false }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div
-        className="w-full max-w-sm bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl p-6 space-y-5"
+        className="w-full max-w-sm space-y-5 rounded-xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-md"
         dir={isRTL ? "rtl" : "ltr"}
       >
         {/* Header */}
-        <div className={`flex items-start justify-between gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+        <div
+          className={`flex items-start justify-between gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
+        >
           <div className={isRTL ? "text-right" : ""}>
-            <h3 className="text-white font-bold text-lg leading-tight">
-              {t("pages.settings.notifications.parentGate.title")}
+            <h3 className="text-lg font-bold leading-tight text-white">
+              {t("parentGate.title")}
             </h3>
-            <p className="text-white/70 text-sm mt-1">
-              {t("pages.settings.notifications.parentGate.subtitle")}
+            <p className="mt-1 text-sm text-white/70">
+              {t("parentGate.subtitle")}
             </p>
           </div>
           <button
             onClick={onCancel}
-            aria-label={t("pages.settings.notifications.parentGate.cancel")}
-            className="text-white/60 hover:text-white/90 transition-colors flex-shrink-0"
+            aria-label={t("parentGate.cancel")}
+            className="flex-shrink-0 text-white/60 transition-colors hover:text-white/90"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Math problem */}
         <div className="flex items-center justify-center py-4">
-          <div className="text-4xl font-black text-white tracking-wide select-none">
+          <div className="select-none text-4xl font-black tracking-wide text-white">
             {problem.expression} = ?
           </div>
         </div>
@@ -88,31 +90,31 @@ export function ParentGateMath({ onConsent, onCancel, isRTL = false }) {
             pattern="[0-9]*"
             value={answer}
             onChange={handleAnswerChange}
-            placeholder={t("pages.settings.notifications.parentGate.placeholder")}
-            className={`w-full bg-white/10 border ${
+            placeholder={t("parentGate.placeholder")}
+            className={`w-full border bg-white/10 ${
               error ? "border-red-400/70" : "border-white/20"
-            } rounded-lg px-4 py-3 text-white text-center text-xl font-bold placeholder-white/40 focus:outline-none focus:border-indigo-400/70 focus:ring-1 focus:ring-indigo-400/40 transition-colors`}
+            } rounded-lg px-4 py-3 text-center text-xl font-bold text-white placeholder-white/40 transition-colors focus:border-indigo-400/70 focus:outline-none focus:ring-1 focus:ring-indigo-400/40`}
             autoFocus
           />
 
           {error && (
-            <p className={`text-red-300 text-sm ${isRTL ? "text-right" : ""}`}>
-              {t("pages.settings.notifications.parentGate.wrong")}
+            <p className={`text-sm text-red-300 ${isRTL ? "text-right" : ""}`}>
+              {t("parentGate.wrong")}
             </p>
           )}
 
           {attempts >= 3 && (
-            <p className={`text-white/50 text-xs ${isRTL ? "text-right" : ""}`}>
-              {t("pages.settings.notifications.parentGate.hint")}
+            <p className={`text-xs text-white/50 ${isRTL ? "text-right" : ""}`}>
+              {t("parentGate.hint")}
             </p>
           )}
 
           <button
             type="submit"
             disabled={!answer.trim()}
-            className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+            className="w-full rounded-lg bg-indigo-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {t("pages.settings.notifications.parentGate.submit")}
+            {t("parentGate.submit")}
           </button>
         </form>
 
@@ -120,9 +122,9 @@ export function ParentGateMath({ onConsent, onCancel, isRTL = false }) {
         <div className={`text-center ${isRTL ? "text-right" : ""}`}>
           <button
             onClick={onCancel}
-            className="text-white/50 hover:text-white/80 text-sm transition-colors"
+            className="text-sm text-white/50 transition-colors hover:text-white/80"
           >
-            {t("pages.settings.notifications.parentGate.cancel")}
+            {t("parentGate.cancel")}
           </button>
         </div>
       </div>
