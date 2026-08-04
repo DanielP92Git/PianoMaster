@@ -4,8 +4,9 @@
  * Manages student XP progression, level calculations, and XP rewards
  */
 
-import supabase from '../services/supabase';
-import { Sentry } from '../services/sentryService';
+import supabase from "../services/supabase";
+import { Sentry } from "../services/sentryService";
+import { verifyStudentDataAccess } from "../services/authorizationUtils";
 
 /**
  * XP Level definitions
@@ -13,36 +14,36 @@ import { Sentry } from '../services/sentryService';
  * Expanded to 30 levels with infinite prestige tiers beyond level 30
  */
 export const XP_LEVELS = [
-  { level: 1, xpRequired: 0, title: 'Beginner', icon: '🌱' },
-  { level: 2, xpRequired: 100, title: 'Music Sprout', icon: '🌿' },
-  { level: 3, xpRequired: 250, title: 'Note Finder', icon: '🎵' },
-  { level: 4, xpRequired: 450, title: 'Melody Maker', icon: '🎶' },
-  { level: 5, xpRequired: 700, title: 'Rhythm Keeper', icon: '🥁' },
-  { level: 6, xpRequired: 1000, title: 'Music Explorer', icon: '🗺️' },
-  { level: 7, xpRequired: 1400, title: 'Sound Wizard', icon: '🪄' },
-  { level: 8, xpRequired: 1900, title: 'Piano Pro', icon: '🎹' },
-  { level: 9, xpRequired: 2500, title: 'Music Master', icon: '👑' },
-  { level: 10, xpRequired: 3200, title: 'Symphony Star', icon: '⭐' },
-  { level: 11, xpRequired: 4000, title: 'Harmony Hero', icon: '🎼' },
-  { level: 12, xpRequired: 5000, title: 'Virtuoso', icon: '✨' },
-  { level: 13, xpRequired: 6200, title: 'Maestro', icon: '🎖️' },
-  { level: 14, xpRequired: 7500, title: 'Grand Master', icon: '🏆' },
-  { level: 15, xpRequired: 9000, title: 'Legend', icon: '💎' },
-  { level: 16, xpRequired: 10500, title: 'Composer', icon: '📝' },
-  { level: 17, xpRequired: 12200, title: 'Conductor', icon: '🎙️' },
-  { level: 18, xpRequired: 14100, title: 'Concert Master', icon: '🎻' },
-  { level: 19, xpRequired: 16200, title: 'Prodigy', icon: '🌟' },
-  { level: 20, xpRequired: 18500, title: 'Orchestrator', icon: '🎺' },
-  { level: 21, xpRequired: 21000, title: 'Music Sage', icon: '📖' },
-  { level: 22, xpRequired: 23700, title: 'Melodist', icon: '🎤' },
-  { level: 23, xpRequired: 26500, title: 'Symphonist', icon: '🎷' },
-  { level: 24, xpRequired: 29400, title: 'Music Architect', icon: '🏛️' },
-  { level: 25, xpRequired: 32500, title: 'Philharmonic', icon: '🌈' },
-  { level: 26, xpRequired: 35800, title: 'Opus Creator', icon: '🖋️' },
-  { level: 27, xpRequired: 39300, title: 'Concerto Star', icon: '💫' },
-  { level: 28, xpRequired: 43000, title: 'Music Luminary', icon: '🔆' },
-  { level: 29, xpRequired: 46900, title: 'Grand Virtuoso', icon: '🎭' },
-  { level: 30, xpRequired: 51000, title: 'Transcendent', icon: '🏅' }
+  { level: 1, xpRequired: 0, title: "Beginner", icon: "🌱" },
+  { level: 2, xpRequired: 100, title: "Music Sprout", icon: "🌿" },
+  { level: 3, xpRequired: 250, title: "Note Finder", icon: "🎵" },
+  { level: 4, xpRequired: 450, title: "Melody Maker", icon: "🎶" },
+  { level: 5, xpRequired: 700, title: "Rhythm Keeper", icon: "🥁" },
+  { level: 6, xpRequired: 1000, title: "Music Explorer", icon: "🗺️" },
+  { level: 7, xpRequired: 1400, title: "Sound Wizard", icon: "🪄" },
+  { level: 8, xpRequired: 1900, title: "Piano Pro", icon: "🎹" },
+  { level: 9, xpRequired: 2500, title: "Music Master", icon: "👑" },
+  { level: 10, xpRequired: 3200, title: "Symphony Star", icon: "⭐" },
+  { level: 11, xpRequired: 4000, title: "Harmony Hero", icon: "🎼" },
+  { level: 12, xpRequired: 5000, title: "Virtuoso", icon: "✨" },
+  { level: 13, xpRequired: 6200, title: "Maestro", icon: "🎖️" },
+  { level: 14, xpRequired: 7500, title: "Grand Master", icon: "🏆" },
+  { level: 15, xpRequired: 9000, title: "Legend", icon: "💎" },
+  { level: 16, xpRequired: 10500, title: "Composer", icon: "📝" },
+  { level: 17, xpRequired: 12200, title: "Conductor", icon: "🎙️" },
+  { level: 18, xpRequired: 14100, title: "Concert Master", icon: "🎻" },
+  { level: 19, xpRequired: 16200, title: "Prodigy", icon: "🌟" },
+  { level: 20, xpRequired: 18500, title: "Orchestrator", icon: "🎺" },
+  { level: 21, xpRequired: 21000, title: "Music Sage", icon: "📖" },
+  { level: 22, xpRequired: 23700, title: "Melodist", icon: "🎤" },
+  { level: 23, xpRequired: 26500, title: "Symphonist", icon: "🎷" },
+  { level: 24, xpRequired: 29400, title: "Music Architect", icon: "🏛️" },
+  { level: 25, xpRequired: 32500, title: "Philharmonic", icon: "🌈" },
+  { level: 26, xpRequired: 35800, title: "Opus Creator", icon: "🖋️" },
+  { level: 27, xpRequired: 39300, title: "Concerto Star", icon: "💫" },
+  { level: 28, xpRequired: 43000, title: "Music Luminary", icon: "🔆" },
+  { level: 29, xpRequired: 46900, title: "Grand Virtuoso", icon: "🎭" },
+  { level: 30, xpRequired: 51000, title: "Transcendent", icon: "🏅" },
 ];
 
 /** Maximum static level before prestige tiers begin */
@@ -68,16 +69,20 @@ export const calculateLevel = (totalXp) => {
     if (prestigeTier > 0) {
       return {
         level: MAX_STATIC_LEVEL + prestigeTier,
-        xpRequired: PRESTIGE_BASE_XP + (prestigeTier * PRESTIGE_XP_PER_TIER),
+        xpRequired: PRESTIGE_BASE_XP + prestigeTier * PRESTIGE_XP_PER_TIER,
         title: `Maestro ${prestigeTier}`,
-        icon: '👑',
+        icon: "👑",
         isPrestige: true,
-        prestigeTier
+        prestigeTier,
       };
     }
 
     // At level 30 but not yet into prestige tier 1
-    return { ...XP_LEVELS[XP_LEVELS.length - 1], isPrestige: false, prestigeTier: 0 };
+    return {
+      ...XP_LEVELS[XP_LEVELS.length - 1],
+      isPrestige: false,
+      prestigeTier: 0,
+    };
   }
 
   // Find the highest static level the student has reached
@@ -110,10 +115,13 @@ export const getLevelProgress = (totalXp) => {
 
   // Prestige tier progress (level 31+)
   if (currentLevelData.isPrestige) {
-    const tierStartXP = PRESTIGE_BASE_XP + (currentLevelData.prestigeTier * PRESTIGE_XP_PER_TIER);
+    const tierStartXP =
+      PRESTIGE_BASE_XP + currentLevelData.prestigeTier * PRESTIGE_XP_PER_TIER;
     const xpInCurrentLevel = totalXp - tierStartXP;
     const xpNeededForNext = PRESTIGE_XP_PER_TIER - xpInCurrentLevel;
-    const progressPercentage = Math.floor((xpInCurrentLevel / PRESTIGE_XP_PER_TIER) * 100);
+    const progressPercentage = Math.floor(
+      (xpInCurrentLevel / PRESTIGE_XP_PER_TIER) * 100
+    );
 
     return {
       currentLevel: currentLevelData,
@@ -121,7 +129,7 @@ export const getLevelProgress = (totalXp) => {
       xpInCurrentLevel,
       xpNeededForNext,
       progressPercentage,
-      isPrestige: true
+      isPrestige: true,
     };
   }
 
@@ -131,7 +139,9 @@ export const getLevelProgress = (totalXp) => {
     const nextTierXP = PRESTIGE_BASE_XP + PRESTIGE_XP_PER_TIER;
     const xpInCurrentLevel = totalXp - currentLevelXP;
     const xpNeededForNext = nextTierXP - totalXp;
-    const progressPercentage = Math.floor((xpInCurrentLevel / PRESTIGE_XP_PER_TIER) * 100);
+    const progressPercentage = Math.floor(
+      (xpInCurrentLevel / PRESTIGE_XP_PER_TIER) * 100
+    );
 
     return {
       currentLevel: currentLevelData,
@@ -139,7 +149,7 @@ export const getLevelProgress = (totalXp) => {
       xpInCurrentLevel,
       xpNeededForNext,
       progressPercentage,
-      isPrestige: false
+      isPrestige: false,
     };
   }
 
@@ -158,7 +168,7 @@ export const getLevelProgress = (totalXp) => {
     xpInCurrentLevel,
     xpNeededForNext,
     progressPercentage,
-    isPrestige: false
+    isPrestige: false,
   };
 };
 
@@ -177,8 +187,8 @@ export const XP_REWARDS = {
     weeklyStreak: 100,
     achievementEarned: (achievementPoints) => Math.floor(achievementPoints / 2),
     bossBattleWin: 150,
-    threeStarNode: 50
-  }
+    threeStarNode: 50,
+  },
 };
 
 /**
@@ -188,7 +198,11 @@ export const XP_REWARDS = {
  * @param {Object} bonuses - Optional bonuses { firstTime, perfect, etc. }
  * @returns {number} Total XP to award
  */
-export const calculateNodeXP = (stars, baseXP = XP_REWARDS.nodeBaseXP, bonuses = {}) => {
+export const calculateNodeXP = (
+  stars,
+  baseXP = XP_REWARDS.nodeBaseXP,
+  bonuses = {}
+) => {
   let totalXP = baseXP * stars;
 
   // Add bonuses
@@ -215,19 +229,15 @@ export const calculateNodeXP = (stars, baseXP = XP_REWARDS.nodeBaseXP, bonuses =
  * @returns {Promise<Object>} Result with new total XP, level, and leveledUp flag
  */
 export const awardXP = async (studentId, xpAmount) => {
-  // SECURITY: Verify user is awarding XP to themselves only
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-  if (user.id !== studentId) {
-    throw new Error('Unauthorized: You can only award XP to yourself');
-  }
+  // SECURITY: verifyStudentDataAccess covers self, parent-owns-child (child_profiles),
+  // and teacher-connected access — replaces the old self-only `user.id !== studentId` check,
+  // which rejected every parent-role award (childId !== the parent's own auth.uid()).
+  await verifyStudentDataAccess(studentId);
 
   try {
-    const { data, error } = await supabase.rpc('award_xp', {
+    const { data, error } = await supabase.rpc("award_xp", {
       p_student_id: studentId,
-      p_xp_amount: xpAmount
+      p_xp_amount: xpAmount,
     });
 
     if (error) throw error;
@@ -239,11 +249,11 @@ export const awardXP = async (studentId, xpAmount) => {
       newTotalXP: result.new_total_xp,
       newLevel: result.new_level,
       leveledUp: result.leveled_up,
-      xpAwarded: xpAmount
+      xpAwarded: xpAmount,
     };
   } catch (error) {
-    console.error('Error awarding XP:', error);
-    Sentry.captureException(error, { extra: { context: 'awardXP' } });
+    console.error("Error awarding XP:", error);
+    Sentry.captureException(error, { extra: { context: "awardXP" } });
     throw error;
   }
 };
@@ -254,23 +264,15 @@ export const awardXP = async (studentId, xpAmount) => {
  * @returns {Promise<Object>} Student's XP and level data
  */
 export const getStudentXP = async (studentId) => {
-  // SECURITY: Verify user can access this student's data
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('Not authenticated');
-  }
-
-  // Students can only access their own XP data
-  // Teachers would use a separate endpoint with relationship verification
-  if (user.id !== studentId) {
-    throw new Error("Unauthorized: Cannot access another student's XP data");
-  }
+  // SECURITY: verifyStudentDataAccess covers self, parent-owns-child (child_profiles),
+  // and teacher-connected access — replaces the old self-only `user.id !== studentId` check.
+  await verifyStudentDataAccess(studentId);
 
   try {
     const { data, error } = await supabase
-      .from('students')
-      .select('total_xp, current_level')
-      .eq('id', studentId)
+      .from("students")
+      .select("total_xp, current_level")
+      .eq("id", studentId)
       .single();
 
     if (error) throw error;
@@ -282,10 +284,10 @@ export const getStudentXP = async (studentId) => {
       totalXP: data.total_xp,
       currentLevel: data.current_level,
       levelData,
-      progress
+      progress,
     };
   } catch (error) {
-    console.error('Error fetching student XP:', error);
+    console.error("Error fetching student XP:", error);
     throw error;
   }
 };
@@ -342,7 +344,7 @@ export const calculateSessionXP = (session) => {
     bonusXP,
     bonuses,
     comebackMultiplier,
-    totalXP
+    totalXP,
   };
 };
 
@@ -359,7 +361,10 @@ export const calculateSessionXP = (session) => {
  * @param {number} comebackMultiplier - Comeback bonus multiplier (default 1)
  * @returns {number} XP to award
  */
-export const calculateFreePlayXP = (scorePercentage, comebackMultiplier = 1) => {
+export const calculateFreePlayXP = (
+  scorePercentage,
+  comebackMultiplier = 1
+) => {
   const clampedScore = Math.max(0, Math.min(100, scorePercentage));
   const baseXP = 10 + Math.floor(clampedScore * 0.4);
   return Math.floor(baseXP * comebackMultiplier);
@@ -374,13 +379,15 @@ export const calculateFreePlayXP = (scorePercentage, comebackMultiplier = 1) => 
 export const getXPLeaderboard = async (limit = 10) => {
   try {
     // Get current user to know which entry to show full details for
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     const currentUserId = user?.id;
 
     const { data, error } = await supabase
-      .from('students')
-      .select('id, username, avatar_url, total_xp, current_level')
-      .order('total_xp', { ascending: false })
+      .from("students")
+      .select("id, username, avatar_url, total_xp, current_level")
+      .order("total_xp", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
@@ -391,16 +398,17 @@ export const getXPLeaderboard = async (limit = 10) => {
       id: student.id,
       rank: index + 1,
       // Only show real username for the current user
-      username: student.id === currentUserId ? student.username : `Player ${index + 1}`,
+      username:
+        student.id === currentUserId ? student.username : `Player ${index + 1}`,
       // Only show avatar for current user, use null for others
       avatar_url: student.id === currentUserId ? student.avatar_url : null,
       total_xp: student.total_xp,
       current_level: student.current_level,
       levelData: calculateLevel(student.total_xp),
-      isCurrentUser: student.id === currentUserId
+      isCurrentUser: student.id === currentUserId,
     }));
   } catch (error) {
-    console.error('Error fetching leaderboard:', error);
+    console.error("Error fetching leaderboard:", error);
     throw error;
   }
 };
@@ -418,5 +426,5 @@ export default {
   awardXP,
   getStudentXP,
   calculateSessionXP,
-  getXPLeaderboard
+  getXPLeaderboard,
 };

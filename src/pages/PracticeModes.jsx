@@ -5,6 +5,7 @@ import { getGamesCategories } from "../services/apiGamesLibrary";
 import { useQuery } from "@tanstack/react-query";
 
 import { useStreakWithAchievements } from "../hooks/useStreakWithAchievements";
+import { useActiveChildId } from "../hooks/useActiveChildId";
 
 // Modes that are built but not yet released — shown as a disabled "Coming Soon"
 // card (card press disabled). Re-enable by removing the type from this set.
@@ -12,7 +13,8 @@ const COMING_SOON_MODE_TYPES = new Set(["ear-training-mode"]);
 
 export default function PracticeModes({ practiceModesSectionRef }) {
   const navigate = useNavigate();
-  const updateStreakWithAchievements = useStreakWithAchievements();
+  const { childId } = useActiveChildId();
+  const updateStreakWithAchievements = useStreakWithAchievements(childId);
   const { t } = useTranslation("common");
 
   const {
