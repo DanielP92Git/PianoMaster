@@ -60,8 +60,8 @@ These were open questions all four researchers surfaced independently. They are 
 - [ ] **PROFILE-02**: Child avatars are selected from a preset system set; custom image upload is not possible
 - [ ] **PROFILE-03**: The nickname field carries visible guidance not to use the child's full name
 - [ ] **PROFILE-04**: A child can switch to another of the family's profiles without a gate or password (D-07)
-- [ ] **PROFILE-05**: Switching profiles fully clears the previous child's cached data, proven by a multi-child device test
-- [ ] **PROFILE-06**: Active-child state survives reload and is never trusted as an authorization signal
+- [x] **PROFILE-05**: Switching profiles fully clears the previous child's cached data, proven by a multi-child device test
+- [x] **PROFILE-06**: Active-child state survives reload and is never trusted as an authorization signal
 
 ### Parent Rights & Gating (COPPA)
 
@@ -138,8 +138,8 @@ These were open questions all four researchers surfaced independently. They are 
 | PROFILE-02  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | PROFILE-03  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | PROFILE-04  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
-| PROFILE-05  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
-| PROFILE-06  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| PROFILE-05  | Phase 4 — Child Profiles & Parental Gating               | Complete |
+| PROFILE-06  | Phase 4 — Child Profiles & Parental Gating               | Complete |
 | COPPA-01    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | COPPA-02    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | COPPA-03    | Phase 4 — Child Profiles & Parental Gating               | Pending  |

@@ -19,6 +19,26 @@ let streakStateFetchInFlight = null;
 let streakStateFetchFailed = false;
 let streakStateFailureTS = 0;
 
+/**
+ * Nulls the module-level in-flight/cooldown singletons above.
+ *
+ * These are module state — queryClient.removeQueries() cannot touch them
+ * (Pitfall 2). Must be called from ActiveChildContext.switchChild() so an
+ * in-flight promise for Child A's streak cannot resolve into Child B's
+ * freshly-fetched React Query cache after a fast switch.
+ */
+export function resetStreakServiceCaches() {
+  lastPracticeFetchInFlight = null;
+  lastPracticeFetchFailed = false;
+  lastPracticeFailureTS = 0;
+  streakFetchInFlight = null;
+  streakFetchFailed = false;
+  streakFailureTS = 0;
+  streakStateFetchInFlight = null;
+  streakStateFetchFailed = false;
+  streakStateFailureTS = 0;
+}
+
 // ============================================================
 // Constants
 // ============================================================
@@ -425,7 +445,14 @@ export const streakService = {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) return { newStreak: 0, freezeEarned: false, freezeConsumed: false, streakBroken: false, comebackBonusActivated: false };
+    if (!session)
+      return {
+        newStreak: 0,
+        freezeEarned: false,
+        freezeConsumed: false,
+        streakBroken: false,
+        comebackBonusActivated: false,
+      };
 
     const today = new Date();
 
@@ -446,12 +473,24 @@ export const streakService = {
         "Skipping streak update because last_practiced_date lookup is failing"
       );
       const currentStreak = streakRowResult.data?.streak_count || 0;
-      return { newStreak: currentStreak, freezeEarned: false, freezeConsumed: false, streakBroken: false, comebackBonusActivated: false };
+      return {
+        newStreak: currentStreak,
+        freezeEarned: false,
+        freezeConsumed: false,
+        streakBroken: false,
+        comebackBonusActivated: false,
+      };
     }
 
     if (streakRowResult.error) {
       console.error("Error fetching streak row:", streakRowResult.error);
-      return { newStreak: 0, freezeEarned: false, freezeConsumed: false, streakBroken: false, comebackBonusActivated: false };
+      return {
+        newStreak: 0,
+        freezeEarned: false,
+        freezeConsumed: false,
+        streakBroken: false,
+        comebackBonusActivated: false,
+      };
     }
 
     const streakRow = streakRowResult.data;
@@ -488,7 +527,13 @@ export const streakService = {
 
       if (lastPracticeDate === todayDate) {
         // Same calendar day — no streak change, return early
-        return { newStreak: currentStreak, freezeEarned: false, freezeConsumed: false, streakBroken: false, comebackBonusActivated: false };
+        return {
+          newStreak: currentStreak,
+          freezeEarned: false,
+          freezeConsumed: false,
+          streakBroken: false,
+          comebackBonusActivated: false,
+        };
       }
 
       const hours = hoursSince(lastPractice);
@@ -496,7 +541,10 @@ export const streakService = {
       // Weekend pass: check if all intermediate days are Fri/Sat
       let isWeekendPassConsecutive = false;
       if (weekendPassEnabled) {
-        isWeekendPassConsecutive = allIntermediateDaysAreWeekend(lastPractice, today);
+        isWeekendPassConsecutive = allIntermediateDaysAreWeekend(
+          lastPractice,
+          today
+        );
       }
 
       if (isWeekendPassConsecutive || hours <= GRACE_WINDOW_HOURS) {
@@ -578,7 +626,13 @@ export const streakService = {
 
     if (streakError) {
       console.error("Error updating streak:", streakError);
-      return { newStreak: currentStreak, freezeEarned: false, freezeConsumed: false, streakBroken: false, comebackBonusActivated: false };
+      return {
+        newStreak: currentStreak,
+        freezeEarned: false,
+        freezeConsumed: false,
+        streakBroken: false,
+        comebackBonusActivated: false,
+      };
     }
 
     // ── Step 5: Update last practice date ────────────────────────
@@ -638,16 +692,14 @@ export const streakService = {
     } = await supabase.auth.getSession();
     if (!session) return;
 
-    const { error } = await supabase
-      .from("current_streak")
-      .upsert(
-        {
-          student_id: session.user.id,
-          weekend_pass_enabled: enabled,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "student_id" }
-      );
+    const { error } = await supabase.from("current_streak").upsert(
+      {
+        student_id: session.user.id,
+        weekend_pass_enabled: enabled,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "student_id" }
+    );
 
     if (error) {
       console.error("Error updating weekend pass:", error);
