@@ -151,9 +151,9 @@ feature is removed entirely so no child voice data is collected at all.
 4. Direct URL navigation and browser back/forward cannot reach Account Settings, Subscription, Billing, or Child Profile CRUD without passing the parental gate, and gate-passed state does not stay open for the next person who picks up the device
 5. A parent can review all data held about each child, export it, delete it, and deactivate one child's profile (stopping further collection) without deleting the rest of the family account
    **Plans**: 11 plans across 3 waves
-   - [ ] 04-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) for all new switcher/children/dataRights/parentGate copy + generalized parentGate namespace
-   - [ ] 04-02-PLAN.md — Wave 1: active-child seam (useActiveChildId + ActiveChildContext switch-clear + apiChildProfiles CRUD + purge extract + streak reset); carries the MANDATORY PROFILE-05 no-bleed test
-   - [ ] 04-03-PLAN.md — Wave 1: authz + data-rights services (verifyStudentDataAccess parent→child branch, STUDENT_DATA_TABLES completion, per-child no-signout delete, notification self-check fix)
+   - [x] 04-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) for all new switcher/children/dataRights/parentGate copy + generalized parentGate namespace
+   - [x] 04-02-PLAN.md — Wave 1: active-child seam (useActiveChildId + ActiveChildContext switch-clear + apiChildProfiles CRUD + purge extract + streak reset); carries the MANDATORY PROFILE-05 no-bleed test
+   - [x] 04-03-PLAN.md — Wave 1: authz + data-rights services (verifyStudentDataAccess parent→child branch, STUDENT_DATA_TABLES completion, per-child no-signout delete, notification self-check fix)
    - [ ] 04-04-PLAN.md — Wave 2: auth-internal services gain explicit childId params (streak/practiceLog/practiceStreak)
    - [ ] 04-05-PLAN.md — Wave 2: shared in-memory ParentGateContext + mount-checked ParentGateProtectedRoute; carries the MANDATORY COPPA-02 gate-bypass test
    - [ ] 04-06-PLAN.md — Wave 3: rescope streak/practice/victory query sites to active child (incl. unkeyed ["streak-state"] + accessory-unlock localStorage re-key)
