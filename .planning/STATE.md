@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: ready_to_plan
-stopped_at: Phase 4 UI-SPEC approved
-last_updated: "2026-08-04T12:32:01.875Z"
-last_activity: 2026-08-04 -- Phase 04 execution started
+status: planning
+stopped_at: Phase 5 context gathered
+last_updated: "2026-08-04T22:35:26.798Z"
+last_activity: 2026-08-04 -- Phase 04 (child-profiles-parental-gating) complete, 12/12 must-haves verified
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 30
-  completed_plans: 19
-  percent: 50
+  completed_plans: 30
+  percent: 100
 ---
 
 # Project State
@@ -151,7 +151,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Stopped at:** Phase 4 (Child Profiles & Parental Gating) COMPLETE
+**Stopped at:** Phase 5 context gathered
 **Next action:** Begin Phase 5 (Subscription Re-Pointing). Plans are TBD — run `/gsd-plan-phase 5` (research + planning) before executing. Depends on Phase 1/2 (both done); no blockers.
 **Resume note (Phase 4 close):** All 11 plans executed across 3 waves, merged clean, full suite green throughout (2303/2303 passing, 0 failures, build succeeds, lint clean). `04-REVIEW.md` code review found 4 Critical + 5 Warning + 2 Info findings; all 4 Critical + 2 trivial Warnings (WR-03/WR-04) fixed in commit `82ca1e75` and independently re-verified against the actual diff (not just SUMMARY.md claims) by `04-VERIFICATION.md` (status: passed, 12/12 must-haves). Deferred, non-blocking: WR-02 (boss-unlock/level-up celebration dedup keyed on parent id, not child — soft cosmetic bleed), WR-05 (apiChildProfiles.js relies on RLS only, no client-side ownership backstop — inconsistent pattern, not a demonstrated bug), IN-01/IN-02 (missing error-state UI, pre-existing NODE_ENV vs import.meta.env inconsistency). **`src/components/layout/Dashboard.jsx` was never in any of the 11 plans' scope** and still gates most of its data fetching/UI sections on `isStudent`, which is false for all parent-role sessions post-migration — flagged by both the code reviewer and verifier as a real but out-of-scope gap; recommend a follow-up gap-closure phase before this milestone ships to real users, since it's the main post-login landing page.
 **Incident during Wave 1 worktree cleanup:** the merge-back script (adapted ad hoc from the execute-phase workflow spec, missing the spec's `WAS_DELETED` resurrection guard) copied `*SUMMARY.md` files from several ancient, already-archived, orphaned worktrees (v2.9/v3.0 milestone phases 07-09/12-15, long since moved to `.planning/milestones/`) back onto disk, and clobbered two tracked files (`.planning/research/SUMMARY.md`, `21-01-SUMMARY.md`) with stale v2.9-era content. Caught during phase-completion review (STATE.md's `next_phase` came back as "07" instead of "05" — the giveaway), both tracked files reverted via `git checkout HEAD --`, the 7 untracked resurrected directories deleted (diff-verified as pure duplicates of the proper archive first). No commit ever included the corrupted content. See [[feedback_worktree_collateral_damage]] memory.
