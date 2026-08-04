@@ -154,11 +154,11 @@ feature is removed entirely so no child voice data is collected at all.
    - [x] 04-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) for all new switcher/children/dataRights/parentGate copy + generalized parentGate namespace
    - [x] 04-02-PLAN.md — Wave 1: active-child seam (useActiveChildId + ActiveChildContext switch-clear + apiChildProfiles CRUD + purge extract + streak reset); carries the MANDATORY PROFILE-05 no-bleed test
    - [x] 04-03-PLAN.md — Wave 1: authz + data-rights services (verifyStudentDataAccess parent→child branch, STUDENT_DATA_TABLES completion, per-child no-signout delete, notification self-check fix)
-   - [ ] 04-04-PLAN.md — Wave 2: auth-internal services gain explicit childId params (streak/practiceLog/practiceStreak)
-   - [ ] 04-05-PLAN.md — Wave 2: shared in-memory ParentGateContext + mount-checked ParentGateProtectedRoute; carries the MANDATORY COPPA-02 gate-bypass test
+   - [x] 04-04-PLAN.md — Wave 2: auth-internal services gain explicit childId params (streak/practiceLog/practiceStreak)
+   - [x] 04-05-PLAN.md — Wave 2: shared in-memory ParentGateContext + mount-checked ParentGateProtectedRoute; carries the MANDATORY COPPA-02 gate-bypass test
    - [ ] 04-06-PLAN.md — Wave 3: rescope streak/practice/victory query sites to active child (incl. unkeyed ["streak-state"] + accessory-unlock localStorage re-key)
-   - [ ] 04-07-PLAN.md — Wave 2: rescope xp/scores/achievements/accessories query sites to active child (closes unkeyed ["scores"] + isStudent enable-gate)
-   - [ ] 04-08-PLAN.md — Wave 2: ChildProfileForm (compact preset-avatar grid + always-on nickname guidance + non-blocking full-name heuristic)
+   - [x] 04-07-PLAN.md — Wave 2: rescope xp/scores/achievements/accessories query sites to active child (closes unkeyed ["scores"] + isStudent enable-gate)
+   - [x] 04-08-PLAN.md — Wave 2: ChildProfileForm (compact preset-avatar grid + always-on nickname guidance + non-blocking full-name heuristic)
    - [ ] 04-09-PLAN.md — Wave 3: "Who's playing?" ungated switcher overlay + header avatar entry + empty state
    - [ ] 04-10-PLAN.md — Wave 3: gated Manage Children screen + per-child data-rights panel (review/export/deactivate/delete) + gated route
    - [ ] 04-11-PLAN.md — Wave 3: Parent Portal split (ungated stats vs gated actions) + Privacy Policy link
