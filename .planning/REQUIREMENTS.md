@@ -65,8 +65,8 @@ These were open questions all four researchers surfaced independently. They are 
 
 ### Parent Rights & Gating (COPPA)
 
-- [ ] **COPPA-01**: Account settings, subscription, billing, and child-profile management sit behind the parental gate
-- [ ] **COPPA-02**: The parental gate cannot be bypassed by direct URL or back-button navigation, and does not stay open for the next person to pick up the device
+- [x] **COPPA-01**: Account settings, subscription, billing, and child-profile management sit behind the parental gate
+- [x] **COPPA-02**: The parental gate cannot be bypassed by direct URL or back-button navigation, and does not stay open for the next person to pick up the device
 - [ ] **COPPA-03**: A parent can review all data held about each of their children
 - [ ] **COPPA-04**: A parent can export their children's data
 - [ ] **COPPA-05**: A parent can delete a child's data
@@ -140,8 +140,8 @@ These were open questions all four researchers surfaced independently. They are 
 | PROFILE-04  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | PROFILE-05  | Phase 4 — Child Profiles & Parental Gating               | Complete |
 | PROFILE-06  | Phase 4 — Child Profiles & Parental Gating               | Complete |
-| COPPA-01    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
-| COPPA-02    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| COPPA-01    | Phase 4 — Child Profiles & Parental Gating               | Complete |
+| COPPA-02    | Phase 4 — Child Profiles & Parental Gating               | Complete |
 | COPPA-03    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | COPPA-04    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | COPPA-05    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
