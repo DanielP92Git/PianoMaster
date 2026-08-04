@@ -598,22 +598,29 @@ curl -X POST http://localhost:54321/functions/v1/create-checkout \
 
 **If this table is empty:** N/A — see above; all Lemon Squeezy test-mode claims are WebSearch-sourced and warrant the owner's own dashboard confirmation before the plan locks in exact verification steps, per the ROADMAP's explicit research flag for this phase.
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+All three questions were resolved during planning (2026-08-05). Each carries an inline
+`RESOLVED:` annotation naming the plan and task that settled it. No open question remains for
+this phase.
 
 1. **Does the Lemon Squeezy store already have test-mode products/variants configured, or does Wave 0 need to create them?**
    - What we know: `docs/DEPLOY.md`'s "Environment Separation" table already distinguishes "Sandbox (dev)" vs "Production" `LS_SIGNING_SECRET` values, implying some sandbox setup exists or was anticipated.
    - What's unclear: Whether a test-mode product/variant with a real `lemon_squeezy_variant_id` currently exists, or whether this phase's plan needs an explicit manual dashboard step to create one.
    - Recommendation: First plan task/Wave 0 step should be the owner confirming (via LS dashboard, toggled to Test mode) whether a usable test-mode variant already exists; if not, creating one is a ~5-minute manual dashboard action that should be an explicit, owner-gated plan step (consistent with this phase's other owner-gated steps).
+   - **RESOLVED:** by **plan `05-01` Task 3** — `[OWNER — Lemon Squeezy dashboard] Confirm/create test-mode variant, webhook, and API key`. The recommendation was adopted verbatim: an owner-gated Wave 1 dashboard step confirms a usable test-mode variant or creates one, and records the variant id in `05-discovery.md` §5 for plan `05-08` to consume. Nothing downstream assumes the variant pre-exists.
 
 2. **Exact wording/shape of the "ambiguity error" `cancel-subscription` returns on >1 active row (D-06, Claude's Discretion)**
    - What we know: Must be "a distinct error response plus an alert," never an arbitrary pick.
    - What's unclear: Whether "alert" means a Sentry error (matching D-03's pattern for the webhook), a dedicated admin notification, or both; and the exact HTTP status/error code the frontend should branch on.
    - Recommendation: Mirror D-03's Sentry-error convention for consistency (both are "billing anomaly needs human eyes" cases) — a distinct HTTP status (e.g., 409 Conflict) with a machine-readable error code the frontend can special-case, separate from the existing generic "Cancellation failed" 500 path.
+   - **RESOLVED:** by **plan `05-04` Task 2** (`Rewire cancel-subscription/index.ts onto parent_id with the D-06 ambiguity branch`), with the client half in **plan `05-05` Task 2**. The shape is fixed, not left to the executor: HTTP **409** with body code **`AMBIGUOUS_ACTIVE_SUBSCRIPTIONS`**, a server-side `CANCEL_AMBIGUOUS:` alert log line (mirroring D-03's convention), and **zero** Lemon Squeezy calls on that path. The frontend branches on that exact code and shows `parentPortal.cancelAmbiguous` instead of the generic failure toast. Verified end-to-end by `05-08` Task 2 step 7, including owner observation that the LS dashboard is unchanged.
 
 3. **Whether the `unresolved_webhook_log` write should happen before or after attempting `upsertSubscription` for resolvable ids that still throw a DB error**
    - What we know: D-03 covers the "resolve-chain found no parent" case specifically, not "resolve-chain succeeded but the subsequent upsert threw."
    - What's unclear: Whether a DB-level upsert failure for a _resolved_ parent should also land in the dead-letter table, or keep the existing "return 500, let LS retry" behavior (index.ts lines 102-108, unchanged by this phase per CONTEXT.md's scope).
    - Recommendation: Keep the two failure modes separate as CONTEXT.md's decisions imply — unresolved-id failures are D-03's dead-letter path (permanent, human-reviewed); upsert failures after successful resolution stay on the existing 500-and-retry path (transient, LS retries fix it). Do not conflate them.
+   - **RESOLVED:** by **plan `05-03` Task 3** (`Rewire index.ts — resolve-chain replaces the silent missing-student_id guard`), which states the separation explicitly in its action text rather than leaving it to executor judgement: the dead-letter write happens **only** on resolve-chain failure (permanent, HTTP 200, `WEBHOOK_UNRESOLVED:` alert), while a post-resolution upsert error keeps the existing 500-and-let-LS-retry behaviour untouched. Replay branches B5/B6/B7 in `05-08` prove the dead-letter path; nothing writes a dead-letter row for a resolvable id.
 
 ## Validation Architecture
 
