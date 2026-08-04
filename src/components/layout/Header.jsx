@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Menu, Music2 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
 import { getAvatarImageSource } from "../../utils/avatarAssets";
+import { useActiveChild } from "../../contexts/ActiveChildContext";
+import { getAvatar } from "../../services/apiAvatars";
+import WhoIsPlayingOverlay from "../switcher/WhoIsPlayingOverlay";
 
 export default function Header({
   onMenuClick,
@@ -16,11 +21,26 @@ export default function Header({
   const isRTL = i18n.dir() === "rtl";
   const location = useLocation();
   const isDashboard = location.pathname === "/";
+  const [switcherOpen, setSwitcherOpen] = useState(false);
 
-  const avatarUrl = getAvatarImageSource(
-    profileData?.avatars || profileData?.avatar_url,
-    profileData?.avatar_url
-  );
+  const { ownedChildren, activeChildId } = useActiveChild();
+  const { data: avatars = [] } = useQuery({
+    queryKey: ["avatars"],
+    queryFn: getAvatar,
+  });
+
+  // Header avatar reflects the ACTIVE child (not the logged-in parent) —
+  // falls back to the parent's own avatar when no active child is set yet.
+  const activeChild = ownedChildren.find((c) => c.id === activeChildId);
+  const activeChildAvatar = activeChild
+    ? avatars.find((a) => a.id === activeChild.avatar_id)
+    : null;
+  const avatarUrl =
+    getAvatarImageSource(activeChildAvatar) ||
+    getAvatarImageSource(
+      profileData?.avatars || profileData?.avatar_url,
+      profileData?.avatar_url
+    );
   const layeredAccessories = Array.isArray(profileData?.equipped_accessories)
     ? profileData.equipped_accessories.filter((item) => item?.image_url)
     : [];
@@ -31,7 +51,7 @@ export default function Header({
         overlay && isDashboard ? "fixed top-0 z-50" : ""
       } left-0 right-0 ${
         isDashboard
-          ? "bg-gradient-to-b from-black/40 to-transparent  shadow-none"
+          ? "bg-gradient-to-b from-black/40 to-transparent shadow-none"
           : "shadow-lg"
       } ${isRTL ? "xl:mr-72" : "xl:ml-72"}`}
     >
@@ -46,7 +66,11 @@ export default function Header({
             {isLoading ? (
               <div className="h-12 w-12 animate-pulse rounded-full bg-white/10" />
             ) : avatarUrl ? (
-              <Link to="/avatars">
+              <button
+                type="button"
+                onClick={() => setSwitcherOpen(true)}
+                aria-label={activeChild?.nickname || t("switcher.title")}
+              >
                 <div className="relative h-12 w-12 cursor-pointer overflow-hidden rounded-full ring-2 ring-white/20 transition-all hover:ring-white">
                   <img
                     className="h-full w-full object-cover"
@@ -69,7 +93,7 @@ export default function Header({
                     );
                   })}
                 </div>
-              </Link>
+              </button>
             ) : null}
             {!pageTitle && (
               <Link
@@ -108,6 +132,10 @@ export default function Header({
           </div>
         </div>
       </div>
+      <WhoIsPlayingOverlay
+        open={switcherOpen}
+        onClose={() => setSwitcherOpen(false)}
+      />
     </nav>
   );
 }
