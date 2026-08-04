@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
+import ParentGateProtectedRoute from "./components/auth/ParentGateProtectedRoute";
 import { useAccountStatus } from "./hooks/useAccountStatus";
 import { RhythmProvider } from "./reducers/rhythmReducer";
 import { reminderService } from "./services/reminderService";
@@ -80,6 +81,9 @@ const TeacherDashboard = lazyWithRetry(
 );
 const ParentPlaceholder = lazyWithRetry(
   () => import("./pages/ParentPlaceholder")
+);
+const ManageChildrenScreen = lazyWithRetry(
+  () => import("./components/children/ManageChildrenScreen")
 );
 
 // Lazy-loaded game components
@@ -421,6 +425,14 @@ function AppRoutes() {
               element={<SubscribeSuccessPage />}
             />
             <Route path="/parent-portal" element={<ParentPortalPage />} />
+            <Route
+              path="/manage-children"
+              element={
+                <ParentGateProtectedRoute>
+                  <ManageChildrenScreen />
+                </ParentGateProtectedRoute>
+              }
+            />
             <Route path="/avatars" element={<Avatars />} />
             <Route path="/teacher/*" element={<TeacherDashboard />} />
             <Route path="/notes-master-mode" element={<NotesMasterMode />} />

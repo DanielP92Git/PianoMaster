@@ -56,7 +56,7 @@ These were open questions all four researchers surfaced independently. They are 
 
 ### Child Profiles (PROFILE)
 
-- [ ] **PROFILE-01**: A parent can create, rename, and delete child profiles from within their account
+- [x] **PROFILE-01**: A parent can create, rename, and delete child profiles from within their account
 - [ ] **PROFILE-02**: Child avatars are selected from a preset system set; custom image upload is not possible
 - [ ] **PROFILE-03**: The nickname field carries visible guidance not to use the child's full name
 - [ ] **PROFILE-04**: A child can switch to another of the family's profiles without a gate or password (D-07)
@@ -67,10 +67,10 @@ These were open questions all four researchers surfaced independently. They are 
 
 - [x] **COPPA-01**: Account settings, subscription, billing, and child-profile management sit behind the parental gate
 - [x] **COPPA-02**: The parental gate cannot be bypassed by direct URL or back-button navigation, and does not stay open for the next person to pick up the device
-- [ ] **COPPA-03**: A parent can review all data held about each of their children
-- [ ] **COPPA-04**: A parent can export their children's data
-- [ ] **COPPA-05**: A parent can delete a child's data
-- [ ] **COPPA-06**: A parent can stop further collection for one child — deactivating that profile without deleting the family account (§312.6(a)(1), absent from the PRD)
+- [x] **COPPA-03**: A parent can review all data held about each of their children
+- [x] **COPPA-04**: A parent can export their children's data
+- [x] **COPPA-05**: A parent can delete a child's data
+- [x] **COPPA-06**: A parent can stop further collection for one child — deactivating that profile without deleting the family account (§312.6(a)(1), absent from the PRD)
 
 ### Recording Removal (RECORD)
 
@@ -134,7 +134,7 @@ These were open questions all four researchers surfaced independently. They are 
 | SIGNUP-03   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
 | SIGNUP-04   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
 | SIGNUP-05   | Phase 3 — Parent-Only Signup & Age Gate                  | Pending  |
-| PROFILE-01  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| PROFILE-01  | Phase 4 — Child Profiles & Parental Gating               | Complete |
 | PROFILE-02  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | PROFILE-03  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
 | PROFILE-04  | Phase 4 — Child Profiles & Parental Gating               | Pending  |
@@ -142,10 +142,10 @@ These were open questions all four researchers surfaced independently. They are 
 | PROFILE-06  | Phase 4 — Child Profiles & Parental Gating               | Complete |
 | COPPA-01    | Phase 4 — Child Profiles & Parental Gating               | Complete |
 | COPPA-02    | Phase 4 — Child Profiles & Parental Gating               | Complete |
-| COPPA-03    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
-| COPPA-04    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
-| COPPA-05    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
-| COPPA-06    | Phase 4 — Child Profiles & Parental Gating               | Pending  |
+| COPPA-03    | Phase 4 — Child Profiles & Parental Gating               | Complete |
+| COPPA-04    | Phase 4 — Child Profiles & Parental Gating               | Complete |
+| COPPA-05    | Phase 4 — Child Profiles & Parental Gating               | Complete |
+| COPPA-06    | Phase 4 — Child Profiles & Parental Gating               | Complete |
 | MIGRATE-04  | Phase 5 — Subscription Re-Pointing                       | Pending  |
 | MIGRATE-01  | Phase 6 — Live Migration & Re-Consent                    | Pending  |
 | MIGRATE-02  | Phase 6 — Live Migration & Re-Consent                    | Pending  |

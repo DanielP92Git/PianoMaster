@@ -2319,7 +2319,12 @@
       "nicknameHelper": "השתמשו בשם פרטי או בכינוי — אנא הימנעו משימוש בשם המלא של ילדכם.",
       "nicknameFullNameWarning": "זה נראה כמו שם מלא. עדיין אפשר לשמור — כינוי פשוט שומר על יותר פרטיות."
     },
-    "manage": { "title": "ניהול הילדים" },
+    "manage": {
+      "title": "ניהול הילדים",
+      "statusActive": "פעיל/ה",
+      "statusPaused": "בהשהיה",
+      "empty": "עדיין אין ילדים."
+    },
     "panel": {
       "sectionProfile": "פרופיל",
       "sectionDataPrivacy": "נתונים ופרטיות"
