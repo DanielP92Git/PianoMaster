@@ -9,7 +9,7 @@ import {
   removePushSubscription,
   getPushSubscriptionStatus,
 } from "../../services/notificationService";
-import ParentGateMath from "./ParentGateMath";
+import { useParentGate } from "../../contexts/ParentGateContext";
 import { useTranslation } from "react-i18next";
 import {
   isAndroidDevice,
@@ -28,20 +28,27 @@ function getNotificationPlatformKey() {
   if (isIOSDevice() && isInStandaloneMode()) return "iosPwa";
   if (isChromeBrowser() && !isAndroidDevice()) return "chrome";
   if (isSafariBrowser() && !isIOSDevice()) return "safari";
-  if (typeof navigator !== "undefined" && /Firefox/i.test(navigator.userAgent)) return "firefox";
+  if (typeof navigator !== "undefined" && /Firefox/i.test(navigator.userAgent))
+    return "firefox";
   return "fallback";
 }
 
 /**
- * Notification permission card with parent-gate push subscription flow.
+ * Notification permission card. Enable/re-enable actions rely on the shared
+ * ParentGateContext (D-06) — this card no longer holds its own gate state or
+ * renders its own math-gate overlay. It is designed to render inside a
+ * host-gated surface (e.g. ParentPortalPage's Notification Preferences
+ * section), so by the time `handleEnableClick` fires, `passed` is normally
+ * already true (no re-prompt). The `!passed` branch is a defensive fallback
+ * only (e.g. the shared window expiring mid-session) — it defers to the
+ * shared gate instead of ever subscribing ungated.
  *
  * State machine:
  *   unsupported   → show "not supported" message
  *   denied        → show "blocked, update browser settings" message
  *   enabled       → show "push enabled" + Disable button
  *   consent_skip  → consent previously granted but is_enabled=false → show re-enable button (no gate)
- *   gate          → first enable: show ParentGateMath overlay
- *   default       → no subscription yet → show Enable button (triggers gate)
+ *   default       → no subscription yet → show Enable button
  *   subscribing   → async work in progress
  */
 export function NotificationPermissionCard({
@@ -50,10 +57,10 @@ export function NotificationPermissionCard({
   isRTL = false,
 }) {
   const { t } = useTranslation();
+  const { passed, pass } = useParentGate();
   const [isSupported, setIsSupported] = useState(true);
   const [permission, setPermission] = useState("default");
   const [pushState, setPushState] = useState("loading"); // loading|enabled|consent_skip|default
-  const [showGate, setShowGate] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [iosInstallRequired, setIosInstallRequired] = useState(false);
 
@@ -151,13 +158,16 @@ export function NotificationPermissionCard({
     }
   };
 
-  const handleConsentGranted = async () => {
-    setShowGate(false);
+  const handleEnableClick = async () => {
+    // The card only mounts inside a host-gated surface, so `passed` is
+    // normally already true here (no re-prompt, D-06). The `!passed` branch
+    // is a defensive guard — defer to the shared gate rather than ever
+    // subscribing ungated.
+    if (!passed) {
+      pass?.();
+      return;
+    }
     await performSubscription();
-  };
-
-  const handleEnableClick = () => {
-    setShowGate(true);
   };
 
   const handleReEnable = async () => {
@@ -182,9 +192,11 @@ export function NotificationPermissionCard({
 
   if (pushState === "loading") {
     return (
-      <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-        <div className={`flex items-center gap-2 text-white/60 ${isRTL ? "flex-row-reverse" : ""}`}>
-          <Loader2 className="w-4 h-4 animate-spin" />
+      <div className="rounded-lg border border-white/10 bg-white/5 p-4">
+        <div
+          className={`flex items-center gap-2 text-white/60 ${isRTL ? "flex-row-reverse" : ""}`}
+        >
+          <Loader2 className="h-4 w-4 animate-spin" />
           <span className="text-sm">{t("common.loading")}</span>
         </div>
       </div>
@@ -193,15 +205,17 @@ export function NotificationPermissionCard({
 
   if (!isSupported || pushState === "unsupported") {
     return (
-      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+      <div className="rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4">
         <div className={rowClasses}>
-          <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-400" />
           <div className={textAlign}>
-            <h4 className="text-white font-medium text-sm mb-1">
+            <h4 className="mb-1 text-sm font-medium text-white">
               {t("pages.settings.notifications.notificationsNotSupported")}
             </h4>
-            <p className="text-white/70 text-xs">
-              {t("pages.settings.notifications.notificationsNotSupportedDescription")}
+            <p className="text-xs text-white/70">
+              {t(
+                "pages.settings.notifications.notificationsNotSupportedDescription"
+              )}
             </p>
           </div>
         </div>
@@ -211,21 +225,26 @@ export function NotificationPermissionCard({
 
   if (permission === "denied" || pushState === "denied") {
     const platformKey = getNotificationPlatformKey();
-    const steps = t(`pages.settings.notifications.notificationsBlockedSteps.${platformKey}`, { returnObjects: true });
+    const steps = t(
+      `pages.settings.notifications.notificationsBlockedSteps.${platformKey}`,
+      { returnObjects: true }
+    );
 
     return (
-      <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+      <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
         <div className={rowClasses}>
-          <BellOff className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+          <BellOff className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-400" />
           <div className={textAlign}>
-            <h4 className="text-white font-medium text-sm mb-1">
+            <h4 className="mb-1 text-sm font-medium text-white">
               {t("pages.settings.notifications.notificationsBlocked")}
             </h4>
-            <p className="text-white/70 text-xs mb-2">
+            <p className="mb-2 text-xs text-white/70">
               {t("pages.settings.notifications.notificationsBlockedSubtitle")}
             </p>
             {Array.isArray(steps) && (
-              <ol className={`text-white/70 text-xs space-y-1 ${isRTL ? "pr-4" : "pl-4"} list-decimal`}>
+              <ol
+                className={`space-y-1 text-xs text-white/70 ${isRTL ? "pr-4" : "pl-4"} list-decimal`}
+              >
                 {steps.map((step, i) => (
                   <li key={i}>{step}</li>
                 ))}
@@ -239,28 +258,36 @@ export function NotificationPermissionCard({
 
   if (pushState === "enabled") {
     return (
-      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-        <div className={`flex items-start gap-3 ${isRTL ? "direction-rtl text-right" : ""}`}>
-          <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+      <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
+        <div
+          className={`flex items-start gap-3 ${isRTL ? "direction-rtl text-right" : ""}`}
+        >
+          <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-400" />
           <div className={`flex-1 ${textAlign}`}>
-            <h4 className="text-white font-medium text-sm mb-1">
+            <h4 className="mb-1 text-sm font-medium text-white">
               {t("pages.settings.notifications.pushNotifications.enabled")}
             </h4>
-            <p className="text-white/70 text-xs mb-3">
-              {t("pages.settings.notifications.pushNotifications.enabledDescription")}
+            <p className="mb-3 text-xs text-white/70">
+              {t(
+                "pages.settings.notifications.pushNotifications.enabledDescription"
+              )}
             </p>
             <button
               onClick={handleDisable}
               disabled={isSubscribing}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white/80 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-medium text-white/80 transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubscribing ? (
                 <span className="flex items-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  {t("pages.settings.notifications.pushNotifications.subscribing")}
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  {t(
+                    "pages.settings.notifications.pushNotifications.subscribing"
+                  )}
                 </span>
               ) : (
-                t("pages.settings.notifications.pushNotifications.disableButton")
+                t(
+                  "pages.settings.notifications.pushNotifications.disableButton"
+                )
               )}
             </button>
           </div>
@@ -272,33 +299,41 @@ export function NotificationPermissionCard({
   if (pushState === "consent_skip") {
     // Consent was previously granted, but currently disabled — allow re-enable without gate
     return (
-      <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-4">
+      <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 p-4">
         <div className={rowClasses}>
-          <Bell className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+          <Bell className="mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-400" />
           <div className={`flex-1 ${textAlign}`}>
-            <h4 className="text-white font-medium text-sm mb-1">
+            <h4 className="mb-1 text-sm font-medium text-white">
               {t("pages.settings.notifications.pushNotifications.enableButton")}
             </h4>
-            <p className="text-white/70 text-xs mb-3">
-              {t("pages.settings.notifications.pushNotifications.enableDescription")}
+            <p className="mb-3 text-xs text-white/70">
+              {t(
+                "pages.settings.notifications.pushNotifications.enableDescription"
+              )}
             </p>
             {iosInstallRequired && (
-              <p className="text-amber-300 text-xs mb-3">
-                {t("pages.settings.notifications.pushNotifications.iosInstallRequired")}
+              <p className="mb-3 text-xs text-amber-300">
+                {t(
+                  "pages.settings.notifications.pushNotifications.iosInstallRequired"
+                )}
               </p>
             )}
             <button
               onClick={handleReEnable}
               disabled={isSubscribing}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubscribing ? (
                 <span className="flex items-center gap-1.5">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t("pages.settings.notifications.pushNotifications.subscribing")}
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {t(
+                    "pages.settings.notifications.pushNotifications.subscribing"
+                  )}
                 </span>
               ) : (
-                t("pages.settings.notifications.pushNotifications.reEnableButton")
+                t(
+                  "pages.settings.notifications.pushNotifications.reEnableButton"
+                )
               )}
             </button>
           </div>
@@ -307,49 +342,46 @@ export function NotificationPermissionCard({
     );
   }
 
-  // Default state: first-time enable (requires parent gate)
+  // Default state: first-time enable (relies on the host's shared parental gate)
   return (
-    <>
-      {showGate && (
-        <ParentGateMath
-          onConsent={handleConsentGranted}
-          onCancel={() => setShowGate(false)}
-          isRTL={isRTL}
-        />
-      )}
-      <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-4">
-        <div className={rowClasses}>
-          <Bell className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
-          <div className={`flex-1 ${textAlign}`}>
-            <h4 className="text-white font-medium text-sm mb-1">
-              {t("pages.settings.notifications.pushNotifications.enableButton")}
-            </h4>
-            <p className="text-white/70 text-xs mb-3">
-              {t("pages.settings.notifications.pushNotifications.enableDescription")}
-            </p>
-            {iosInstallRequired && (
-              <p className="text-amber-300 text-xs mb-3">
-                {t("pages.settings.notifications.pushNotifications.iosInstallRequired")}
-              </p>
+    <div className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 p-4">
+      <div className={rowClasses}>
+        <Bell className="mt-0.5 h-5 w-5 flex-shrink-0 text-indigo-400" />
+        <div className={`flex-1 ${textAlign}`}>
+          <h4 className="mb-1 text-sm font-medium text-white">
+            {t("pages.settings.notifications.pushNotifications.enableButton")}
+          </h4>
+          <p className="mb-3 text-xs text-white/70">
+            {t(
+              "pages.settings.notifications.pushNotifications.enableDescription"
             )}
-            <button
-              onClick={handleEnableClick}
-              disabled={isSubscribing}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubscribing ? (
-                <span className="flex items-center gap-1.5">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t("pages.settings.notifications.pushNotifications.subscribing")}
-                </span>
-              ) : (
-                t("pages.settings.notifications.pushNotifications.enableButton")
+          </p>
+          {iosInstallRequired && (
+            <p className="mb-3 text-xs text-amber-300">
+              {t(
+                "pages.settings.notifications.pushNotifications.iosInstallRequired"
               )}
-            </button>
-          </div>
+            </p>
+          )}
+          <button
+            onClick={handleEnableClick}
+            disabled={isSubscribing}
+            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubscribing ? (
+              <span className="flex items-center gap-1.5">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t(
+                  "pages.settings.notifications.pushNotifications.subscribing"
+                )}
+              </span>
+            ) : (
+              t("pages.settings.notifications.pushNotifications.enableButton")
+            )}
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 
