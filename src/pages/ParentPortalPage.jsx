@@ -1,14 +1,20 @@
 /**
  * ParentPortalPage — /parent-portal
  *
- * Gate-first parent portal with 4 sections:
- *   1. Quick Stats — 2x2 grid of child progress cards
- *   2. Practice Heatmap — monthly calendar
- *   3. Subscription Management — existing cancel/resubscribe flow
- *   4. Parent Settings — notifications + weekend pass toggle
+ * Split portal (D-08):
+ *   1. Quick Stats — 2x2 grid of child progress cards (UNGATED, keyed on active child)
+ *   2. Practice Heatmap — monthly calendar (UNGATED, keyed on active child)
+ *   3. Subscription Management — existing cancel/resubscribe flow (GATED)
+ *   4. Parent Settings — weekend pass toggle + Privacy link (UNGATED)
+ *   5. Notification Preferences (GATED)
+ *   6. Account deletion (UNGATED — out of this plan's scope)
+ *   7. Legal links (UNGATED)
  *
- * Math gate (ParentGateMath) renders on every visit. Gate dismissal
- * reveals portal content with fadeIn animation.
+ * Read-only stats/heatmap load and render immediately without solving the
+ * parental gate. Subscription + notification action rows are locked behind
+ * the shared ParentGateContext (Plan 05) — clicking the lock affordance opens
+ * ParentGateMath; solving it calls the shared pass(), so the whole app-window
+ * gate opens (D-06, no re-solve for the embedded NotificationPermissionCard).
  */
 
 import { useState } from "react";
@@ -27,6 +33,7 @@ import {
   Scale,
   Bell,
   ShieldCheck,
+  Lock,
 } from "lucide-react";
 import PracticeHeatmapCard from "../components/parent/PracticeHeatmapCard";
 import QuickStatsGrid from "../components/parent/QuickStatsGrid";
@@ -38,6 +45,8 @@ import SettingsSection from "../components/settings/SettingsSection";
 import AccountDeletionModal from "../components/teacher/AccountDeletionModal";
 import { toast } from "react-hot-toast";
 import { useUser } from "../features/authentication/useUser";
+import { useParentGate } from "../contexts/ParentGateContext";
+import { useActiveChildId } from "../hooks/useActiveChildId";
 import { useSubscription } from "../contexts/SubscriptionContext";
 import { useSettings } from "../contexts/SettingsContext";
 import { fetchSubscriptionDetail } from "../services/subscriptionService";
@@ -46,6 +55,25 @@ import { getStudentProgress } from "../services/skillProgressService";
 import { streakService } from "../services/streakService";
 import supabase from "../services/supabase";
 import BackButton from "../components/ui/BackButton";
+
+/**
+ * Lock affordance for a gated action section (UI-SPEC note 2/7 — D-08).
+ * Passive row-level marker; clicking it opens the shared ParentGateMath
+ * prompt (does NOT call pass() directly — pass() is only invoked from
+ * ParentGateMath's onConsent, after the math is solved).
+ */
+function GatedActionLock({ label, onUnlock, isRTL }) {
+  return (
+    <button
+      type="button"
+      onClick={onUnlock}
+      className={`flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-white/60 transition-colors hover:bg-white/10 ${isRTL ? "flex-row-reverse text-right" : "text-left"}`}
+    >
+      <Lock size={18} className="flex-shrink-0 text-white/40" />
+      <span>{label}</span>
+    </button>
+  );
+}
 
 /**
  * Format amount from cents to locale-aware currency string.
@@ -129,14 +157,27 @@ export default function ParentPortalPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
-  // Gate state — true means gate is visible, false means portal content is visible
-  const [gateOpen, setGateOpen] = useState(true);
+  // Shared parental gate (Plan 05, D-06) — replaces the page's own local gate state.
+  const { passed, pass } = useParentGate();
+  // The single source of the child id for all child-scoped reads (Plan 02).
+  const { childId, ready } = useActiveChildId();
+
+  // Controls the on-demand ParentGateMath prompt shown when a locked action
+  // row is clicked. NOT the gate itself — the shared window is `passed`.
+  const [showGatePrompt, setShowGatePrompt] = useState(false);
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   // Optimistic state after cancel to avoid waiting for DB refresh
   const [optimisticCancel, setOptimisticCancel] = useState(null);
+
+  const handleUnlockRequest = () => setShowGatePrompt(true);
+  const handleGateConsent = () => {
+    pass();
+    setShowGatePrompt(false);
+  };
+  const handleGateCancel = () => setShowGatePrompt(false);
 
   // Subscription detail query (Section 3)
   const { data: detail, isLoading: detailLoading } = useQuery({
@@ -146,25 +187,25 @@ export default function ParentPortalPage() {
     staleTime: 0,
   });
 
-  // Quick Stats queries — only fetch after gate is passed (D-06)
+  // Quick Stats queries — ungated read-only viewing (D-08), keyed on the active child
   const { data: xpData, isLoading: xpLoading } = useQuery({
-    queryKey: ["student-xp", user?.id],
-    queryFn: () => getStudentXP(user.id),
-    enabled: !!user?.id && !gateOpen,
+    queryKey: ["student-xp", childId],
+    queryFn: () => getStudentXP(childId),
+    enabled: ready && !!childId,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: progressData, isLoading: progressLoading } = useQuery({
-    queryKey: ["student-progress", user?.id],
-    queryFn: () => getStudentProgress(user.id),
-    enabled: !!user?.id && !gateOpen,
+    queryKey: ["student-progress", childId],
+    queryFn: () => getStudentProgress(childId),
+    enabled: ready && !!childId,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: streakState, isLoading: streakLoading } = useQuery({
-    queryKey: ["streak-state", user?.id],
-    queryFn: () => streakService.getStreakState(),
-    enabled: !!user?.id && !gateOpen,
+    queryKey: ["streak-state", childId],
+    queryFn: () => streakService.getStreakState(childId),
+    enabled: ready && !!childId,
     staleTime: 60 * 1000,
   });
 
@@ -233,19 +274,19 @@ export default function ParentPortalPage() {
   }
 
   /**
-   * Toggle weekend pass — no individual gate needed (portal gate covers it).
-   * Per D-13: weekend pass toggle works without its own ParentGateMath gate.
+   * Toggle weekend pass — no individual gate needed (D-13, out of this
+   * plan's scope — only subscription/notification action rows are gated).
    */
   const handleWeekendPassToggle = async (newValue) => {
     try {
       await streakService.setWeekendPass(newValue);
-      queryClient.invalidateQueries({ queryKey: ["streak-state", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["streak-state", childId] });
     } catch {
       toast.error(t("common.saving"));
     }
   };
 
-  // Account deletion — no individual parent gate needed (portal gate covers it)
+  // Account deletion — out of this plan's scope (D-08 gates only subscription/notification rows)
   const studentDisplayName = user
     ? `${user.user_metadata?.first_name || ""} ${user.user_metadata?.last_name || ""}`.trim() ||
       user.user_metadata?.username ||
@@ -277,494 +318,516 @@ export default function ParentPortalPage() {
 
   return (
     <div dir={isRTL ? "rtl" : "ltr"}>
-      {/* Math gate — renders on every visit, always first */}
-      {gateOpen && (
+      {/* On-demand parental gate prompt — only shown when a locked action row
+          is clicked (D-08). NOT shown on mount (Quick Stats + heatmap below
+          are ungated read-only). */}
+      {showGatePrompt && (
         <ParentGateMath
-          onConsent={() => setGateOpen(false)}
-          onCancel={() => navigate(-1)}
+          onConsent={handleGateConsent}
+          onCancel={handleGateCancel}
           isRTL={isRTL}
         />
       )}
 
-      {/* Portal content — shown only after gate is passed */}
-      {!gateOpen && (
-        <div className="min-h-screen animate-fadeIn pb-8 motion-reduce:animate-none">
-          <div className="mx-auto max-w-lg px-4 py-6 pb-16 sm:px-6">
-            {/* Back navigation — only on mobile (desktop has sidebar nav) */}
-            <BackButton styling="mb-6 md:hidden" />
+      {/* Portal content — always visible; individual action rows lock/unlock via `passed` */}
+      <div className="min-h-screen animate-fadeIn pb-8 motion-reduce:animate-none">
+        <div className="mx-auto max-w-lg px-4 py-6 pb-16 sm:px-6">
+          {/* Back navigation — only on mobile (desktop has sidebar nav) */}
+          <BackButton styling="mb-6 md:hidden" />
 
-            <h1 className="mb-6 text-2xl font-bold text-white">
-              {t("parentPortal.parentZoneTitle")}
-            </h1>
+          <h1 className="mb-6 text-2xl font-bold text-white">
+            {t("parentPortal.parentZoneTitle")}
+          </h1>
 
-            {/* Section 1: Quick Stats */}
-            <section>
-              <h2 className="mb-4 text-xl font-bold text-white">
-                {t("parentPortal.quickStatsHeading")}
-              </h2>
-              <QuickStatsGrid
-                xpData={xpData}
-                progressData={progressData}
-                streakState={streakState}
-                isLoading={statsLoading}
-              />
-            </section>
+          {/* Section 1: Quick Stats */}
+          <section>
+            <h2 className="mb-4 text-xl font-bold text-white">
+              {t("parentPortal.quickStatsHeading")}
+            </h2>
+            <QuickStatsGrid
+              xpData={xpData}
+              progressData={progressData}
+              streakState={streakState}
+              isLoading={statsLoading}
+            />
+          </section>
 
-            {/* Section 2: Practice Heatmap */}
-            <section className="mt-8">
-              <PracticeHeatmapCard studentId={user?.id} />
-            </section>
+          {/* Section 2: Practice Heatmap */}
+          <section className="mt-8">
+            <PracticeHeatmapCard studentId={childId} />
+          </section>
 
-            {/* Section 3: Subscription Management */}
-            <div className="mt-8">
-              <SettingsSection
-                isRTL={isRTL}
-                title={t("parentPortal.title")}
-                icon={CreditCard}
-                defaultOpen={false}
-              >
-                {detailLoading || subCtxLoading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2
-                      size={24}
-                      className="animate-spin text-indigo-400"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    {/* No subscription state */}
-                    {!effectiveDetail && (
-                      <div className="py-2 text-center">
-                        <CreditCard
-                          size={40}
-                          className="mx-auto mb-3 text-white/40"
-                        />
-                        <p className="mb-1 font-semibold text-white">
-                          {t("parentPortal.noSubscriptionHeading")}
-                        </p>
-                        <p className="mb-4 text-sm text-white/70">
-                          {t("parentPortal.noSubscriptionBody")}
-                        </p>
-                        <button
-                          onClick={() => navigate("/subscribe")}
-                          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 px-6 py-3 text-sm font-bold text-amber-900 transition-all duration-200 hover:from-amber-300 hover:to-yellow-300"
-                        >
-                          {t("parentPortal.unlockAccess")}
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Active/cancelled subscription card */}
-                    {effectiveDetail && (
-                      <div className="space-y-5">
-                        {/* Header */}
-                        <div
-                          className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
-                        >
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/20">
-                            <Crown size={20} className="text-amber-400" />
-                          </div>
-                          <div>
-                            <h2 className="text-lg font-bold text-white">
-                              {effectiveDetail.planName ||
-                                t("parentPortal.premiumTitle")}
-                            </h2>
-                            <StatusBadge status={status} t={t} />
-                          </div>
-                        </div>
-
-                        {/* Plan details grid */}
-                        <div className="divide-y divide-white/10 rounded-xl border border-white/10 bg-white/5">
-                          {/* Billing period */}
-                          {billingLabel && (
-                            <div
-                              className={`flex items-center justify-between px-4 py-3 ${isRTL ? "flex-row-reverse" : ""}`}
-                            >
-                              <span className="text-sm text-white/60">
-                                {t("parentPortal.plan")}
-                              </span>
-                              <span className="text-sm font-medium text-white">
-                                {billingLabel}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Price */}
-                          {formattedAmount && (
-                            <div
-                              className={`flex items-center justify-between px-4 py-3 ${isRTL ? "flex-row-reverse" : ""}`}
-                            >
-                              <span className="flex items-center gap-1.5 text-sm text-white/60">
-                                <CreditCard size={14} />
-                                {billingLabel}
-                              </span>
-                              <span className="text-sm font-bold text-indigo-300">
-                                {formattedAmount}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Next renewal or access until */}
-                          {endDate && (
-                            <div
-                              className={`flex items-center justify-between px-4 py-3 ${isRTL ? "flex-row-reverse" : ""}`}
-                            >
-                              <span className="flex items-center gap-1.5 text-sm text-white/60">
-                                <Calendar size={14} />
-                                {isCancelled
-                                  ? t("parentPortal.accessUntil")
-                                  : t("parentPortal.nextRenewal")}
-                              </span>
-                              <span
-                                className={`text-sm font-medium ${isCancelled ? "text-amber-300" : "text-white"}`}
-                              >
-                                {formattedEndDate}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Cancelled: access end info + re-subscribe */}
-                        {isCancelled && (
-                          <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4">
-                            <div
-                              className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
-                            >
-                              <XCircle
-                                size={20}
-                                className="mt-0.5 flex-shrink-0 text-amber-400"
-                              />
-                              <div>
-                                <p className="text-sm font-medium text-amber-300">
-                                  {t("parentPortal.accessUntil")}:{" "}
-                                  <span className="font-bold">
-                                    {formattedEndDate}
-                                  </span>
-                                </p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => navigate("/subscribe")}
-                              className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 px-4 py-2.5 text-sm font-bold text-amber-900 transition-all duration-200 hover:from-amber-300 hover:to-yellow-300"
-                            >
-                              <RefreshCw size={16} />
-                              {t("parentPortal.resubscribe")}
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Cancel button (only for active/on_trial) */}
-                        {isCancellable && (
-                          <div
-                            className={`flex justify-end ${isRTL ? "justify-start" : ""}`}
-                          >
-                            <button
-                              onClick={() => setShowCancelDialog(true)}
-                              className="rounded-xl border border-red-400/30 bg-red-500/20 px-6 py-2.5 text-sm font-medium text-red-300 transition-colors duration-200 hover:bg-red-500/30"
-                            >
-                              {t("parentPortal.cancelSubscription")}
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                )}
-              </SettingsSection>
-            </div>
-
-            {/* Section 4: Parent Settings */}
-            <div className="mt-8 space-y-4">
-              <SettingsSection
-                isRTL={isRTL}
-                title={t("parentPortal.parentSettingsHeading")}
-                icon={ShieldCheck}
-                defaultOpen={false}
-              >
-                <div className="space-y-4">
-                  <ToggleSetting
-                    isRTL={isRTL}
-                    label={t("streak.weekendPassLabel")}
-                    description={t("streak.weekendPassDescription")}
-                    value={streakState?.weekendPassEnabled || false}
-                    onChange={handleWeekendPassToggle}
-                  />
-                  {streakState?.weekendPassEnabled && (
-                    <p className="mt-2 text-xs text-green-300">
-                      {t("streak.weekendPassEnabled")}
-                    </p>
-                  )}
-                </div>
-              </SettingsSection>
-
-              {/* Section 5: Notification Preferences */}
-              <SettingsSection
-                isRTL={isRTL}
-                title={t("parentPortal.notificationsHeading")}
-                icon={Bell}
-                defaultOpen={false}
-              >
-                {/* Practice reminders push permission */}
-                <NotificationPermissionCard
+          {/* Section 3: Subscription Management — GATED action row (D-08) */}
+          <div className="mt-8">
+            <SettingsSection
+              isRTL={isRTL}
+              title={t("parentPortal.title")}
+              icon={passed ? CreditCard : Lock}
+              defaultOpen={false}
+            >
+              {!passed ? (
+                <GatedActionLock
                   isRTL={isRTL}
-                  studentId={user?.id}
-                  onPermissionChange={() => {}}
+                  label={t("parentPortal.unlockToManage")}
+                  onUnlock={handleUnlockRequest}
                 />
-
-                <ToggleSetting
-                  isRTL={isRTL}
-                  label={t(
-                    "pages.settings.notifications.enableAllNotifications"
-                  )}
-                  description={t(
-                    "pages.settings.notifications.enableAllNotificationsDescription"
-                  )}
-                  value={preferences.notifications_enabled}
-                  onChange={(value) =>
-                    updatePreference("notifications_enabled", value)
-                  }
-                />
-
-                <div className="mt-4 space-y-2">
-                  <h4 className="mb-2 text-sm font-semibold text-white">
-                    {t("pages.settings.notifications.notificationTypesTitle")}
-                  </h4>
-                  <ToggleSetting
-                    isRTL={isRTL}
-                    label={t("pages.settings.notifications.achievements")}
-                    value={
-                      preferences.notification_types?.achievement !== false
-                    }
-                    onChange={(value) =>
-                      updateNotificationType("achievement", value)
-                    }
-                    disabled={!preferences.notifications_enabled}
-                  />
-                  <ToggleSetting
-                    isRTL={isRTL}
-                    label={t("pages.settings.notifications.assignments")}
-                    value={preferences.notification_types?.assignment !== false}
-                    onChange={(value) =>
-                      updateNotificationType("assignment", value)
-                    }
-                    disabled={!preferences.notifications_enabled}
-                  />
-                  <ToggleSetting
-                    isRTL={isRTL}
-                    label={t("pages.settings.notifications.messages")}
-                    value={preferences.notification_types?.message !== false}
-                    onChange={(value) =>
-                      updateNotificationType("message", value)
-                    }
-                    disabled={!preferences.notifications_enabled}
-                  />
-                  <ToggleSetting
-                    isRTL={isRTL}
-                    label={t("pages.settings.notifications.reminders")}
-                    value={preferences.notification_types?.reminder !== false}
-                    onChange={(value) =>
-                      updateNotificationType("reminder", value)
-                    }
-                    disabled={!preferences.notifications_enabled}
-                  />
-                  <ToggleSetting
-                    isRTL={isRTL}
-                    label={t("pages.settings.notifications.system")}
-                    value={preferences.notification_types?.system !== false}
-                    onChange={(value) =>
-                      updateNotificationType("system", value)
-                    }
-                    disabled={!preferences.notifications_enabled}
-                  />
+              ) : detailLoading || subCtxLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 size={24} className="animate-spin text-indigo-400" />
                 </div>
-
-                <div className="mt-6">
-                  <ToggleSetting
-                    isRTL={isRTL}
-                    label={t("pages.settings.notifications.quietHours")}
-                    description={t(
-                      "pages.settings.notifications.quietHoursDescription"
-                    )}
-                    value={preferences.quiet_hours_enabled}
-                    onChange={(value) =>
-                      updatePreference("quiet_hours_enabled", value)
-                    }
-                    disabled={!preferences.notifications_enabled}
-                  />
-                  {preferences.quiet_hours_enabled && (
-                    <div className="mt-3 grid grid-cols-2 gap-4">
-                      <TimePicker
-                        isRTL={isRTL}
-                        label={t("pages.settings.notifications.startTime")}
-                        value={preferences.quiet_hours_start}
-                        onChange={(value) =>
-                          updatePreference("quiet_hours_start", value)
-                        }
+              ) : (
+                <>
+                  {/* No subscription state */}
+                  {!effectiveDetail && (
+                    <div className="py-2 text-center">
+                      <CreditCard
+                        size={40}
+                        className="mx-auto mb-3 text-white/40"
                       />
-                      <TimePicker
-                        isRTL={isRTL}
-                        label={t("pages.settings.notifications.endTime")}
-                        value={preferences.quiet_hours_end}
-                        onChange={(value) =>
-                          updatePreference("quiet_hours_end", value)
-                        }
-                      />
+                      <p className="mb-1 font-semibold text-white">
+                        {t("parentPortal.noSubscriptionHeading")}
+                      </p>
+                      <p className="mb-4 text-sm text-white/70">
+                        {t("parentPortal.noSubscriptionBody")}
+                      </p>
+                      <button
+                        onClick={() => navigate("/subscribe")}
+                        className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 px-6 py-3 text-sm font-bold text-amber-900 transition-all duration-200 hover:from-amber-300 hover:to-yellow-300"
+                      >
+                        {t("parentPortal.unlockAccess")}
+                      </button>
                     </div>
                   )}
-                </div>
 
-                <div className="mt-6">
+                  {/* Active/cancelled subscription card */}
+                  {effectiveDetail && (
+                    <div className="space-y-5">
+                      {/* Header */}
+                      <div
+                        className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                      >
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/20">
+                          <Crown size={20} className="text-amber-400" />
+                        </div>
+                        <div>
+                          <h2 className="text-lg font-bold text-white">
+                            {effectiveDetail.planName ||
+                              t("parentPortal.premiumTitle")}
+                          </h2>
+                          <StatusBadge status={status} t={t} />
+                        </div>
+                      </div>
+
+                      {/* Plan details grid */}
+                      <div className="divide-y divide-white/10 rounded-xl border border-white/10 bg-white/5">
+                        {/* Billing period */}
+                        {billingLabel && (
+                          <div
+                            className={`flex items-center justify-between px-4 py-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                          >
+                            <span className="text-sm text-white/60">
+                              {t("parentPortal.plan")}
+                            </span>
+                            <span className="text-sm font-medium text-white">
+                              {billingLabel}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Price */}
+                        {formattedAmount && (
+                          <div
+                            className={`flex items-center justify-between px-4 py-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                          >
+                            <span className="flex items-center gap-1.5 text-sm text-white/60">
+                              <CreditCard size={14} />
+                              {billingLabel}
+                            </span>
+                            <span className="text-sm font-bold text-indigo-300">
+                              {formattedAmount}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Next renewal or access until */}
+                        {endDate && (
+                          <div
+                            className={`flex items-center justify-between px-4 py-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                          >
+                            <span className="flex items-center gap-1.5 text-sm text-white/60">
+                              <Calendar size={14} />
+                              {isCancelled
+                                ? t("parentPortal.accessUntil")
+                                : t("parentPortal.nextRenewal")}
+                            </span>
+                            <span
+                              className={`text-sm font-medium ${isCancelled ? "text-amber-300" : "text-white"}`}
+                            >
+                              {formattedEndDate}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Cancelled: access end info + re-subscribe */}
+                      {isCancelled && (
+                        <div className="rounded-xl border border-amber-400/30 bg-amber-400/10 p-4">
+                          <div
+                            className={`flex items-start gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                          >
+                            <XCircle
+                              size={20}
+                              className="mt-0.5 flex-shrink-0 text-amber-400"
+                            />
+                            <div>
+                              <p className="text-sm font-medium text-amber-300">
+                                {t("parentPortal.accessUntil")}:{" "}
+                                <span className="font-bold">
+                                  {formattedEndDate}
+                                </span>
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => navigate("/subscribe")}
+                            className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 px-4 py-2.5 text-sm font-bold text-amber-900 transition-all duration-200 hover:from-amber-300 hover:to-yellow-300"
+                          >
+                            <RefreshCw size={16} />
+                            {t("parentPortal.resubscribe")}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Cancel button (only for active/on_trial) */}
+                      {isCancellable && (
+                        <div
+                          className={`flex justify-end ${isRTL ? "justify-start" : ""}`}
+                        >
+                          <button
+                            onClick={() => setShowCancelDialog(true)}
+                            className="rounded-xl border border-red-400/30 bg-red-500/20 px-6 py-2.5 text-sm font-medium text-red-300 transition-colors duration-200 hover:bg-red-500/30"
+                          >
+                            {t("parentPortal.cancelSubscription")}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </SettingsSection>
+          </div>
+
+          {/* Section 4: Parent Settings */}
+          <div className="mt-8 space-y-4">
+            <SettingsSection
+              isRTL={isRTL}
+              title={t("parentPortal.parentSettingsHeading")}
+              icon={ShieldCheck}
+              defaultOpen={false}
+            >
+              <div className="space-y-4">
+                <ToggleSetting
+                  isRTL={isRTL}
+                  label={t("streak.weekendPassLabel")}
+                  description={t("streak.weekendPassDescription")}
+                  value={streakState?.weekendPassEnabled || false}
+                  onChange={handleWeekendPassToggle}
+                />
+                {streakState?.weekendPassEnabled && (
+                  <p className="mt-2 text-xs text-green-300">
+                    {t("streak.weekendPassEnabled")}
+                  </p>
+                )}
+                {/* Privacy Policy link (SIGNUP-05, carried from Phase 3 D-12) —
+                      mirrors the Phase-3 entry-screen treatment exactly. */}
+                <p className="pt-2 text-xs text-white/50">
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white/75 underline transition-colors hover:text-white"
+                  >
+                    {t("auth.signup.terms.privacyLink")}
+                  </a>
+                </p>
+              </div>
+            </SettingsSection>
+
+            {/* Section 5: Notification Preferences — GATED action row (D-08) */}
+            <SettingsSection
+              isRTL={isRTL}
+              title={t("parentPortal.notificationsHeading")}
+              icon={passed ? Bell : Lock}
+              defaultOpen={false}
+            >
+              {!passed ? (
+                <GatedActionLock
+                  isRTL={isRTL}
+                  label={t("parentPortal.unlockToManage")}
+                  onUnlock={handleUnlockRequest}
+                />
+              ) : (
+                <>
+                  {/* Practice reminders push permission */}
+                  <NotificationPermissionCard
+                    isRTL={isRTL}
+                    studentId={user?.id}
+                    onPermissionChange={() => {}}
+                  />
+
                   <ToggleSetting
                     isRTL={isRTL}
                     label={t(
-                      "pages.settings.notifications.dailyPracticeReminder"
+                      "pages.settings.notifications.enableAllNotifications"
                     )}
                     description={t(
-                      "pages.settings.notifications.dailyPracticeReminderDescription"
+                      "pages.settings.notifications.enableAllNotificationsDescription"
                     )}
-                    value={preferences.daily_reminder_enabled}
+                    value={preferences.notifications_enabled}
                     onChange={(value) =>
-                      updatePreference("daily_reminder_enabled", value)
+                      updatePreference("notifications_enabled", value)
                     }
-                    disabled={!preferences.notifications_enabled}
                   />
-                  {preferences.daily_reminder_enabled && (
-                    <div className="mt-3">
-                      <TimePicker
-                        isRTL={isRTL}
-                        label={t("pages.settings.notifications.reminderTime")}
-                        value={preferences.daily_reminder_time}
-                        onChange={(value) =>
-                          updatePreference("daily_reminder_time", value)
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-              </SettingsSection>
 
-              {/* Section 6: Account */}
-              <SettingsSection
-                isRTL={isRTL}
-                title={t("parentPortal.accountHeading")}
-                icon={Trash2}
-                defaultOpen={false}
-              >
-                <div className="space-y-3">
-                  <p className="text-sm text-white/70">
-                    {t("pages.settings.deleteAccountDescription")}
-                  </p>
-                  <button
-                    onClick={handleDeleteAccountClick}
-                    className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-600/20 px-4 py-2 text-sm font-medium text-red-300 transition-all duration-200 hover:bg-red-600/30 hover:text-red-200"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    {t("pages.settings.deleteAccountButton")}
-                  </button>
-                </div>
-              </SettingsSection>
+                  <div className="mt-4 space-y-2">
+                    <h4 className="mb-2 text-sm font-semibold text-white">
+                      {t("pages.settings.notifications.notificationTypesTitle")}
+                    </h4>
+                    <ToggleSetting
+                      isRTL={isRTL}
+                      label={t("pages.settings.notifications.achievements")}
+                      value={
+                        preferences.notification_types?.achievement !== false
+                      }
+                      onChange={(value) =>
+                        updateNotificationType("achievement", value)
+                      }
+                      disabled={!preferences.notifications_enabled}
+                    />
+                    <ToggleSetting
+                      isRTL={isRTL}
+                      label={t("pages.settings.notifications.assignments")}
+                      value={
+                        preferences.notification_types?.assignment !== false
+                      }
+                      onChange={(value) =>
+                        updateNotificationType("assignment", value)
+                      }
+                      disabled={!preferences.notifications_enabled}
+                    />
+                    <ToggleSetting
+                      isRTL={isRTL}
+                      label={t("pages.settings.notifications.messages")}
+                      value={preferences.notification_types?.message !== false}
+                      onChange={(value) =>
+                        updateNotificationType("message", value)
+                      }
+                      disabled={!preferences.notifications_enabled}
+                    />
+                    <ToggleSetting
+                      isRTL={isRTL}
+                      label={t("pages.settings.notifications.reminders")}
+                      value={preferences.notification_types?.reminder !== false}
+                      onChange={(value) =>
+                        updateNotificationType("reminder", value)
+                      }
+                      disabled={!preferences.notifications_enabled}
+                    />
+                    <ToggleSetting
+                      isRTL={isRTL}
+                      label={t("pages.settings.notifications.system")}
+                      value={preferences.notification_types?.system !== false}
+                      onChange={(value) =>
+                        updateNotificationType("system", value)
+                      }
+                      disabled={!preferences.notifications_enabled}
+                    />
+                  </div>
 
-              {/* Section 7: Legal */}
-              <SettingsSection
-                isRTL={isRTL}
-                title={t("parentPortal.legalHeading")}
-                icon={Scale}
-                defaultOpen={false}
-              >
-                <div className="space-y-3">
-                  <Link
-                    to="/privacy"
-                    className="flex items-center gap-2 text-sm text-indigo-300 transition-colors hover:text-indigo-200"
-                  >
-                    {t("pages.settings.privacyPolicy", "Privacy Policy")}
-                  </Link>
-                  <Link
-                    to="/terms"
-                    className="flex items-center gap-2 text-sm text-indigo-300 transition-colors hover:text-indigo-200"
-                  >
-                    {t("pages.settings.termsOfService", "Terms of Service")}
-                  </Link>
-                  <Link
-                    to="/legal"
-                    className="flex items-center gap-2 text-sm text-indigo-300 transition-colors hover:text-indigo-200"
-                  >
-                    {t(
-                      "pages.settings.attributions",
-                      "Attributions & Licenses"
+                  <div className="mt-6">
+                    <ToggleSetting
+                      isRTL={isRTL}
+                      label={t("pages.settings.notifications.quietHours")}
+                      description={t(
+                        "pages.settings.notifications.quietHoursDescription"
+                      )}
+                      value={preferences.quiet_hours_enabled}
+                      onChange={(value) =>
+                        updatePreference("quiet_hours_enabled", value)
+                      }
+                      disabled={!preferences.notifications_enabled}
+                    />
+                    {preferences.quiet_hours_enabled && (
+                      <div className="mt-3 grid grid-cols-2 gap-4">
+                        <TimePicker
+                          isRTL={isRTL}
+                          label={t("pages.settings.notifications.startTime")}
+                          value={preferences.quiet_hours_start}
+                          onChange={(value) =>
+                            updatePreference("quiet_hours_start", value)
+                          }
+                        />
+                        <TimePicker
+                          isRTL={isRTL}
+                          label={t("pages.settings.notifications.endTime")}
+                          value={preferences.quiet_hours_end}
+                          onChange={(value) =>
+                            updatePreference("quiet_hours_end", value)
+                          }
+                        />
+                      </div>
                     )}
-                  </Link>
-                </div>
-              </SettingsSection>
-            </div>
-          </div>
+                  </div>
 
-          {/* Account Deletion Modal */}
-          <AccountDeletionModal
-            isOpen={showDeleteModal}
-            onClose={() => setShowDeleteModal(false)}
-            student={
-              user
-                ? { student_id: user.id, student_name: studentDisplayName }
-                : null
-            }
-            onDeletionRequested={() => setShowDeleteModal(false)}
-          />
+                  <div className="mt-6">
+                    <ToggleSetting
+                      isRTL={isRTL}
+                      label={t(
+                        "pages.settings.notifications.dailyPracticeReminder"
+                      )}
+                      description={t(
+                        "pages.settings.notifications.dailyPracticeReminderDescription"
+                      )}
+                      value={preferences.daily_reminder_enabled}
+                      onChange={(value) =>
+                        updatePreference("daily_reminder_enabled", value)
+                      }
+                      disabled={!preferences.notifications_enabled}
+                    />
+                    {preferences.daily_reminder_enabled && (
+                      <div className="mt-3">
+                        <TimePicker
+                          isRTL={isRTL}
+                          label={t("pages.settings.notifications.reminderTime")}
+                          value={preferences.daily_reminder_time}
+                          onChange={(value) =>
+                            updatePreference("daily_reminder_time", value)
+                          }
+                        />
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </SettingsSection>
 
-          {/* Cancel Confirmation Dialog */}
-          {showCancelDialog && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div
-                className="fixed inset-0 bg-black/70"
-                onClick={() => !isCancelling && setShowCancelDialog(false)}
-                aria-hidden="true"
-              />
-              <div className="relative w-full max-w-sm rounded-xl border border-white/20 bg-slate-900/95 p-6 shadow-2xl backdrop-blur-md">
-                <div
-                  className={`mb-4 flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
-                >
-                  <AlertTriangle
-                    size={24}
-                    className="flex-shrink-0 text-amber-400"
-                  />
-                  <h3 className="text-lg font-bold text-white">
-                    {t("parentPortal.cancelConfirmTitle")}
-                  </h3>
-                </div>
-                <p className="mb-6 text-sm text-white/70">
-                  {t("parentPortal.cancelConfirmBody", {
-                    date: formattedEndDate || "",
-                  })}
+            {/* Section 6: Account */}
+            <SettingsSection
+              isRTL={isRTL}
+              title={t("parentPortal.accountHeading")}
+              icon={Trash2}
+              defaultOpen={false}
+            >
+              <div className="space-y-3">
+                <p className="text-sm text-white/70">
+                  {t("pages.settings.deleteAccountDescription")}
                 </p>
-                <div
-                  className={`flex gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                <button
+                  onClick={handleDeleteAccountClick}
+                  className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-600/20 px-4 py-2 text-sm font-medium text-red-300 transition-all duration-200 hover:bg-red-600/30 hover:text-red-200"
                 >
-                  <button
-                    onClick={() => setShowCancelDialog(false)}
-                    disabled={isCancelling}
-                    className="flex-1 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20 disabled:opacity-50"
-                  >
-                    {t("parentPortal.keepSubscription")}
-                  </button>
-                  <button
-                    onClick={handleCancel}
-                    disabled={isCancelling}
-                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
-                  >
-                    {isCancelling ? (
-                      <>
-                        <Loader2 size={16} className="animate-spin" />
-                        {t("parentPortal.cancelling")}
-                      </>
-                    ) : (
-                      t("parentPortal.yesCancel")
-                    )}
-                  </button>
-                </div>
+                  <Trash2 className="h-4 w-4" />
+                  {t("pages.settings.deleteAccountButton")}
+                </button>
+              </div>
+            </SettingsSection>
+
+            {/* Section 7: Legal */}
+            <SettingsSection
+              isRTL={isRTL}
+              title={t("parentPortal.legalHeading")}
+              icon={Scale}
+              defaultOpen={false}
+            >
+              <div className="space-y-3">
+                <Link
+                  to="/privacy"
+                  className="flex items-center gap-2 text-sm text-indigo-300 transition-colors hover:text-indigo-200"
+                >
+                  {t("pages.settings.privacyPolicy", "Privacy Policy")}
+                </Link>
+                <Link
+                  to="/terms"
+                  className="flex items-center gap-2 text-sm text-indigo-300 transition-colors hover:text-indigo-200"
+                >
+                  {t("pages.settings.termsOfService", "Terms of Service")}
+                </Link>
+                <Link
+                  to="/legal"
+                  className="flex items-center gap-2 text-sm text-indigo-300 transition-colors hover:text-indigo-200"
+                >
+                  {t("pages.settings.attributions", "Attributions & Licenses")}
+                </Link>
+              </div>
+            </SettingsSection>
+          </div>
+        </div>
+
+        {/* Account Deletion Modal */}
+        <AccountDeletionModal
+          isOpen={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          student={
+            user
+              ? { student_id: user.id, student_name: studentDisplayName }
+              : null
+          }
+          onDeletionRequested={() => setShowDeleteModal(false)}
+        />
+
+        {/* Cancel Confirmation Dialog */}
+        {showCancelDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 bg-black/70"
+              onClick={() => !isCancelling && setShowCancelDialog(false)}
+              aria-hidden="true"
+            />
+            <div className="relative w-full max-w-sm rounded-xl border border-white/20 bg-slate-900/95 p-6 shadow-2xl backdrop-blur-md">
+              <div
+                className={`mb-4 flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
+              >
+                <AlertTriangle
+                  size={24}
+                  className="flex-shrink-0 text-amber-400"
+                />
+                <h3 className="text-lg font-bold text-white">
+                  {t("parentPortal.cancelConfirmTitle")}
+                </h3>
+              </div>
+              <p className="mb-6 text-sm text-white/70">
+                {t("parentPortal.cancelConfirmBody", {
+                  date: formattedEndDate || "",
+                })}
+              </p>
+              <div className={`flex gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <button
+                  onClick={() => setShowCancelDialog(false)}
+                  disabled={isCancelling}
+                  className="flex-1 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20 disabled:opacity-50"
+                >
+                  {t("parentPortal.keepSubscription")}
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={isCancelling}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-500 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+                >
+                  {isCancelling ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      {t("parentPortal.cancelling")}
+                    </>
+                  ) : (
+                    t("parentPortal.yesCancel")
+                  )}
+                </button>
               </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
