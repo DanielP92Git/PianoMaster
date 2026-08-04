@@ -73,10 +73,11 @@ export const ParentGateProvider = ({ children }) => {
     const handleVisibilityChange = () => {
       if (document.hidden) closeGate();
     };
-    window.addEventListener("visibilitychange", handleVisibilityChange);
+    // visibilitychange fires on `document` per spec (does not bubble to window)
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("blur", closeGate);
     return () => {
-      window.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("blur", closeGate);
     };
   }, [closeGate]);
