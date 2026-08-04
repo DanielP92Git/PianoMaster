@@ -10,6 +10,7 @@ import {
   updateAccessoryCustomMetadata,
 } from "../services/apiAccessories";
 import { useUser } from "../features/authentication/useUser";
+import { useActiveChildId } from "./useActiveChildId";
 
 export function useAccessoriesList(options = {}) {
   const filters = options.filters ?? null;
@@ -22,35 +23,35 @@ export function useAccessoriesList(options = {}) {
 }
 
 export function useUserAccessories(options = {}) {
-  const { user } = useUser();
+  const { childId, ready } = useActiveChildId();
 
   return useQuery({
-    queryKey: ["user-accessories", user?.id],
-    queryFn: () => getUserAccessories(user.id),
-    enabled: !!user?.id,
+    queryKey: ["user-accessories", childId],
+    queryFn: () => getUserAccessories(childId),
+    enabled: ready && !!childId,
     staleTime: options.staleTime ?? 60 * 1000,
   });
 }
 
 export function usePointBalance(options = {}) {
-  const { user } = useUser();
+  const { childId, ready } = useActiveChildId();
 
   return useQuery({
-    queryKey: ["point-balance", user?.id],
-    queryFn: () => getUserPointBalance(user.id),
-    enabled: !!user?.id,
+    queryKey: ["point-balance", childId],
+    queryFn: () => getUserPointBalance(childId),
+    enabled: ready && !!childId,
     staleTime: options.staleTime ?? 30 * 1000, // 30 seconds - keep data fresh
     refetchInterval: options.refetchInterval ?? 5 * 60 * 1000,
   });
 }
 
 export function usePointTransactions(limit = 20) {
-  const { user } = useUser();
+  const { childId, ready } = useActiveChildId();
 
   return useQuery({
-    queryKey: ["point-transactions", user?.id, limit],
-    queryFn: () => getUserPointTransactions(user.id, { limit }),
-    enabled: !!user?.id,
+    queryKey: ["point-transactions", childId, limit],
+    queryFn: () => getUserPointTransactions(childId, { limit }),
+    enabled: ready && !!childId,
   });
 }
 

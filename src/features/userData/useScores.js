@@ -1,22 +1,21 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getStudentScores, updateStudentScore } from "../../services/apiScores";
+import { useActiveChildId } from "../../hooks/useActiveChildId";
 import toast from "react-hot-toast";
 
 export function useScores() {
   const queryClient = useQueryClient();
-  const user = queryClient.getQueryData(["user"]); // Retrieve the user data from the QueryClient
-  const studentId = user?.id;
-  const isStudent = user?.isStudent; // Check if user is actually a student
+  const { childId, ready } = useActiveChildId();
 
-  // Fetch student scores (only for students)
+  // Fetch scores for the active child
   const {
     data: scores,
     error: fetchError,
     isLoading: isFetching,
   } = useQuery({
-    queryKey: ["scores"],
-    queryFn: () => getStudentScores(studentId),
-    enabled: !!studentId && isStudent, // Only fetch scores if the user is a student
+    queryKey: ["scores", childId],
+    queryFn: () => getStudentScores(childId),
+    enabled: ready && !!childId, // Only fetch once the active child id is resolved
     staleTime: 3 * 60 * 1000, // 3 minutes - scores can change during gameplay
     refetchInterval: 5 * 60 * 1000, // Check every 5 minutes
     onError: (error) => {
@@ -25,7 +24,7 @@ export function useScores() {
     },
   });
 
-  // Update student score
+  // Update active child's score
   const {
     mutate: updateScore,
     mutateAsync: updateScoreAsync,
@@ -33,14 +32,14 @@ export function useScores() {
     isLoading: isUpdating,
   } = useMutation({
     mutationFn: ({ score, gameType }) =>
-      updateStudentScore(studentId, score, gameType),
+      updateStudentScore(childId, score, gameType),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries(["scores"]),
-        queryClient.invalidateQueries(["student-scores", studentId]),
-        queryClient.invalidateQueries(["point-balance", studentId]),
+        queryClient.invalidateQueries(["scores", childId]),
+        queryClient.invalidateQueries(["student-scores", childId]),
+        queryClient.invalidateQueries(["point-balance", childId]),
         queryClient.invalidateQueries(["gamesPlayed"]),
-        queryClient.invalidateQueries(["earned-achievements", studentId]),
+        queryClient.invalidateQueries(["earned-achievements", childId]),
       ]);
     },
     onError: (error) => {
