@@ -1,5 +1,5 @@
-import supabase from './supabase';
-import { getCalendarDate } from '../utils/dateUtils';
+import supabase from "./supabase";
+import { getCalendarDate } from "../utils/dateUtils";
 
 /**
  * Practice streak service for instrument practice tracking.
@@ -111,19 +111,20 @@ export const practiceStreakService = {
   /**
    * Fetch the current instrument practice streak for the authenticated student.
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @returns {Promise<{ streakCount: number, lastPracticedOn: string|null, lastMilestoneCelebrated: number }>}
    * @throws {Error} 'Not authenticated' if no session
    */
-  async getPracticeStreak() {
+  async getPracticeStreak(childId) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
+    if (!session) throw new Error("Not authenticated");
 
     const { data, error } = await supabase
-      .from('instrument_practice_streak')
-      .select('streak_count, last_practiced_on, last_milestone_celebrated')
-      .eq('student_id', session.user.id)
+      .from("instrument_practice_streak")
+      .select("streak_count, last_practiced_on, last_milestone_celebrated")
+      .eq("student_id", childId)
       .maybeSingle();
 
     if (error) throw error;
@@ -144,30 +145,29 @@ export const practiceStreakService = {
    *  - Gap = 1 (consecutive or weekend-bridged): increment streak
    *  - Gap > 1: reset streak to 1, reset last_milestone_celebrated to 0
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @param {string} localDate - "YYYY-MM-DD" from getCalendarDate() — local timezone
    * @param {boolean} [weekendPassEnabled=false] - read from current_streak.weekend_pass_enabled
    * @returns {Promise<{ streakCount: number, lastMilestoneCelebrated: number }>}
    * @throws {Error} 'Not authenticated' if no session
    */
-  async updatePracticeStreak(localDate, weekendPassEnabled = false) {
+  async updatePracticeStreak(childId, localDate, weekendPassEnabled = false) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
-
-    const userId = session.user.id;
+    if (!session) throw new Error("Not authenticated");
 
     // Fetch current streak state (including last_milestone_celebrated)
     const { data: current, error: fetchError } = await supabase
-      .from('instrument_practice_streak')
-      .select('streak_count, last_practiced_on, last_milestone_celebrated')
-      .eq('student_id', userId)
+      .from("instrument_practice_streak")
+      .select("streak_count, last_practiced_on, last_milestone_celebrated")
+      .eq("student_id", childId)
       .maybeSingle();
 
     if (fetchError) throw fetchError;
 
     // Parse today as local midnight Date for gap calculation
-    const today = new Date(localDate + 'T00:00:00');
+    const today = new Date(localDate + "T00:00:00");
     let newStreakCount;
     let isStreakReset = false;
 
@@ -176,7 +176,7 @@ export const practiceStreakService = {
       newStreakCount = 1;
       isStreakReset = true;
     } else {
-      const lastDate = new Date(current.last_practiced_on + 'T00:00:00');
+      const lastDate = new Date(current.last_practiced_on + "T00:00:00");
       const gap = _effectiveDayGap(lastDate, today, weekendPassEnabled);
 
       if (gap === 0) {
@@ -198,7 +198,7 @@ export const practiceStreakService = {
 
     // Build upsert payload — only include last_milestone_celebrated when resetting (D-08)
     const upsertPayload = {
-      student_id: userId,
+      student_id: childId,
       streak_count: newStreakCount,
       last_practiced_on: localDate,
       updated_at: new Date().toISOString(),
@@ -210,14 +210,16 @@ export const practiceStreakService = {
 
     // Upsert streak row (insert on first log, update on subsequent)
     const { error: upsertError } = await supabase
-      .from('instrument_practice_streak')
-      .upsert(upsertPayload, { onConflict: 'student_id' });
+      .from("instrument_practice_streak")
+      .upsert(upsertPayload, { onConflict: "student_id" });
 
     if (upsertError) throw upsertError;
 
     return {
       streakCount: newStreakCount,
-      lastMilestoneCelebrated: isStreakReset ? 0 : (current?.last_milestone_celebrated ?? 0),
+      lastMilestoneCelebrated: isStreakReset
+        ? 0
+        : (current?.last_milestone_celebrated ?? 0),
     };
   },
 
@@ -226,23 +228,24 @@ export const practiceStreakService = {
    * Called by Plan 02 milestone modal after display to prevent re-triggering.
    * updateLastMilestoneCelebrated sets last_milestone_celebrated on the DB row.
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @param {number} milestone - Milestone number (5, 10, 21, or 30)
    * @returns {Promise<void>}
    * @throws {Error} 'Not authenticated' if no session
    */
-  async updateLastMilestoneCelebrated(milestone) {
+  async updateLastMilestoneCelebrated(childId, milestone) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    if (!session) throw new Error('Not authenticated');
+    if (!session) throw new Error("Not authenticated");
 
     const { error } = await supabase
-      .from('instrument_practice_streak')
+      .from("instrument_practice_streak")
       .update({
         last_milestone_celebrated: milestone,
         updated_at: new Date().toISOString(),
       })
-      .eq('student_id', session.user.id);
+      .eq("student_id", childId);
 
     if (error) throw error;
   },

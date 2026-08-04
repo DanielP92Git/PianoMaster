@@ -182,9 +182,10 @@ export const streakService = {
   /**
    * Returns just the streak count number.
    * Backward-compatible — callers that only need the number continue to work.
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @returns {Promise<number>}
    */
-  async getStreak() {
+  async getStreak(childId) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -204,7 +205,7 @@ export const streakService = {
         const { data, error } = await supabase
           .from("current_streak")
           .select("streak_count")
-          .eq("student_id", session.user.id)
+          .eq("student_id", childId)
           .maybeSingle();
 
         if (error) {
@@ -234,6 +235,7 @@ export const streakService = {
    * Returns the full streak state object for UI consumption.
    * React Query key: ["streak-state", userId]
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @returns {Promise<{
    *   streakCount: number,
    *   freezeCount: number,
@@ -243,7 +245,7 @@ export const streakService = {
    *   comebackBonus: { active: boolean, expiresAt: string|null, daysLeft: number }
    * }>}
    */
-  async getStreakState() {
+  async getStreakState(childId) {
     const DEFAULT_STATE = {
       streakCount: 0,
       freezeCount: 0,
@@ -279,12 +281,12 @@ export const streakService = {
             .select(
               "streak_count, streak_freezes, weekend_pass_enabled, last_freeze_consumed_at, comeback_bonus_start, comeback_bonus_expires"
             )
-            .eq("student_id", session.user.id)
+            .eq("student_id", childId)
             .maybeSingle(),
           supabase
             .from("last_practiced_date")
             .select("practiced_at")
-            .eq("student_id", session.user.id)
+            .eq("student_id", childId)
             .maybeSingle(),
         ]);
 
@@ -360,9 +362,10 @@ export const streakService = {
 
   /**
    * Returns the last practice date as a Date object, or null if never practiced.
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @returns {Promise<Date|null>}
    */
-  async getLastPracticeDate() {
+  async getLastPracticeDate(childId) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -385,7 +388,7 @@ export const streakService = {
         const { data, error } = await supabase
           .from("last_practiced_date")
           .select("practiced_at")
-          .eq("student_id", session.user.id)
+          .eq("student_id", childId)
           .maybeSingle();
 
         if (error) {
@@ -433,6 +436,7 @@ export const streakService = {
    *   - Earn freeze if streak is a multiple of 7 and inventory < 3
    *   - Clear expired comeback bonus
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @returns {Promise<{
    *   newStreak: number,
    *   freezeEarned: boolean,
@@ -441,7 +445,7 @@ export const streakService = {
    *   comebackBonusActivated: boolean
    * }>}
    */
-  async updateStreak() {
+  async updateStreak(childId) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -458,13 +462,13 @@ export const streakService = {
 
     // Fetch last practice date and current streak row in parallel
     const [lastPractice, streakRowResult] = await Promise.all([
-      this.getLastPracticeDate(),
+      this.getLastPracticeDate(childId),
       supabase
         .from("current_streak")
         .select(
           "streak_count, streak_freezes, weekend_pass_enabled, last_freeze_earned_at, comeback_bonus_start, comeback_bonus_expires"
         )
-        .eq("student_id", session.user.id)
+        .eq("student_id", childId)
         .maybeSingle(),
     ]);
 
@@ -511,7 +515,7 @@ export const streakService = {
 
     // Upsert payload — we build this incrementally
     const updatePayload = {
-      student_id: session.user.id,
+      student_id: childId,
       updated_at: today.toISOString(),
     };
 
@@ -641,7 +645,7 @@ export const streakService = {
       .from("last_practiced_date")
       .upsert(
         {
-          student_id: session.user.id,
+          student_id: childId,
           practiced_at: today.toISOString(),
         },
         { onConflict: "student_id" }
@@ -656,13 +660,13 @@ export const streakService = {
     const { data: highestStreak } = await supabase
       .from("highest_streak")
       .select("streak_count")
-      .eq("student_id", session.user.id)
+      .eq("student_id", childId)
       .maybeSingle();
 
     if (!highestStreak || currentStreak > highestStreak.streak_count) {
       await supabase.from("highest_streak").upsert(
         {
-          student_id: session.user.id,
+          student_id: childId,
           streak_count: currentStreak,
           achieved_at: today.toISOString(),
         },
@@ -683,10 +687,11 @@ export const streakService = {
    * Enables or disables the weekend pass for the current student.
    * Weekend pass prevents Fri/Sat from counting as missed days.
    *
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    * @param {boolean} enabled
    * @returns {Promise<void>}
    */
-  async setWeekendPass(enabled) {
+  async setWeekendPass(childId, enabled) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -694,7 +699,7 @@ export const streakService = {
 
     const { error } = await supabase.from("current_streak").upsert(
       {
-        student_id: session.user.id,
+        student_id: childId,
         weekend_pass_enabled: enabled,
         updated_at: new Date().toISOString(),
       },
@@ -715,8 +720,9 @@ export const streakService = {
   /**
    * Resets the streak to 0 and clears all protection state.
    * Also clears freeze inventory and comeback bonus columns.
+   * @param {string} childId - target row's student_id (RLS principal still derived from session)
    */
-  async resetStreak() {
+  async resetStreak(childId) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -726,7 +732,7 @@ export const streakService = {
 
     await supabase.from("current_streak").upsert(
       {
-        student_id: session.user.id,
+        student_id: childId,
         streak_count: 0,
         streak_freezes: 0,
         weekend_pass_enabled: false,
@@ -741,7 +747,7 @@ export const streakService = {
 
     await supabase.from("last_practiced_date").upsert(
       {
-        student_id: session.user.id,
+        student_id: childId,
         practiced_at: null,
       },
       { onConflict: "student_id" }
