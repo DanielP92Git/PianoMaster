@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: executing
+status: ready_to_plan
 stopped_at: Phase 4 UI-SPEC approved
 last_updated: "2026-08-04T12:32:01.875Z"
 last_activity: 2026-08-04 -- Phase 04 execution started
 progress:
   total_phases: 8
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 30
   completed_plans: 19
-  percent: 63
+  percent: 50
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 04 — child-profiles-parental-gating
+**Current focus:** Phase 05 — subscription-re-pointing (Phase 04 complete)
 
 ## Current Position
 
-Phase: 04 (child-profiles-parental-gating) — EXECUTING
-Plan: 1 of 11
-Status: Executing Phase 04
-Last activity: 2026-08-04 -- Phase 04 execution started
+Phase: 05 (subscription-re-pointing)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-04 -- Phase 04 (child-profiles-parental-gating) complete, 12/12 must-haves verified
 
 Progress: [██████████] 100%
 
@@ -151,8 +151,10 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Stopped at:** Phase 4 UI-SPEC approved
-**Next action:** Run milestone/phase verification for Phase 3, then proceed to Phase 4 (Profile CRUD + COPPA parental gate) per the roadmap.
+**Stopped at:** Phase 4 (Child Profiles & Parental Gating) COMPLETE
+**Next action:** Begin Phase 5 (Subscription Re-Pointing). Plans are TBD — run `/gsd-plan-phase 5` (research + planning) before executing. Depends on Phase 1/2 (both done); no blockers.
+**Resume note (Phase 4 close):** All 11 plans executed across 3 waves, merged clean, full suite green throughout (2303/2303 passing, 0 failures, build succeeds, lint clean). `04-REVIEW.md` code review found 4 Critical + 5 Warning + 2 Info findings; all 4 Critical + 2 trivial Warnings (WR-03/WR-04) fixed in commit `82ca1e75` and independently re-verified against the actual diff (not just SUMMARY.md claims) by `04-VERIFICATION.md` (status: passed, 12/12 must-haves). Deferred, non-blocking: WR-02 (boss-unlock/level-up celebration dedup keyed on parent id, not child — soft cosmetic bleed), WR-05 (apiChildProfiles.js relies on RLS only, no client-side ownership backstop — inconsistent pattern, not a demonstrated bug), IN-01/IN-02 (missing error-state UI, pre-existing NODE_ENV vs import.meta.env inconsistency). **`src/components/layout/Dashboard.jsx` was never in any of the 11 plans' scope** and still gates most of its data fetching/UI sections on `isStudent`, which is false for all parent-role sessions post-migration — flagged by both the code reviewer and verifier as a real but out-of-scope gap; recommend a follow-up gap-closure phase before this milestone ships to real users, since it's the main post-login landing page.
+**Incident during Wave 1 worktree cleanup:** the merge-back script (adapted ad hoc from the execute-phase workflow spec, missing the spec's `WAS_DELETED` resurrection guard) copied `*SUMMARY.md` files from several ancient, already-archived, orphaned worktrees (v2.9/v3.0 milestone phases 07-09/12-15, long since moved to `.planning/milestones/`) back onto disk, and clobbered two tracked files (`.planning/research/SUMMARY.md`, `21-01-SUMMARY.md`) with stale v2.9-era content. Caught during phase-completion review (STATE.md's `next_phase` came back as "07" instead of "05" — the giveaway), both tracked files reverted via `git checkout HEAD --`, the 7 untracked resurrected directories deleted (diff-verified as pure duplicates of the proper archive first). No commit ever included the corrupted content. See [[feedback_worktree_collateral_damage]] memory.
 
 **Next action (historical, superseded):** Run `/gsd-execute-phase 1` to execute Phase 1 (Identity Schema Expand). 5 plans across 4 waves: W1 = 01-01 (FK checklist + function inventory) ∥ 01-02 (segmentation table + SQL assertion suite); W2 = 01-03 (owner scope/segmentation sign-off gate, autonomous:no); W3 = 01-04 (atomic up-migration + down-migration); W4 = 01-05 (owner-gated branch rehearsal → production apply + live IDENT-05 verifier + D-29 smoke, autonomous:no, [BLOCKING]). Plan-checker verdict: no BLOCKING issues; 5 robustness fixes folded in (per-row `requires_reconsent` VALUES encoding, parents count/true-count + positive parent-match assertions, real PASS/FAIL gating on the production apply verify, RESEARCH open-questions marked resolved, VALIDATION nyquist_compliant flipped true). Two owner gates during execution: segmentation/FK-scope sign-off (W2) and the production apply (W4).
 
