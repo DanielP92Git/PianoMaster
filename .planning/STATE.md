@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
-status: planning
-stopped_at: Phase 4 context gathered
-last_updated: "2026-08-03T21:50:01.841Z"
-last_activity: 2026-08-03
+status: executing
+stopped_at: Phase 4 UI-SPEC approved
+last_updated: "2026-08-04T12:32:01.875Z"
+last_activity: 2026-08-04 -- Phase 04 execution started
 progress:
   total_phases: 8
   completed_phases: 3
-  total_plans: 19
+  total_plans: 30
   completed_plans: 19
-  percent: 100
+  percent: 63
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 03 — parent-only-signup-age-gate
+**Current focus:** Phase 04 — child-profiles-parental-gating
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-08-03
+Phase: 04 (child-profiles-parental-gating) — EXECUTING
+Plan: 1 of 11
+Status: Executing Phase 04
+Last activity: 2026-08-04 -- Phase 04 execution started
 
 Progress: [██████████] 100%
 
@@ -151,7 +151,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Stopped at:** Phase 4 context gathered
+**Stopped at:** Phase 4 UI-SPEC approved
 **Next action:** Run milestone/phase verification for Phase 3, then proceed to Phase 4 (Profile CRUD + COPPA parental gate) per the roadmap.
 
 **Next action (historical, superseded):** Run `/gsd-execute-phase 1` to execute Phase 1 (Identity Schema Expand). 5 plans across 4 waves: W1 = 01-01 (FK checklist + function inventory) ∥ 01-02 (segmentation table + SQL assertion suite); W2 = 01-03 (owner scope/segmentation sign-off gate, autonomous:no); W3 = 01-04 (atomic up-migration + down-migration); W4 = 01-05 (owner-gated branch rehearsal → production apply + live IDENT-05 verifier + D-29 smoke, autonomous:no, [BLOCKING]). Plan-checker verdict: no BLOCKING issues; 5 robustness fixes folded in (per-row `requires_reconsent` VALUES encoding, parents count/true-count + positive parent-match assertions, real PASS/FAIL gating on the production apply verify, RESEARCH open-questions marked resolved, VALIDATION nyquist_compliant flipped true). Two owner gates during execution: segmentation/FK-scope sign-off (W2) and the production apply (W4).

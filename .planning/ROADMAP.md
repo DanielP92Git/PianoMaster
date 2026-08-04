@@ -150,10 +150,21 @@ feature is removed entirely so no child voice data is collected at all.
 3. Switching profiles clears all of the previous child's cached data — proven by a multi-child device test showing zero stale or cross-child data
 4. Direct URL navigation and browser back/forward cannot reach Account Settings, Subscription, Billing, or Child Profile CRUD without passing the parental gate, and gate-passed state does not stay open for the next person who picks up the device
 5. A parent can review all data held about each child, export it, delete it, and deactivate one child's profile (stopping further collection) without deleting the rest of the family account
-   **Plans**: TBD
-   **Pitfalls to avoid**: Pitfall 11 (route-only gate bypass via direct URL/back-button — needs a mount-checked wrapper, not a one-time click-through), Pitfall 12 (sibling data bleed from stale React Query cache — needs explicit cache invalidation or full remount on switch).
-   **Research flag**: Open Question 3 (should switching _away_ from a child require the gate too, so a sibling can't reassign another's session?) needs an explicit decision during phase discussion — LOW confidence either way per research, do not assume an answer.
-   **UI hint**: yes
+   **Plans**: 11 plans across 3 waves
+   - [ ] 04-01-PLAN.md — Wave 1: i18n copy contract (EN+HE) for all new switcher/children/dataRights/parentGate copy + generalized parentGate namespace
+   - [ ] 04-02-PLAN.md — Wave 1: active-child seam (useActiveChildId + ActiveChildContext switch-clear + apiChildProfiles CRUD + purge extract + streak reset); carries the MANDATORY PROFILE-05 no-bleed test
+   - [ ] 04-03-PLAN.md — Wave 1: authz + data-rights services (verifyStudentDataAccess parent→child branch, STUDENT_DATA_TABLES completion, per-child no-signout delete, notification self-check fix)
+   - [ ] 04-04-PLAN.md — Wave 2: auth-internal services gain explicit childId params (streak/practiceLog/practiceStreak)
+   - [ ] 04-05-PLAN.md — Wave 2: shared in-memory ParentGateContext + mount-checked ParentGateProtectedRoute; carries the MANDATORY COPPA-02 gate-bypass test
+   - [ ] 04-06-PLAN.md — Wave 3: rescope streak/practice/victory query sites to active child (incl. unkeyed ["streak-state"] + accessory-unlock localStorage re-key)
+   - [ ] 04-07-PLAN.md — Wave 2: rescope xp/scores/achievements/accessories query sites to active child (closes unkeyed ["scores"] + isStudent enable-gate)
+   - [ ] 04-08-PLAN.md — Wave 2: ChildProfileForm (compact preset-avatar grid + always-on nickname guidance + non-blocking full-name heuristic)
+   - [ ] 04-09-PLAN.md — Wave 3: "Who's playing?" ungated switcher overlay + header avatar entry + empty state
+   - [ ] 04-10-PLAN.md — Wave 3: gated Manage Children screen + per-child data-rights panel (review/export/deactivate/delete) + gated route
+   - [ ] 04-11-PLAN.md — Wave 3: Parent Portal split (ungated stats vs gated actions) + Privacy Policy link
+         **Pitfalls to avoid**: Pitfall 11 (route-only gate bypass via direct URL/back-button — needs a mount-checked wrapper, not a one-time click-through), Pitfall 12 (sibling data bleed from stale React Query cache — needs explicit cache invalidation or full remount on switch).
+         **Research flag**: Open Question 3 (should switching _away_ from a child require the gate too, so a sibling can't reassign another's session?) needs an explicit decision during phase discussion — LOW confidence either way per research, do not assume an answer.
+         **UI hint**: yes
 
 #### Phase 5: Subscription Re-Pointing
 
@@ -298,7 +309,7 @@ Full details: `.planning/milestones/v3.6-ROADMAP.md` · Requirements: `.planning
 | 1. Identity Schema Expand                         | v4.0      | 0/TBD          | Not started | -         |
 | 2. RLS Rewrite — Ownership-Based Access Control   | v4.0      | 0/5            | Not started | -         |
 | 3. Parent-Only Signup & Age Gate                  | v4.0      | 0/8            | Planned     | -         |
-| 4. Child Profiles & Parental Gating               | v4.0      | 0/TBD          | Not started | -         |
+| 4. Child Profiles & Parental Gating               | v4.0      | 0/11           | Planned     | -         |
 | 5. Subscription Re-Pointing                       | v4.0      | 0/TBD          | Not started | -         |
 | 6. Live Migration & Re-Consent                    | v4.0      | 0/TBD          | Not started | -         |
 | 7. Audio Recording Removal                        | v4.0      | 0/TBD          | Not started | -         |
