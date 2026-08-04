@@ -35,6 +35,7 @@ import {
   markLevelCelebrated,
 } from "../utils/levelUpTracking";
 import { useBossUnlockTracking } from "./useBossUnlockTracking";
+import { useActiveChildId } from "./useActiveChildId";
 import { useTranslation } from "react-i18next";
 
 const SHOWN_UNLOCKS_VERSION = 2;
@@ -106,6 +107,7 @@ export function useVictoryState({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, isTeacher } = useUser();
+  const { childId, ready } = useActiveChildId();
   const { reducedMotion } = useAccessibility();
   const { shouldShow: shouldShowBossModal, markAsShown: markBossAsShown } =
     useBossUnlockTracking(user?.id, nodeId);
@@ -113,19 +115,19 @@ export function useVictoryState({
 
   // Fetch streak state to check comeback bonus (for 2x XP display)
   const { data: streakState } = useQuery({
-    queryKey: ["streak-state", user?.id],
-    queryFn: () => streakService.getStreakState(),
-    enabled: !!user?.id,
+    queryKey: ["streak-state", childId],
+    queryFn: () => streakService.getStreakState(childId),
+    enabled: ready && !!childId,
     staleTime: 2 * 60 * 1000,
   });
   const comebackActive = streakState?.comebackBonus?.active === true;
   const timeUsed = timedMode ? initialTime - timeRemaining : null;
-  const updateStreakWithAchievements = useStreakWithAchievements();
+  const updateStreakWithAchievements = useStreakWithAchievements(childId);
   const [shownUnlocksLoaded, setShownUnlocksLoaded] = useState(false);
 
   const storageKey = useMemo(
-    () => (user?.id ? `shown-accessory-unlocks-${user.id}` : null),
-    [user?.id]
+    () => (childId ? `shown-accessory-unlocks-${childId}` : null),
+    [childId]
   );
   const shownUnlocksRef = useRef(new Set());
 
@@ -142,14 +144,14 @@ export function useVictoryState({
   );
 
   const refreshQueries = useCallback(async () => {
-    if (!user?.id) return;
+    if (!childId) return;
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["student-scores", user.id] }),
+      queryClient.invalidateQueries({ queryKey: ["student-scores", childId] }),
       queryClient.invalidateQueries({
-        queryKey: ["earned-achievements", user.id],
+        queryKey: ["earned-achievements", childId],
       }),
     ]);
-  }, [queryClient, user?.id]);
+  }, [queryClient, childId]);
 
   const handleExit = useCallback(() => {
     refreshQueries();
@@ -176,12 +178,12 @@ export function useVictoryState({
   }, [navigate, nodeId]);
 
   const handleEquipAccessory = useCallback(() => {
-    if (user?.id) {
+    if (childId) {
       queryClient.invalidateQueries({
-        queryKey: ["user-accessories", user.id],
+        queryKey: ["user-accessories", childId],
       });
     }
-  }, [queryClient, user?.id]);
+  }, [queryClient, childId]);
 
   // Accessory unlock detection
   const { data: accessories } = useAccessoriesList();
@@ -346,7 +348,7 @@ export function useVictoryState({
     const processTrailCompletion = async () => {
       // Prevent multiple executions
       if (hasProcessedTrail.current) return;
-      if (!user?.id) return;
+      if (!childId) return;
 
       // Calculate stars
       const earnedStars = calculateStarsFromPercentage(scorePercentage);
@@ -386,7 +388,7 @@ export function useVictoryState({
             // If exerciseIndex is provided, use exercise-level progress tracking
             if (exerciseIndex !== null && totalExercises !== null) {
               // Fetch pre-update progress for personal best detection
-              const preUpdateProgress = await getNodeProgress(user.id, nodeId);
+              const preUpdateProgress = await getNodeProgress(childId, nodeId);
               const existingExercise =
                 preUpdateProgress?.exercise_progress?.find(
                   (ep) => ep.index === exerciseIndex
@@ -405,7 +407,7 @@ export function useVictoryState({
               // arg. suppressPersistence returns early above this call (see the guard at the
               // top of this branch), so Practice mode skips the mastery write for free.
               const result = await updateExerciseProgress(
-                user.id,
+                childId,
                 nodeId,
                 exerciseIndex,
                 exerciseType ||
@@ -448,16 +450,16 @@ export function useVictoryState({
                 const xpBreakdown = calculateSessionXP(sessionData);
 
                 if (xpBreakdown.totalXP > 0) {
-                  const xpResult = await awardXP(user.id, xpBreakdown.totalXP);
+                  const xpResult = await awardXP(childId, xpBreakdown.totalXP);
                   setXpData({ ...xpBreakdown, ...xpResult });
                   queryClient.invalidateQueries({
-                    queryKey: ["student-xp", user.id],
+                    queryKey: ["student-xp", childId],
                   });
                 }
               }
             } else {
               // Legacy path: single exercise nodes or old behavior
-              const existingProgress = await getNodeProgress(user.id, nodeId);
+              const existingProgress = await getNodeProgress(childId, nodeId);
               const isFirst = !existingProgress || existingProgress.stars === 0;
               setIsFirstComplete(isFirst);
 
@@ -475,7 +477,7 @@ export function useVictoryState({
               // Phase 03 (ADAPT-03): sessionMastery is passed as the trailing perNoteMastery
               // arg; suppressPersistence's early-return above skips this entirely in Practice mode.
               const result = await updateNodeProgress(
-                user.id,
+                childId,
                 nodeId,
                 earnedStars,
                 Math.round(Math.min(scorePercentage, 100)),
@@ -508,10 +510,10 @@ export function useVictoryState({
               const xpBreakdown = calculateSessionXP(sessionData);
 
               if (xpBreakdown.totalXP > 0) {
-                const xpResult = await awardXP(user.id, xpBreakdown.totalXP);
+                const xpResult = await awardXP(childId, xpBreakdown.totalXP);
                 setXpData({ ...xpBreakdown, ...xpResult });
                 queryClient.invalidateQueries({
-                  queryKey: ["student-xp", user.id],
+                  queryKey: ["student-xp", childId],
                 });
               }
             }
@@ -523,7 +525,7 @@ export function useVictoryState({
         }
       } else {
         // Free play: award XP based on score
-        if (user?.id && scorePercentage > 0) {
+        if (childId && scorePercentage > 0) {
           try {
             const freePlayXP = calculateFreePlayXP(
               scorePercentage,
@@ -531,10 +533,10 @@ export function useVictoryState({
             );
             if (!suppressPersistence) {
               if (freePlayXP > 0) {
-                const xpResult = await awardXP(user.id, freePlayXP);
+                const xpResult = await awardXP(childId, freePlayXP);
                 setXpData({ totalXP: freePlayXP, ...xpResult });
                 queryClient.invalidateQueries({
-                  queryKey: ["student-xp", user.id],
+                  queryKey: ["student-xp", childId],
                 });
               }
             }
@@ -548,7 +550,7 @@ export function useVictoryState({
 
     processTrailCompletion();
   }, [
-    user?.id,
+    childId,
     nodeId,
     score,
     totalPossibleScore,
@@ -651,9 +653,9 @@ export function useVictoryState({
       }
 
       queryClient.invalidateQueries({ queryKey: ["accessories"] });
-      if (user?.id) {
+      if (childId) {
         queryClient.invalidateQueries({
-          queryKey: ["user-accessories", user.id],
+          queryKey: ["user-accessories", childId],
         });
       }
     }, 1500);
@@ -664,7 +666,7 @@ export function useVictoryState({
     queryClient,
     shownUnlocksLoaded,
     storageKey,
-    user?.id,
+    childId,
     currentProgress,
     setBaselineProgress,
   ]);

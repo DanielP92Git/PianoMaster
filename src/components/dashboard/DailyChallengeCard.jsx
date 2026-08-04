@@ -8,20 +8,20 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Zap, CheckCircle, Trophy } from "lucide-react";
-import { useUser } from "../../features/authentication/useUser";
 import { getTodaysChallenge } from "../../services/dailyChallengeService";
+import { useActiveChildId } from "../../hooks/useActiveChildId";
 
 const DailyChallengeCard = () => {
   const { t, i18n } = useTranslation("common");
   const isRTL = i18n.dir() === "rtl";
   const navigate = useNavigate();
-  const { user } = useUser();
+  const { childId, ready } = useActiveChildId();
   const dateString = new Date().toISOString().split("T")[0];
 
   const { data: challenge, isLoading } = useQuery({
-    queryKey: ["daily-challenge", user?.id, dateString],
-    queryFn: () => getTodaysChallenge(user.id),
-    enabled: !!user?.id,
+    queryKey: ["daily-challenge", childId, dateString],
+    queryFn: () => getTodaysChallenge(childId),
+    enabled: ready && !!childId,
   });
 
   const isCompleted = challenge?.completed;

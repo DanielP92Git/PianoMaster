@@ -4,6 +4,7 @@ import { streakService } from "../../services/streakService";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-hot-toast";
+import { useActiveChildId } from "../../hooks/useActiveChildId";
 
 // Get visual indicator and color scheme based on streak length
 const getStreakVisuals = (streak) => {
@@ -108,9 +109,11 @@ const renderLucideIcon = (IconComponent, className) =>
   IconComponent ? React.createElement(IconComponent, { className }) : null;
 
 export default function StreakDisplay({ variant = "default", className = "" }) {
+  const { childId, ready } = useActiveChildId();
   const { data: streakState, isLoading } = useQuery({
-    queryKey: ["streak-state"],
-    queryFn: () => streakService.getStreakState(),
+    queryKey: ["streak-state", childId],
+    queryFn: () => streakService.getStreakState(childId),
+    enabled: ready && !!childId,
     staleTime: 2 * 60 * 1000, // 2 minutes - streak doesn't change often
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes instead of 30 seconds
     retry: 1,
@@ -130,7 +133,7 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
 
     if (hoursSince <= 24) {
       freezeConsumedToastRef.current = true;
-      toast.success(t('streak.freezeConsumed'));
+      toast.success(t("streak.freezeConsumed"));
     }
   }, [streakState?.lastFreezeConsumedAt, t]);
 
@@ -138,20 +141,22 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
     // Match the card variant styling for consistent appearance
     if (variant === "card") {
       return (
-        <div className={`card-compact p-3 relative overflow-hidden ${className}`}>
+        <div
+          className={`card-compact relative overflow-hidden p-3 ${className}`}
+        >
           <div className="relative flex flex-col items-center text-center">
-            <div className="flex items-center gap-1 mb-1">
+            <div className="mb-1 flex items-center gap-1">
               {renderLoaderIcon("w-3 h-3 text-gray-600 animate-spin")}
               <h3 className="text-xs font-medium text-gray-600">
                 {t("dashboard.stats.dailyStreak")}
               </h3>
             </div>
-            <p className="text-lg font-bold text-gray-900 mb-1">
-              <span className="text-xs ml-1">
+            <p className="mb-1 text-lg font-bold text-gray-900">
+              <span className="ml-1 text-xs">
                 {t("dashboard.streak.loadingState")}
               </span>
             </p>
-            <div className="text-xs font-medium text-gray-400 mb-1">
+            <div className="mb-1 text-xs font-medium text-gray-400">
               {t("dashboard.streak.loadingHint")}
             </div>
           </div>
@@ -160,7 +165,7 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
     }
 
     return (
-      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20 shadow-lg">
+      <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2 shadow-lg backdrop-blur-md">
         {renderLoaderIcon("w-4 h-4 text-white/60 animate-spin")}
         <span className="text-sm font-medium text-white/60">
           {t("dashboard.streak.loadingState")}
@@ -176,7 +181,9 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
 
   // Determine if freeze was used within last 24h for annotation
   const freezeUsedRecently = lastFreezeConsumedAt
-    ? (Date.now() - new Date(lastFreezeConsumedAt).getTime()) / (1000 * 60 * 60) <= 24
+    ? (Date.now() - new Date(lastFreezeConsumedAt).getTime()) /
+        (1000 * 60 * 60) <=
+      24
     : false;
 
   // Use amber visuals when in grace window, otherwise normal
@@ -202,7 +209,7 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
   // Compact variant for smaller displays
   if (variant === "compact") {
     return (
-      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 shadow-lg">
+      <div className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 shadow-lg backdrop-blur-md">
         {renderIcon("w-4 h-4")}
         <span className={`text-sm font-medium ${visuals.textColor}`}>
           {currentStreak} {dayLabel}
@@ -214,7 +221,7 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
   // Enhanced card variant for dashboard
   if (variant === "card") {
     return (
-      <div className={`card-compact p-3 relative overflow-hidden ${className}`}>
+      <div className={`card-compact relative overflow-hidden p-3 ${className}`}>
         {/* Background glow effect for high streaks */}
         {currentStreak >= 7 && (
           <div
@@ -223,38 +230,38 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
         )}
 
         <div className="relative flex flex-col items-center text-center">
-          <div className="flex items-center gap-1 mb-1">
+          <div className="mb-1 flex items-center gap-1">
             {renderIcon("w-3 h-3")}
             <h3 className="text-xs font-medium text-gray-600">
               {t("dashboard.stats.dailyStreak")}
             </h3>
           </div>
 
-          <p className="text-lg font-bold text-gray-900 mb-1">
+          <p className="mb-1 text-lg font-bold text-gray-900">
             {currentStreak}
-            <span className="text-xs ml-1">
-              {dayLabel}
-            </span>
+            <span className="ml-1 text-xs">{dayLabel}</span>
           </p>
 
           {/* Freeze count indicator */}
           {freezeCount > 0 && (
-            <div className="flex items-center justify-center gap-1 text-xs text-blue-500 mb-0.5">
-              <span>🛡️ {t('streak.freezeCount', { count: freezeCount })}</span>
+            <div className="mb-0.5 flex items-center justify-center gap-1 text-xs text-blue-500">
+              <span>🛡️ {t("streak.freezeCount", { count: freezeCount })}</span>
               {freezeUsedRecently && (
-                <span className="text-gray-400">({t('streak.freezeUsedYesterday')})</span>
+                <span className="text-gray-400">
+                  ({t("streak.freezeUsedYesterday")})
+                </span>
               )}
             </div>
           )}
 
           <div className={`text-xs font-medium ${visuals.textColor} mb-1`}>
-            {inGraceWindow ? t('streak.graceWarning') : t(visuals.messageKey)}
+            {inGraceWindow ? t("streak.graceWarning") : t(visuals.messageKey)}
           </div>
 
           {/* Progress bar for next milestone */}
           {currentStreak > 0 && currentStreak < 100 && (
             <div className="w-full max-w-20">
-              <div className="w-full bg-gray-200 rounded-full h-0.5 overflow-hidden">
+              <div className="h-0.5 w-full overflow-hidden rounded-full bg-gray-200">
                 <div
                   className={`h-full bg-gradient-to-r from-${visuals.color}-400 to-${visuals.color}-600 transition-all duration-500`}
                   style={{
@@ -262,7 +269,7 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
                   }}
                 />
               </div>
-              <div className="text-xs text-gray-500 mt-0.5">
+              <div className="mt-0.5 text-xs text-gray-500">
                 {nextMilestoneData
                   ? t("dashboard.streak.nextMilestone", nextMilestoneData)
                   : t("dashboard.streak.maxReached")}
@@ -272,8 +279,8 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
 
           {/* Milestone celebration message */}
           {milestoneMessage && (
-            <div className="mt-1 p-0.5 bg-gray-100 rounded border border-gray-200 animate-pulse">
-              <div className="text-xs text-gray-900 font-medium">
+            <div className="mt-1 animate-pulse rounded border border-gray-200 bg-gray-100 p-0.5">
+              <div className="text-xs font-medium text-gray-900">
                 {milestoneMessage}
               </div>
             </div>
@@ -285,34 +292,38 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
 
   // Default variant
   return (
-    <div className={`relative overflow-hidden flex items-center gap-3 backdrop-blur-md px-4 py-2.5 rounded-xl border shadow-lg ${
-      inGraceWindow
-        ? 'bg-amber-500/15 border-amber-400/30'
-        : 'bg-white/10 border-white/20'
-    }`}>
+    <div
+      className={`relative flex items-center gap-3 overflow-hidden rounded-xl border px-4 py-2.5 shadow-lg backdrop-blur-md ${
+        inGraceWindow
+          ? "border-amber-400/30 bg-amber-500/15"
+          : "border-white/20 bg-white/10"
+      }`}
+    >
       {/* Subtle glow behind icon */}
-      <div className={`absolute inset-0 bg-gradient-to-r ${visuals.glowColor} opacity-50 pointer-events-none`} />
+      <div
+        className={`absolute inset-0 bg-gradient-to-r ${visuals.glowColor} pointer-events-none opacity-50`}
+      />
 
       <div className="relative flex items-center gap-3">
         {renderIcon("w-5 h-5")}
-        <span className="text-sm font-bold text-white">
-          {currentStreak}
-        </span>
-        <span className="text-sm font-medium text-white/70">
-          {dayLabel}
-        </span>
+        <span className="text-sm font-bold text-white">{currentStreak}</span>
+        <span className="text-sm font-medium text-white/70">{dayLabel}</span>
       </div>
 
       {freezeCount > 0 && (
-        <span className="relative text-xs text-blue-300 font-medium">🛡️ {t('streak.freezeCount', { count: freezeCount })}</span>
+        <span className="relative text-xs font-medium text-blue-300">
+          🛡️ {t("streak.freezeCount", { count: freezeCount })}
+        </span>
       )}
 
       {inGraceWindow && (
-        <span className="relative text-xs text-amber-300 font-medium">{t('streak.graceWarning')}</span>
+        <span className="relative text-xs font-medium text-amber-300">
+          {t("streak.graceWarning")}
+        </span>
       )}
 
       {milestoneMessage && (
-        <div className="relative text-xs bg-white/10 px-2 py-0.5 rounded-full text-white/80 animate-pulse">
+        <div className="relative animate-pulse rounded-full bg-white/10 px-2 py-0.5 text-xs text-white/80">
           {milestoneMessage}
         </div>
       )}

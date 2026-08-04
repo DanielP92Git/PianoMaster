@@ -229,7 +229,7 @@ class AchievementService {
 
       // Fetch user data sequentially to avoid saturating connections
       const scores = await getStudentScoreStats(studentId);
-      const streak = await streakService.getStreak();
+      const streak = await streakService.getStreak(studentId);
       const earnedAchievements = await this.getEarnedAchievements(studentId);
       const practiceSessions = await getPracticeSessionStats(studentId);
 
@@ -393,7 +393,7 @@ class AchievementService {
       const [scores, streak, earnedAchievements, practiceSessionsCount] =
         await Promise.all([
           getStudentScoreStats(studentId),
-          streakService.getStreak(),
+          streakService.getStreak(studentId),
           this.getEarnedAchievements(studentId),
           getPracticeSessionStats(studentId),
         ]);

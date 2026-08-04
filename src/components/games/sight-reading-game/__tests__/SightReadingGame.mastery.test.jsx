@@ -114,6 +114,16 @@ vi.mock("../../../../features/authentication/useUser", () => ({
   useUser: () => mockUserBox.current,
 }));
 
+// useVictoryState now resolves its row-target id via useActiveChildId() rather than
+// user.id directly (04-06) — mirror the legacy/student-role resolution (childId = user.id)
+// so existing assertions on the id-agnostic trailing perNoteMastery arg stay unaffected.
+vi.mock("../../../../hooks/useActiveChildId", () => ({
+  useActiveChildId: () => ({
+    childId: mockUserBox.current?.user?.id ?? null,
+    ready: !!mockUserBox.current?.user?.id,
+  }),
+}));
+
 vi.mock("../../../../services/apiScores", () => ({
   updateStudentScore: vi.fn(),
 }));
