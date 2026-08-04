@@ -7,7 +7,7 @@
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Shield, ChevronUp } from "lucide-react";
-import { useUser } from "../features/authentication/useUser";
+import { useActiveChildId } from "../hooks/useActiveChildId";
 import { getStudentXP } from "../utils/xpSystem";
 import TrailMap from "../components/trail/TrailMap";
 import { useAccessibility } from "../contexts/AccessibilityContext";
@@ -16,14 +16,14 @@ import "../styles/trail-effects.css";
 const TrailMapPage = () => {
   const { t, i18n } = useTranslation(["common", "trail"]);
   const isRTL = i18n.dir() === "rtl";
-  const { user } = useUser();
+  const { childId, ready } = useActiveChildId();
   const { reducedMotion } = useAccessibility();
 
-  // Fetch student XP data for header display
+  // Fetch active child's XP data for header display
   const { data: xpData } = useQuery({
-    queryKey: ["student-xp", user?.id],
-    queryFn: () => getStudentXP(user.id),
-    enabled: !!user?.id,
+    queryKey: ["student-xp", childId],
+    queryFn: () => getStudentXP(childId),
+    enabled: ready && !!childId,
     staleTime: 60 * 1000, // 1 minute
   });
 

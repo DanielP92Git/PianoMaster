@@ -24,10 +24,9 @@ import {
   FaGamepad,
 } from "react-icons/fa";
 import { achievementService } from "../services/achievementService";
-import { useUser } from "../features/authentication/useUser";
+import { useActiveChildId } from "../hooks/useActiveChildId";
 import { useTranslation } from "react-i18next";
 import { useAccessibility } from "../contexts/AccessibilityContext";
-
 
 const categoryGlowColors = {
   milestone: "rgba(59,130,246,0.5)",
@@ -86,7 +85,7 @@ const fadeSlideUp = {
 };
 
 export default function AchievementsRedesign() {
-  const { user } = useUser();
+  const { childId, ready } = useActiveChildId();
   const { t, i18n } = useTranslation();
   const { reducedMotion } = useAccessibility();
   const isRTL = i18n.dir() === "rtl";
@@ -108,19 +107,19 @@ export default function AchievementsRedesign() {
     staleTime: 30 * 60 * 1000,
   });
 
-  // Fetch user's earned achievements
+  // Fetch active child's earned achievements
   const { data: earnedAchievements = [], isLoading: earnedLoading } = useQuery({
-    queryKey: ["earned-achievements", user?.id],
-    queryFn: () => achievementService.getEarnedAchievements(user.id),
-    enabled: !!user?.id,
+    queryKey: ["earned-achievements", childId],
+    queryFn: () => achievementService.getEarnedAchievements(childId),
+    enabled: ready && !!childId,
     staleTime: 5 * 60 * 1000,
   });
 
   // Fetch achievement progress
   const { data: progressData = [], isLoading: progressLoading } = useQuery({
-    queryKey: ["achievements-with-progress", user?.id],
-    queryFn: () => achievementService.getAchievementsWithProgress(user.id),
-    enabled: !!user?.id,
+    queryKey: ["achievements-with-progress", childId],
+    queryFn: () => achievementService.getAchievementsWithProgress(childId),
+    enabled: ready && !!childId,
     staleTime: 2 * 60 * 1000,
   });
 
@@ -128,7 +127,7 @@ export default function AchievementsRedesign() {
 
   // Create a map of earned achievements for quick lookup
   const earnedMap = new Map(
-    earnedAchievements.map((earned) => [earned.achievement_id, earned]),
+    earnedAchievements.map((earned) => [earned.achievement_id, earned])
   );
 
   // Group achievements by category
@@ -237,7 +236,10 @@ export default function AchievementsRedesign() {
     <div className="p-6">
       <MotionOrDiv className="mx-auto max-w-4xl" {...containerMotionProps}>
         {/* 1. Hero Trophy Section */}
-        <MotionOrDiv className="mb-8 flex flex-col items-center" {...childMotionProps}>
+        <MotionOrDiv
+          className="mb-8 flex flex-col items-center"
+          {...childMotionProps}
+        >
           {/* Trophy with SVG ring glow */}
           <div className="relative mb-4 h-32 w-32">
             <svg
@@ -289,7 +291,10 @@ export default function AchievementsRedesign() {
               {/* Trophy icon via foreignObject */}
               <foreignObject x="22" y="22" width="56" height="56">
                 <div className="flex h-full w-full items-center justify-center">
-                  <FaTrophy className="h-10 w-10 text-cyan-300" style={{ fontSize: "2.5rem" }} />
+                  <FaTrophy
+                    className="h-10 w-10 text-cyan-300"
+                    style={{ fontSize: "2.5rem" }}
+                  />
                 </div>
               </foreignObject>
             </svg>
@@ -339,61 +344,68 @@ export default function AchievementsRedesign() {
           }}
           {...childMotionProps}
         >
-          {closestAchievement ? (() => {
-            const progressPct = Math.min(
-              Math.round((closestAchievement.progress || 0) * 100),
-              100,
-            );
+          {closestAchievement ? (
+            (() => {
+              const progressPct = Math.min(
+                Math.round((closestAchievement.progress || 0) * 100),
+                100
+              );
 
-            return (
-              <div
-                className={`flex items-center gap-4 ${isRTL ? "flex-row-reverse" : "flex-row"}`}
-              >
-                {/* Trophy in dark muted circle */}
-                <div className="flex-shrink-0">
-                  <div
-                    className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10"
-                    style={{ background: "rgba(40, 35, 60, 0.9)" }}
-                  >
-                    <FaTrophy style={{ fontSize: "2rem", color: "#fbbf24" }} />
-                  </div>
-                </div>
-                {/* Content */}
-                <div className="min-w-0 flex-1">
-                  <div className="mb-0.5 text-sm text-white/60">
-                    {t("pages.achievements.nextAchievement")}
-                  </div>
-                  <h3 className="mb-0.5 truncate text-lg font-bold text-white">
-                    {getAchievementTitle(closestAchievement)}
-                  </h3>
-                  <p className="mb-3 text-sm text-white/50">
-                    {getAchievementDescription(closestAchievement)}
-                  </p>
-                  {/* Progress bar with green glow */}
-                  <div className="mb-1.5 h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+              return (
+                <div
+                  className={`flex items-center gap-4 ${isRTL ? "flex-row-reverse" : "flex-row"}`}
+                >
+                  {/* Trophy in dark muted circle */}
+                  <div className="flex-shrink-0">
                     <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${progressPct}%`,
-                        background:
-                          "linear-gradient(90deg, #22c55e, #4ade80)",
-                        boxShadow: "0 0 8px rgba(74,222,128,0.5)",
-                      }}
-                    ></div>
+                      className="flex h-16 w-16 items-center justify-center rounded-full border border-white/10"
+                      style={{ background: "rgba(40, 35, 60, 0.9)" }}
+                    >
+                      <FaTrophy
+                        style={{ fontSize: "2rem", color: "#fbbf24" }}
+                      />
+                    </div>
                   </div>
-                  <div className="text-sm font-medium text-green-400">
-                    {(closestAchievement.progress || 0) >= 0.7
-                      ? t("pages.achievements.almostThere")
-                      : t("pages.achievements.keepGoing")}
-                    {" — "}
-                    <span className="text-amber-300">{progressPct}%</span>
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-0.5 text-sm text-white/60">
+                      {t("pages.achievements.nextAchievement")}
+                    </div>
+                    <h3 className="mb-0.5 truncate text-lg font-bold text-white">
+                      {getAchievementTitle(closestAchievement)}
+                    </h3>
+                    <p className="mb-3 text-sm text-white/50">
+                      {getAchievementDescription(closestAchievement)}
+                    </p>
+                    {/* Progress bar with green glow */}
+                    <div className="mb-1.5 h-2.5 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${progressPct}%`,
+                          background:
+                            "linear-gradient(90deg, #22c55e, #4ade80)",
+                          boxShadow: "0 0 8px rgba(74,222,128,0.5)",
+                        }}
+                      ></div>
+                    </div>
+                    <div className="text-sm font-medium text-green-400">
+                      {(closestAchievement.progress || 0) >= 0.7
+                        ? t("pages.achievements.almostThere")
+                        : t("pages.achievements.keepGoing")}
+                      {" — "}
+                      <span className="text-amber-300">{progressPct}%</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })() : (
+              );
+            })()
+          ) : (
             <div className="flex flex-col items-center py-4">
-              <FaTrophy className="mb-2" style={{ fontSize: "2.5rem", color: "#fbbf24" }} />
+              <FaTrophy
+                className="mb-2"
+                style={{ fontSize: "2.5rem", color: "#fbbf24" }}
+              />
               <div className="text-sm font-semibold text-green-300">
                 {t("pages.achievements.allUnlocked")}
               </div>
@@ -403,181 +415,190 @@ export default function AchievementsRedesign() {
 
         {/* 3. All Achievements by Category */}
         <div className="space-y-4">
-          {Object.entries(groupedAchievements).map(([category, achievements]) => {
-            const CategoryReactIcon =
-              categoryReactIcons[category] || FaTrophy;
-            const ringColor =
-              categoryRingColors[category] || categoryRingColors.milestone;
-            const glowColor =
-              categoryGlowColors[category] || categoryGlowColors.milestone;
-            const earnedInCategory = achievements.filter((a) =>
-              earnedMap.has(a.id),
-            ).length;
+          {Object.entries(groupedAchievements).map(
+            ([category, achievements]) => {
+              const CategoryReactIcon =
+                categoryReactIcons[category] || FaTrophy;
+              const ringColor =
+                categoryRingColors[category] || categoryRingColors.milestone;
+              const glowColor =
+                categoryGlowColors[category] || categoryGlowColors.milestone;
+              const earnedInCategory = achievements.filter((a) =>
+                earnedMap.has(a.id)
+              ).length;
 
-            return (
-              <MotionOrDiv
-                key={category}
-                className="overflow-hidden rounded-2xl border border-white/10"
-                {...childMotionProps}
-              >
-                {/* Category header strip */}
-                <div
-                  className={`flex items-center gap-3 border-b border-white/10 px-5 py-3.5 ${isRTL ? "flex-row-reverse" : ""}`}
-                  style={{
-                    background: `linear-gradient(135deg, ${glowColor}28, rgba(10,8,30,0.55))`,
-                  }}
+              return (
+                <MotionOrDiv
+                  key={category}
+                  className="overflow-hidden rounded-2xl border border-white/10"
+                  {...childMotionProps}
                 >
-                  {/* Neon category icon */}
+                  {/* Category header strip */}
                   <div
-                    className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+                    className={`flex items-center gap-3 border-b border-white/10 px-5 py-3.5 ${isRTL ? "flex-row-reverse" : ""}`}
                     style={{
-                      background: "rgba(10,8,30,0.8)",
-                      border: `1.5px solid ${ringColor}`,
-                      boxShadow: `0 0 10px ${glowColor}, 0 0 20px ${glowColor}55`,
+                      background: `linear-gradient(135deg, ${glowColor}28, rgba(10,8,30,0.55))`,
                     }}
                   >
-                    <CategoryReactIcon
-                      style={{ fontSize: "1rem", color: ringColor }}
-                    />
+                    {/* Neon category icon */}
+                    <div
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+                      style={{
+                        background: "rgba(10,8,30,0.8)",
+                        border: `1.5px solid ${ringColor}`,
+                        boxShadow: `0 0 10px ${glowColor}, 0 0 20px ${glowColor}55`,
+                      }}
+                    >
+                      <CategoryReactIcon
+                        style={{ fontSize: "1rem", color: ringColor }}
+                      />
+                    </div>
+                    <h2 className="flex-1 font-semibold capitalize text-white">
+                      {t("pages.achievements.categoryTitle", {
+                        category: getCategoryLabel(category),
+                      })}
+                    </h2>
+                    {/* Earned / total pill */}
+                    <div className="flex-shrink-0 rounded-full bg-white/10 px-2.5 py-0.5 text-xs text-white/55">
+                      {earnedInCategory}/{achievements.length}
+                    </div>
                   </div>
-                  <h2 className="flex-1 font-semibold capitalize text-white">
-                    {t("pages.achievements.categoryTitle", {
-                      category: getCategoryLabel(category),
-                    })}
-                  </h2>
-                  {/* Earned / total pill */}
-                  <div className="flex-shrink-0 rounded-full bg-white/10 px-2.5 py-0.5 text-xs text-white/55">
-                    {earnedInCategory}/{achievements.length}
-                  </div>
-                </div>
 
-                {/* Achievement card grid */}
-                <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 md:grid-cols-4">
-                  {achievements.map((achievement) => {
-                    const earned = earnedMap.get(achievement.id);
-                    const progress = getProgressInfo(achievement.id);
-                    const isEarned = !!earned;
-                    const achRingColor =
-                      categoryRingColors[achievement.category] ||
-                      categoryRingColors.milestone;
-                    const achGlowColor =
-                      categoryGlowColors[achievement.category] ||
-                      categoryGlowColors.milestone;
+                  {/* Achievement card grid */}
+                  <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3 md:grid-cols-4">
+                    {achievements.map((achievement) => {
+                      const earned = earnedMap.get(achievement.id);
+                      const progress = getProgressInfo(achievement.id);
+                      const isEarned = !!earned;
+                      const achRingColor =
+                        categoryRingColors[achievement.category] ||
+                        categoryRingColors.milestone;
+                      const achGlowColor =
+                        categoryGlowColors[achievement.category] ||
+                        categoryGlowColors.milestone;
 
-                    return (
-                      <div
-                        key={achievement.id}
-                        className={`rounded-2xl border p-4 backdrop-blur-md ${isEarned ? "border-white/15" : "border-white/10 opacity-50"}`}
-                        style={{
-                          background: isEarned
-                            ? "linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(10,8,30,0.85) 100%)"
-                            : "linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(10,8,30,0.7) 100%)",
-                        }}
-                      >
-                        {/* Icon with neon ring */}
-                        <div className="relative mb-3 flex justify-center">
-                          <div
-                            className="flex h-16 w-16 items-center justify-center rounded-full"
-                            style={
-                              isEarned
-                                ? {
-                                    background: "rgba(10,8,30,0.9)",
-                                    border: `2px solid ${achRingColor}`,
-                                    boxShadow: [
-                                      `0 0 8px ${achRingColor}`,
-                                      `0 0 20px ${achGlowColor}`,
-                                      `0 0 40px ${achGlowColor}66`,
-                                      `inset 0 0 12px ${achGlowColor}33`,
-                                    ].join(", "),
-                                  }
-                                : {
-                                    background: "rgba(255,255,255,0.05)",
-                                    border: "1.5px solid rgba(255,255,255,0.1)",
-                                  }
-                            }
-                          >
-                            {isEarned ? (
-                              (() => {
-                                const IconComp = achievementIcons[achievement.icon] || Trophy;
-                                return <IconComp className="h-7 w-7" style={{ color: achRingColor }} />;
-                              })()
-                            ) : (
-                              <LockIcon className="h-5 w-5 text-white/30" />
+                      return (
+                        <div
+                          key={achievement.id}
+                          className={`rounded-2xl border p-4 backdrop-blur-md ${isEarned ? "border-white/15" : "border-white/10 opacity-50"}`}
+                          style={{
+                            background: isEarned
+                              ? "linear-gradient(160deg, rgba(255,255,255,0.06) 0%, rgba(10,8,30,0.85) 100%)"
+                              : "linear-gradient(160deg, rgba(255,255,255,0.03) 0%, rgba(10,8,30,0.7) 100%)",
+                          }}
+                        >
+                          {/* Icon with neon ring */}
+                          <div className="relative mb-3 flex justify-center">
+                            <div
+                              className="flex h-16 w-16 items-center justify-center rounded-full"
+                              style={
+                                isEarned
+                                  ? {
+                                      background: "rgba(10,8,30,0.9)",
+                                      border: `2px solid ${achRingColor}`,
+                                      boxShadow: [
+                                        `0 0 8px ${achRingColor}`,
+                                        `0 0 20px ${achGlowColor}`,
+                                        `0 0 40px ${achGlowColor}66`,
+                                        `inset 0 0 12px ${achGlowColor}33`,
+                                      ].join(", "),
+                                    }
+                                  : {
+                                      background: "rgba(255,255,255,0.05)",
+                                      border:
+                                        "1.5px solid rgba(255,255,255,0.1)",
+                                    }
+                              }
+                            >
+                              {isEarned ? (
+                                (() => {
+                                  const IconComp =
+                                    achievementIcons[achievement.icon] ||
+                                    Trophy;
+                                  return (
+                                    <IconComp
+                                      className="h-7 w-7"
+                                      style={{ color: achRingColor }}
+                                    />
+                                  );
+                                })()
+                              ) : (
+                                <LockIcon className="h-5 w-5 text-white/30" />
+                              )}
+                            </div>
+                            {/* Green checkmark badge */}
+                            {isEarned && (
+                              <div className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
+                                <CheckCircle2 className="h-3 w-3 text-white" />
+                              </div>
+                            )}
+                            {/* +XP amber badge */}
+                            {isEarned && (
+                              <div
+                                className={`absolute -top-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${isRTL ? "-left-1" : "-right-6"}`}
+                                style={{
+                                  background:
+                                    "linear-gradient(135deg, #f59e0b, #d97706)",
+                                  boxShadow: "0 0 6px rgba(245,158,11,0.6)",
+                                }}
+                              >
+                                +{achievement.points} XP
+                              </div>
                             )}
                           </div>
-                          {/* Green checkmark badge */}
-                          {isEarned && (
-                            <div className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
-                              <CheckCircle2 className="h-3 w-3 text-white" />
-                            </div>
+                          {/* Title */}
+                          <h4
+                            className={`mb-1 line-clamp-1 text-center text-sm font-bold ${isEarned ? "text-white" : "text-white/50"}`}
+                          >
+                            {getAchievementTitle(achievement)}
+                          </h4>
+                          {/* Description */}
+                          <p
+                            className={`line-clamp-2 text-center text-xs ${isEarned ? "text-white/55" : "text-white/35"}`}
+                          >
+                            {getAchievementDescription(achievement)}
+                          </p>
+                          {/* timeAgo for earned */}
+                          {isEarned && earned && (
+                            <span className="mt-1 block text-center text-[10px] text-white/35">
+                              {timeAgo(earned.earned_at)}
+                            </span>
                           )}
-                          {/* +XP amber badge */}
-                          {isEarned && (
-                            <div
-                              className={`absolute -top-1 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${isRTL ? "-left-1" : "-right-6"}`}
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, #f59e0b, #d97706)",
-                                boxShadow:
-                                  "0 0 6px rgba(245,158,11,0.6)",
-                              }}
-                            >
+                          {/* Muted XP text for unearned */}
+                          {!isEarned && (
+                            <span className="mt-1 block text-center text-[10px] text-white/30">
                               +{achievement.points} XP
-                            </div>
+                            </span>
                           )}
-                        </div>
-                        {/* Title */}
-                        <h4
-                          className={`mb-1 line-clamp-1 text-center text-sm font-bold ${isEarned ? "text-white" : "text-white/50"}`}
-                        >
-                          {getAchievementTitle(achievement)}
-                        </h4>
-                        {/* Description */}
-                        <p
-                          className={`line-clamp-2 text-center text-xs ${isEarned ? "text-white/55" : "text-white/35"}`}
-                        >
-                          {getAchievementDescription(achievement)}
-                        </p>
-                        {/* timeAgo for earned */}
-                        {isEarned && earned && (
-                          <span className="mt-1 block text-center text-[10px] text-white/35">
-                            {timeAgo(earned.earned_at)}
-                          </span>
-                        )}
-                        {/* Muted XP text for unearned */}
-                        {!isEarned && (
-                          <span className="mt-1 block text-center text-[10px] text-white/30">
-                            +{achievement.points} XP
-                          </span>
-                        )}
-                        {/* Progress bar for in-progress unearned */}
-                        {!isEarned &&
-                          progress &&
-                          progress.progress !== undefined &&
-                          progress.progress > 0 && (
-                            <div className="mt-2">
-                              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-                                <div
-                                  className="h-full rounded-full transition-all"
-                                  style={{
-                                    width: `${Math.min(progress.progress * 100, 100)}%`,
-                                    background: `linear-gradient(90deg, ${achRingColor}88, ${achRingColor})`,
-                                  }}
-                                />
+                          {/* Progress bar for in-progress unearned */}
+                          {!isEarned &&
+                            progress &&
+                            progress.progress !== undefined &&
+                            progress.progress > 0 && (
+                              <div className="mt-2">
+                                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                                  <div
+                                    className="h-full rounded-full transition-all"
+                                    style={{
+                                      width: `${Math.min(progress.progress * 100, 100)}%`,
+                                      background: `linear-gradient(90deg, ${achRingColor}88, ${achRingColor})`,
+                                    }}
+                                  />
+                                </div>
+                                <span className="mt-0.5 block text-center text-[10px] text-white/40">
+                                  {Math.round(progress.progress * 100)}%{" "}
+                                  {t("pages.achievements.complete")}
+                                </span>
                               </div>
-                              <span className="mt-0.5 block text-center text-[10px] text-white/40">
-                                {Math.round(progress.progress * 100)}%{" "}
-                                {t("pages.achievements.complete")}
-                              </span>
-                            </div>
-                          )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </MotionOrDiv>
-            );
-          })}
+                            )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </MotionOrDiv>
+              );
+            }
+          )}
         </div>
 
         {/* Empty State */}
