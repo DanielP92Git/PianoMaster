@@ -156,12 +156,12 @@ feature is removed entirely so no child voice data is collected at all.
    - [x] 04-03-PLAN.md — Wave 1: authz + data-rights services (verifyStudentDataAccess parent→child branch, STUDENT_DATA_TABLES completion, per-child no-signout delete, notification self-check fix)
    - [x] 04-04-PLAN.md — Wave 2: auth-internal services gain explicit childId params (streak/practiceLog/practiceStreak)
    - [x] 04-05-PLAN.md — Wave 2: shared in-memory ParentGateContext + mount-checked ParentGateProtectedRoute; carries the MANDATORY COPPA-02 gate-bypass test
-   - [ ] 04-06-PLAN.md — Wave 3: rescope streak/practice/victory query sites to active child (incl. unkeyed ["streak-state"] + accessory-unlock localStorage re-key)
+   - [x] 04-06-PLAN.md — Wave 3: rescope streak/practice/victory query sites to active child (incl. unkeyed ["streak-state"] + accessory-unlock localStorage re-key)
    - [x] 04-07-PLAN.md — Wave 2: rescope xp/scores/achievements/accessories query sites to active child (closes unkeyed ["scores"] + isStudent enable-gate)
    - [x] 04-08-PLAN.md — Wave 2: ChildProfileForm (compact preset-avatar grid + always-on nickname guidance + non-blocking full-name heuristic)
-   - [ ] 04-09-PLAN.md — Wave 3: "Who's playing?" ungated switcher overlay + header avatar entry + empty state
-   - [ ] 04-10-PLAN.md — Wave 3: gated Manage Children screen + per-child data-rights panel (review/export/deactivate/delete) + gated route
-   - [ ] 04-11-PLAN.md — Wave 3: Parent Portal split (ungated stats vs gated actions) + Privacy Policy link
+   - [x] 04-09-PLAN.md — Wave 3: "Who's playing?" ungated switcher overlay + header avatar entry + empty state
+   - [x] 04-10-PLAN.md — Wave 3: gated Manage Children screen + per-child data-rights panel (review/export/deactivate/delete) + gated route
+   - [x] 04-11-PLAN.md — Wave 3: Parent Portal split (ungated stats vs gated actions) + Privacy Policy link
          **Pitfalls to avoid**: Pitfall 11 (route-only gate bypass via direct URL/back-button — needs a mount-checked wrapper, not a one-time click-through), Pitfall 12 (sibling data bleed from stale React Query cache — needs explicit cache invalidation or full remount on switch).
          **Research flag**: Open Question 3 (should switching _away_ from a child require the gate too, so a sibling can't reassign another's session?) needs an explicit decision during phase discussion — LOW confidence either way per research, do not assume an answer.
          **UI hint**: yes
