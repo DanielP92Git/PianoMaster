@@ -7,13 +7,11 @@ vi.mock("./supabase", () => ({
 }));
 
 vi.mock("./authorizationUtils", () => ({
-  verifyStudentDataAccess: vi
-    .fn()
-    .mockResolvedValue({
-      userId: "student-1",
-      isOwner: true,
-      isTeacher: false,
-    }),
+  verifyStudentDataAccess: vi.fn().mockResolvedValue({
+    userId: "student-1",
+    isOwner: true,
+    isTeacher: false,
+  }),
 }));
 
 import { getExportedDataTypes, exportStudentData } from "./dataExportService";
