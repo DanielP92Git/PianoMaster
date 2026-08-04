@@ -455,6 +455,12 @@ const { data: avatars } = useQuery({
 
 ## Open Questions
 
+> **Resolution status (recorded during planning, 2026-08-04):** OQ1 → delegated to Claude's discretion per
+> 04-CONTEXT.md (default full remount + `removeQueries()`; measure in device test). OQ2 → **RESOLVED** by D-11 /
+> Plan 04-03 (include progress/practice/achievement/notification tables; exclude operational `rate_limits`,
+> `parental_consent_tokens`). OQ3 → **RESOLVED**: the SessionTimeout-reset-on-switch assertion is now part of the
+> 04-VALIDATION.md multi-child device test.
+
 1. **Full remount vs context-reaction on switch (Claude's discretion, D "switch-transition UX").**
    - Known: `key={activeChildId}` on the authenticated shell is the safest bleed-proof instrument (Pitfall 12 recommends it).
    - Unclear: remount cost on lower-end tablets (the target device).
