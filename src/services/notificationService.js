@@ -2,6 +2,7 @@
  * Notification service for managing Web Push notifications
  */
 import supabase from "./supabase";
+import { verifyStudentDataAccess } from "./authorizationUtils";
 
 /**
  * Get the active SW registration, auto-registering if needed.
@@ -211,31 +212,27 @@ export async function showLocalNotification(title, options = {}) {
 /**
  * Save (upsert) a push subscription to the push_subscriptions table.
  * Writes parent_consent_granted = true and parent_consent_at = now.
- * Defense-in-depth: verifies the caller owns the studentId.
+ * Defense-in-depth: verifies the caller owns the studentId, either as the
+ * student themselves or as the parent who owns the child profile.
  *
- * @param {string} studentId - The authenticated student's UUID
+ * @param {string} studentId - The student's UUID (self or an owned child)
  * @param {Object} subscriptionJSON - The serialised PushSubscription (subscription.toJSON())
  * @returns {Promise<void>}
  */
 export async function savePushSubscription(studentId, subscriptionJSON) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || user.id !== studentId) throw new Error("Unauthorized");
+  await verifyStudentDataAccess(studentId);
 
-  const { error } = await supabase
-    .from("push_subscriptions")
-    .upsert(
-      {
-        student_id: studentId,
-        subscription: subscriptionJSON,
-        is_enabled: true,
-        parent_consent_granted: true,
-        parent_consent_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "student_id" }
-    );
+  const { error } = await supabase.from("push_subscriptions").upsert(
+    {
+      student_id: studentId,
+      subscription: subscriptionJSON,
+      is_enabled: true,
+      parent_consent_granted: true,
+      parent_consent_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "student_id" }
+  );
 
   if (error) throw error;
 }
@@ -243,15 +240,14 @@ export async function savePushSubscription(studentId, subscriptionJSON) {
 /**
  * Remove a push subscription: unsubscribes from the browser PushManager
  * and marks the DB row as disabled.
+ * Defense-in-depth: verifies the caller owns the studentId, either as the
+ * student themselves or as the parent who owns the child profile.
  *
- * @param {string} studentId - The authenticated student's UUID
+ * @param {string} studentId - The student's UUID (self or an owned child)
  * @returns {Promise<void>}
  */
 export async function removePushSubscription(studentId) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user || user.id !== studentId) throw new Error("Unauthorized");
+  await verifyStudentDataAccess(studentId);
 
   await unsubscribeFromPushNotifications();
 

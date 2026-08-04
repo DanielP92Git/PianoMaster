@@ -8,8 +8,8 @@
  * When adding new tables that store student data, add them here.
  */
 
-import supabase from './supabase';
-import { verifyStudentDataAccess } from './authorizationUtils';
+import supabase from "./supabase";
+import { verifyStudentDataAccess } from "./authorizationUtils";
 
 /**
  * Tables that contain student data.
@@ -18,16 +18,26 @@ import { verifyStudentDataAccess } from './authorizationUtils';
  * @type {Array<{table: string, idColumn: string}>}
  */
 const STUDENT_DATA_TABLES = [
-  { table: 'students', idColumn: 'id' },
-  { table: 'students_score', idColumn: 'student_id' },
-  { table: 'student_skill_progress', idColumn: 'student_id' },
-  { table: 'student_daily_goals', idColumn: 'student_id' },
-  { table: 'practice_sessions', idColumn: 'student_id' },
-  { table: 'student_achievements', idColumn: 'student_id' },
-  { table: 'assignment_submissions', idColumn: 'student_id' },
-  { table: 'parental_consent_log', idColumn: 'student_id' },
-  { table: 'student_point_transactions', idColumn: 'student_id' },
-  { table: 'user_accessories', idColumn: 'user_id' }
+  { table: "students", idColumn: "id" },
+  { table: "students_score", idColumn: "student_id" },
+  { table: "student_skill_progress", idColumn: "student_id" },
+  { table: "student_daily_goals", idColumn: "student_id" },
+  { table: "practice_sessions", idColumn: "student_id" },
+  { table: "student_achievements", idColumn: "student_id" },
+  { table: "assignment_submissions", idColumn: "student_id" },
+  { table: "parental_consent_log", idColumn: "student_id" },
+  { table: "student_point_transactions", idColumn: "student_id" },
+  { table: "user_accessories", idColumn: "user_id" },
+  { table: "instrument_practice_logs", idColumn: "student_id" },
+  { table: "instrument_practice_streak", idColumn: "student_id" },
+  // NOTE: notifications' owning FK column is `recipient_id`, not `student_id`
+  // (see supabase/migrations/20250625120001_add_teacher_schema.sql) —
+  // idColumn corrected from the plan's literal `student_id` to match schema.
+  { table: "notifications", idColumn: "recipient_id" },
+  { table: "push_subscriptions", idColumn: "student_id" },
+  { table: "student_daily_challenges", idColumn: "student_id" },
+  { table: "student_unit_progress", idColumn: "student_id" },
+  // Excluded by D-11/Open-Q2: rate_limits, parental_consent_tokens (operational/security, not "my child's data")
 ];
 
 /**
@@ -39,16 +49,22 @@ const STUDENT_DATA_TABLES = [
  */
 function getTableDescription(table) {
   const descriptions = {
-    students: 'Your profile information (name, email, level, avatar)',
-    students_score: 'Your game scores and performance history',
-    student_skill_progress: 'Your progress on skill trail nodes',
-    student_daily_goals: 'Your daily practice goals',
-    practice_sessions: 'Your practice session recordings',
-    student_achievements: 'Your unlocked achievements and badges',
-    assignment_submissions: 'Your teacher assignment submissions',
-    parental_consent_log: 'Consent history (for under-13 users)',
-    student_point_transactions: 'Your point earnings and spending history',
-    user_accessories: 'Your avatar accessories and customizations'
+    students: "Your profile information (name, email, level, avatar)",
+    students_score: "Your game scores and performance history",
+    student_skill_progress: "Your progress on skill trail nodes",
+    student_daily_goals: "Your daily practice goals",
+    practice_sessions: "Your practice session recordings",
+    student_achievements: "Your unlocked achievements and badges",
+    assignment_submissions: "Your teacher assignment submissions",
+    parental_consent_log: "Consent history (for under-13 users)",
+    student_point_transactions: "Your point earnings and spending history",
+    user_accessories: "Your avatar accessories and customizations",
+    instrument_practice_logs: "Daily practice logs",
+    instrument_practice_streak: "Practice streak history",
+    notifications: "Notifications sent",
+    push_subscriptions: "Push notification devices",
+    student_daily_challenges: "Daily challenge progress",
+    student_unit_progress: "Unit progress",
   };
   return descriptions[table] || table;
 }
@@ -70,7 +86,7 @@ export async function exportStudentData(studentId) {
     try {
       const { data, error } = await supabase
         .from(table)
-        .select('*')
+        .select("*")
         .eq(idColumn, studentId);
 
       if (error) {
@@ -91,10 +107,11 @@ export async function exportStudentData(studentId) {
     exportMetadata: {
       exportDate: new Date().toISOString(),
       studentId: studentId,
-      exportVersion: '1.0',
-      tablesIncluded: STUDENT_DATA_TABLES.map(t => t.table),
-      coppaNote: 'This export contains all personal data collected for this account per COPPA requirements.'
-    }
+      exportVersion: "1.0",
+      tablesIncluded: STUDENT_DATA_TABLES.map((t) => t.table),
+      coppaNote:
+        "This export contains all personal data collected for this account per COPPA requirements.",
+    },
   };
 
   // Add each table's data with record count
@@ -103,7 +120,7 @@ export async function exportStudentData(studentId) {
       recordCount: data.length,
       description: getTableDescription(table),
       data: data,
-      ...(error && { error })
+      ...(error && { error }),
     };
   });
 
@@ -121,10 +138,9 @@ export async function downloadStudentDataJSON(studentId) {
   const data = await exportStudentData(studentId);
 
   // Create downloadable blob with formatted JSON
-  const blob = new Blob(
-    [JSON.stringify(data, null, 2)],
-    { type: 'application/json' }
-  );
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json",
+  });
 
   return URL.createObjectURL(blob);
 }
@@ -138,7 +154,7 @@ export async function downloadStudentDataJSON(studentId) {
 export function getExportedDataTypes() {
   return STUDENT_DATA_TABLES.map(({ table }) => ({
     table,
-    description: getTableDescription(table)
+    description: getTableDescription(table),
   }));
 }
 
@@ -156,7 +172,7 @@ export async function getDataSummary(studentId) {
     try {
       const { count, error } = await supabase
         .from(table)
-        .select('*', { count: 'exact', head: true })
+        .select("*", { count: "exact", head: true })
         .eq(idColumn, studentId);
 
       if (error) {
@@ -176,8 +192,8 @@ export async function getDataSummary(studentId) {
       table,
       description: getTableDescription(table),
       recordCount: count,
-      ...(error && { error })
+      ...(error && { error }),
     })),
-    totalRecords: results.reduce((sum, r) => sum + r.count, 0)
+    totalRecords: results.reduce((sum, r) => sum + r.count, 0),
   };
 }
