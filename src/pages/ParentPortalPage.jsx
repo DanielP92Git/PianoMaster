@@ -279,7 +279,7 @@ export default function ParentPortalPage() {
    */
   const handleWeekendPassToggle = async (newValue) => {
     try {
-      await streakService.setWeekendPass(newValue);
+      await streakService.setWeekendPass(childId, newValue);
       queryClient.invalidateQueries({ queryKey: ["streak-state", childId] });
     } catch {
       toast.error(t("common.saving"));

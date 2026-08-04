@@ -344,7 +344,7 @@ describe("ParentPortalPage — always-visible sections", () => {
     );
     fireEvent.click(toggleBtn);
     await waitFor(() => {
-      expect(mockSetWeekendPass).toHaveBeenCalledWith(true);
+      expect(mockSetWeekendPass).toHaveBeenCalledWith("active-child-456", true);
     });
     // Crucially, no ParentGateMath gate should appear for this ungated toggle
     expect(screen.queryByTestId("parent-gate")).not.toBeInTheDocument();
