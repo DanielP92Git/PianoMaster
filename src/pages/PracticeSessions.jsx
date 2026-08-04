@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { practiceService } from "../services/practiceService";
 import { useUser } from "../features/authentication/useUser";
+import { useActiveChildId } from "../hooks/useActiveChildId";
 import {
   Pencil,
   Trash2,
@@ -20,6 +21,7 @@ import { useTranslation } from "react-i18next";
 
 export default function PracticeSessions() {
   const { user } = useUser();
+  const { childId, ready } = useActiveChildId();
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState(null);
   const [editedNotes, setEditedNotes] = useState("");
@@ -37,9 +39,9 @@ export default function PracticeSessions() {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["practice-sessions", user?.id],
-    queryFn: () => practiceService.getPracticeSessions(user.id),
-    enabled: !!user?.id,
+    queryKey: ["practice-sessions", childId],
+    queryFn: () => practiceService.getPracticeSessions(childId),
+    enabled: ready && !!childId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     refetchOnWindowFocus: true, // Refetch when user returns to tab
   });
@@ -56,16 +58,16 @@ export default function PracticeSessions() {
       practiceService.updatePracticeSessionNotes(sessionId, notes),
     onMutate: async ({ sessionId, notes }) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries(["practice-sessions", user?.id]);
+      await queryClient.cancelQueries(["practice-sessions", childId]);
 
       // Snapshot the previous sessions
       const previousSessions = queryClient.getQueryData([
         "practice-sessions",
-        user?.id,
+        childId,
       ]);
 
       // Optimistically update the cache
-      queryClient.setQueryData(["practice-sessions", user?.id], (old) =>
+      queryClient.setQueryData(["practice-sessions", childId], (old) =>
         old?.map((session) =>
           session.id === sessionId
             ? { ...session, recording_description: notes }
@@ -78,7 +80,7 @@ export default function PracticeSessions() {
     onError: (error, { sessionId: _sessionId }, context) => {
       // Revert to the previous sessions on error
       queryClient.setQueryData(
-        ["practice-sessions", user?.id],
+        ["practice-sessions", childId],
         context.previousSessions
       );
       toast.error("Failed to update notes");
@@ -89,7 +91,7 @@ export default function PracticeSessions() {
     },
     onSettled: () => {
       // Refetch to ensure server state
-      queryClient.invalidateQueries(["practice-sessions", user?.id]);
+      queryClient.invalidateQueries(["practice-sessions", childId]);
     },
   });
 
@@ -102,16 +104,16 @@ export default function PracticeSessions() {
     },
     onMutate: async (sessionId) => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries(["practice-sessions", user?.id]);
+      await queryClient.cancelQueries(["practice-sessions", childId]);
 
       // Snapshot the previous values
       const previousSessions = queryClient.getQueryData([
         "practice-sessions",
-        user?.id,
+        childId,
       ]);
 
       // Optimistically update React Query cache
-      queryClient.setQueryData(["practice-sessions", user?.id], (old) =>
+      queryClient.setQueryData(["practice-sessions", childId], (old) =>
         old?.filter((session) => session.id !== sessionId)
       );
 
@@ -126,7 +128,7 @@ export default function PracticeSessions() {
       console.error("Delete mutation error:", error);
       // Rollback React Query cache
       queryClient.setQueryData(
-        ["practice-sessions", user?.id],
+        ["practice-sessions", childId],
         context.previousSessions
       );
       toast.error(`Failed to delete recording: ${error.message}`);
@@ -136,25 +138,25 @@ export default function PracticeSessions() {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure cache is in sync
-      queryClient.invalidateQueries(["practice-sessions", user?.id]);
+      queryClient.invalidateQueries(["practice-sessions", childId]);
     },
   });
 
   // Add cleanup mutation
   const cleanupMutation = useMutation({
-    mutationFn: () => practiceService.cleanupAllSessions(user.id),
+    mutationFn: () => practiceService.cleanupAllSessions(childId),
     onMutate: async () => {
       // Cancel any outgoing refetches
-      await queryClient.cancelQueries(["practice-sessions", user?.id]);
+      await queryClient.cancelQueries(["practice-sessions", childId]);
 
       // Snapshot the previous values
       const previousSessions = queryClient.getQueryData([
         "practice-sessions",
-        user?.id,
+        childId,
       ]);
 
       // Optimistically clear cache
-      queryClient.setQueryData(["practice-sessions", user?.id], []);
+      queryClient.setQueryData(["practice-sessions", childId], []);
 
       // Stop any playing audio
       if (playingId) {
@@ -164,14 +166,14 @@ export default function PracticeSessions() {
       return { previousSessions };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["practice-sessions", user?.id]);
+      queryClient.invalidateQueries(["practice-sessions", childId]);
       toast.success("All practice sessions have been deleted");
     },
     onError: (error, variables, context) => {
       console.error("Cleanup error:", error);
       // Rollback on error
       queryClient.setQueryData(
-        ["practice-sessions", user?.id],
+        ["practice-sessions", childId],
         context.previousSessions
       );
       toast.error("Failed to delete all sessions");
@@ -188,15 +190,15 @@ export default function PracticeSessions() {
       return sessionIds;
     },
     onMutate: async (sessionIds) => {
-      await queryClient.cancelQueries(["practice-sessions", user?.id]);
+      await queryClient.cancelQueries(["practice-sessions", childId]);
 
       const previousSessions = queryClient.getQueryData([
         "practice-sessions",
-        user?.id,
+        childId,
       ]);
 
       // Optimistically remove selected sessions
-      queryClient.setQueryData(["practice-sessions", user?.id], (old) =>
+      queryClient.setQueryData(["practice-sessions", childId], (old) =>
         old?.filter((session) => !sessionIds.includes(session.id))
       );
 
@@ -208,7 +210,7 @@ export default function PracticeSessions() {
       return { previousSessions };
     },
     onSuccess: (sessionIds) => {
-      queryClient.invalidateQueries(["practice-sessions", user?.id]);
+      queryClient.invalidateQueries(["practice-sessions", childId]);
       setSelectedSessions([]);
       toast.success(
         `Successfully deleted ${sessionIds.length} recording${sessionIds.length > 1 ? "s" : ""}`
@@ -217,7 +219,7 @@ export default function PracticeSessions() {
     onError: (error, sessionIds, context) => {
       console.error("Delete selected error:", error);
       queryClient.setQueryData(
-        ["practice-sessions", user?.id],
+        ["practice-sessions", childId],
         context.previousSessions
       );
       toast.error("Failed to delete selected recordings");
@@ -298,9 +300,9 @@ export default function PracticeSessions() {
   const isSessionSelected = (sessionId) => selectedSessions.includes(sessionId);
   const isAllSelected =
     sessions?.length > 0 && selectedSessions.length === sessions.length;
-  
+
   const isExpanded = (sessionId) => expandedSessions.has(sessionId);
-  
+
   const toggleExpanded = (sessionId) => {
     setExpandedSessions((prev) => {
       const newSet = new Set(prev);
@@ -312,7 +314,7 @@ export default function PracticeSessions() {
       return newSet;
     });
   };
-  
+
   // Format date and time separately
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -322,7 +324,7 @@ export default function PracticeSessions() {
       day: "numeric",
     });
   };
-  
+
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-US", {
@@ -333,8 +335,8 @@ export default function PracticeSessions() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 text-white animate-spin" />
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
@@ -342,9 +344,9 @@ export default function PracticeSessions() {
   if (error) {
     return (
       <div className="p-8">
-        <div className="text-center py-8">
+        <div className="py-8 text-center">
           <p className="text-red-400">Failed to load practice recordings.</p>
-          <p className="text-gray-400 text-sm mt-2">
+          <p className="mt-2 text-sm text-gray-400">
             {error.message || "Please try again later."}
           </p>
         </div>
@@ -353,7 +355,7 @@ export default function PracticeSessions() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-4 sm:space-y-6">
+    <div className="space-y-4 p-4 sm:space-y-6 sm:p-6 lg:p-8">
       {/* Mobile-optimized header with stacked layout */}
       <div className="space-y-3">
         {/* Select All - Full width on mobile */}
@@ -361,36 +363,38 @@ export default function PracticeSessions() {
           <div className="flex items-center justify-between">
             <button
               onClick={() => handleSelectAll(!isAllSelected)}
-              className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-sm text-gray-300 transition-colors hover:text-white"
             >
               {isAllSelected ? (
-                <CheckSquare className="w-5 h-5 text-blue-400" />
+                <CheckSquare className="h-5 w-5 text-blue-400" />
               ) : (
-                <Square className="w-5 h-5" />
+                <Square className="h-5 w-5" />
               )}
-              <span className="hidden sm:inline">{t("common.actions.selectAll")}</span>
+              <span className="hidden sm:inline">
+                {t("common.actions.selectAll")}
+              </span>
               <span className="sm:hidden">Select All</span>
             </button>
           </div>
         )}
 
         {/* Action Buttons - Stacked on mobile, row on larger screens */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-end">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
           {/* Show "Delete All" only when all sessions are selected */}
           {isAllSelected && sessions?.length > 0 && (
             <button
               onClick={handleCleanup}
               disabled={cleanupMutation.isLoading}
-              className="w-full sm:w-auto px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm font-medium"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 sm:w-auto"
             >
               {cleanupMutation.isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Cleaning up...</span>
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="h-4 w-4" />
                   <span className="hidden sm:inline">
                     {t("common.actions.deleteAllSessions")}
                   </span>
@@ -399,24 +403,25 @@ export default function PracticeSessions() {
               )}
             </button>
           )}
-          
+
           {/* Show "Delete Selected" when specific recordings are selected (but not all) */}
           {selectedSessions.length > 0 && !isAllSelected && (
             <button
               onClick={handleDeleteSelected}
               disabled={deleteSelectedMutation.isLoading}
-              className="w-full sm:w-auto px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 text-sm font-medium"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 sm:w-auto"
             >
               {deleteSelectedMutation.isLoading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Deleting...</span>
                 </>
               ) : (
                 <>
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="h-4 w-4" />
                   <span className="hidden sm:inline">
-                    {t("common.actions.deleteSelected")} ({selectedSessions.length})
+                    {t("common.actions.deleteSelected")} (
+                    {selectedSessions.length})
                   </span>
                   <span className="sm:hidden">
                     Delete Selected ({selectedSessions.length})
@@ -430,19 +435,21 @@ export default function PracticeSessions() {
 
       <div className="space-y-4 sm:space-y-6">
         {sessions?.length === 0 ? (
-          <div className="text-center py-12 sm:py-16">
-            <p className="text-gray-400 text-sm sm:text-base">{t("pages.practiceSessions.noPracticeSessions")}</p>
+          <div className="py-12 text-center sm:py-16">
+            <p className="text-sm text-gray-400 sm:text-base">
+              {t("pages.practiceSessions.noPracticeSessions")}
+            </p>
           </div>
         ) : (
           sessions?.map((session, index) => {
             const expanded = isExpanded(session.id);
-            
+
             return (
               <div key={session.id} className="space-y-3 sm:space-y-4">
                 {/* New Recording Badge */}
                 {index === 0 && (
                   <div className="flex justify-center">
-                    <span className="px-3 py-1 text-xs sm:text-sm font-medium text-white bg-green-500 rounded-full">
+                    <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-medium text-white sm:text-sm">
                       {t("pages.practiceSessions.latestRecording")}
                     </span>
                   </div>
@@ -450,7 +457,7 @@ export default function PracticeSessions() {
 
                 {/* Combined Practice Session Container */}
                 <div
-                  className={`bg-white/10 backdrop-blur-md rounded-xl border overflow-hidden transition-all ${
+                  className={`overflow-hidden rounded-xl border bg-white/10 backdrop-blur-md transition-all ${
                     isSessionSelected(session.id)
                       ? "border-blue-500 bg-blue-500/10"
                       : "border-white/20"
@@ -459,7 +466,7 @@ export default function PracticeSessions() {
                   {/* Collapsed Header - Always visible */}
                   <button
                     onClick={() => toggleExpanded(session.id)}
-                    className="w-full p-3 sm:p-4 border-b border-white/10 hover:bg-white/5 transition-colors"
+                    className="w-full border-b border-white/10 p-3 transition-colors hover:bg-white/5 sm:p-4"
                   >
                     <div className="flex items-center gap-2 sm:gap-3">
                       {/* Selection Checkbox */}
@@ -475,7 +482,7 @@ export default function PracticeSessions() {
                           );
                         }}
                         onKeyDown={(e) => {
-                          if (e.key === ' ' || e.key === 'Enter') {
+                          if (e.key === " " || e.key === "Enter") {
                             e.preventDefault();
                             e.stopPropagation();
                             handleSessionSelect(
@@ -484,34 +491,38 @@ export default function PracticeSessions() {
                             );
                           }
                         }}
-                        className="text-gray-400 hover:text-blue-400 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
-                        aria-label={isSessionSelected(session.id) ? "Deselect session" : "Select session"}
+                        className="flex min-h-[44px] min-w-[44px] flex-shrink-0 cursor-pointer items-center justify-center text-gray-400 transition-colors hover:text-blue-400"
+                        aria-label={
+                          isSessionSelected(session.id)
+                            ? "Deselect session"
+                            : "Select session"
+                        }
                       >
                         {isSessionSelected(session.id) ? (
-                          <CheckSquare className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
+                          <CheckSquare className="h-5 w-5 text-blue-400 sm:h-6 sm:w-6" />
                         ) : (
-                          <Square className="w-5 h-5 sm:w-6 sm:h-6" />
+                          <Square className="h-5 w-5 sm:h-6 sm:w-6" />
                         )}
                       </div>
 
                       {/* Basic Info - Date, Time, Status */}
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-3">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                            <div className="text-white text-sm sm:text-base font-medium">
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
+                            <div className="text-sm font-medium text-white sm:text-base">
                               {formatDate(session.submitted_at)}
                             </div>
-                            <div className="text-white/70 text-xs sm:text-sm">
+                            <div className="text-xs text-white/70 sm:text-sm">
                               {formatTime(session.submitted_at)}
                             </div>
                           </div>
                           {session.status && (
                             <div className="flex items-center gap-2">
-                              <span className="text-white/50 text-xs">
+                              <span className="text-xs text-white/50">
                                 {t("pages.practiceSessions.statusLabel")}:
                               </span>
                               <span
-                                className={`px-2 py-1 rounded text-xs font-medium ${
+                                className={`rounded px-2 py-1 text-xs font-medium ${
                                   session.status === "excellent"
                                     ? "bg-green-500/20 text-green-400"
                                     : session.status === "reviewed"
@@ -521,7 +532,9 @@ export default function PracticeSessions() {
                                         : "bg-gray-500/20 text-gray-400"
                                 }`}
                               >
-                                {t(`pages.practiceSessions.status.${session.status}`)}
+                                {t(
+                                  `pages.practiceSessions.status.${session.status}`
+                                )}
                               </span>
                             </div>
                           )}
@@ -531,9 +544,9 @@ export default function PracticeSessions() {
                       {/* Expand/Collapse Icon */}
                       <div className="flex-shrink-0 text-white/70">
                         {expanded ? (
-                          <ChevronUp className="w-5 h-5" />
+                          <ChevronUp className="h-5 w-5" />
                         ) : (
-                          <ChevronDown className="w-5 h-5" />
+                          <ChevronDown className="h-5 w-5" />
                         )}
                       </div>
                     </div>
@@ -543,113 +556,129 @@ export default function PracticeSessions() {
                   {expanded && (
                     <>
                       {/* Practice Session Player */}
-                      <div className="p-3 sm:p-4 border-b border-white/10">
+                      <div className="border-b border-white/10 p-3 sm:p-4">
                         <PracticeSessionPlayer
                           session={session}
                           isPlaying={playingId === session.id}
                           onPlayStateChange={handlePlayStateChange}
                           showDownload={true}
-                          className="bg-transparent border-none p-0"
+                          className="border-none bg-transparent p-0"
                         />
                       </div>
 
                       {/* Notes Section */}
                       <div className="p-3 sm:p-4">
-                        <div className="flex items-center justify-between mb-3 gap-2">
-                          <h4 className="text-white font-medium flex items-center gap-2 text-sm sm:text-base">
-                            <span className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0"></span>
-                            <span className="truncate">{t("pages.practiceSessions.sessionStudentNotes")}</span>
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <h4 className="flex items-center gap-2 text-sm font-medium text-white sm:text-base">
+                            <span className="h-2 w-2 flex-shrink-0 rounded-full bg-blue-400"></span>
+                            <span className="truncate">
+                              {t("pages.practiceSessions.sessionStudentNotes")}
+                            </span>
                           </h4>
-                          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+                          <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
                             <button
                               onClick={() => handleEdit(session)}
-                              className="p-2 sm:p-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
-                              title={t("pages.practiceSessions.editStudentNotes")}
-                              aria-label={t("pages.practiceSessions.editStudentNotes")}
+                              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg bg-blue-600 p-2 transition-colors hover:bg-blue-700 sm:p-2.5"
+                              title={t(
+                                "pages.practiceSessions.editStudentNotes"
+                              )}
+                              aria-label={t(
+                                "pages.practiceSessions.editStudentNotes"
+                              )}
                             >
-                              <Pencil className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                              <Pencil className="h-4 w-4 text-white sm:h-5 sm:w-5" />
                             </button>
                             <button
                               onClick={() => handleDelete(session.id)}
                               disabled={deleteSessionMutation.isLoading}
-                              className="p-2 sm:p-2.5 rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg bg-red-600 p-2 transition-colors hover:bg-red-700 disabled:opacity-50 sm:p-2.5"
                               title={t("pages.practiceSessions.deleteSession")}
-                              aria-label={t("pages.practiceSessions.deleteSession")}
+                              aria-label={t(
+                                "pages.practiceSessions.deleteSession"
+                              )}
                             >
-                              <Trash2 className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                              <Trash2 className="h-4 w-4 text-white sm:h-5 sm:w-5" />
                             </button>
                           </div>
                         </div>
 
-                  {editingId === session.id ? (
-                    <div className="space-y-3">
-                      <textarea
-                        value={editedNotes}
-                        onChange={(e) => setEditedNotes(e.target.value)}
-                        className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 resize-none text-sm sm:text-base"
-                        rows="4"
-                        placeholder={t("pages.practiceSessions.addStudentNotes")}
-                      />
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <button
-                          onClick={() => handleSave(session.id)}
-                          disabled={updateNotesMutation.isLoading}
-                          className="flex-1 sm:flex-none px-4 py-2.5 rounded-lg bg-green-600 hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 text-sm font-medium"
-                        >
-                          <Save className="w-4 h-4" />
-                          {updateNotesMutation.isLoading ? t("common.actions.saving") : t("common.actions.save")}
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="flex-1 sm:flex-none px-4 py-2.5 rounded-lg bg-gray-600 hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm font-medium"
-                        >
-                          <X className="w-4 h-4" />
-                          {t("common.actions.cancel")}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-white/80 text-sm sm:text-base">
-                      {session.recording_description ? (
-                        <div className="whitespace-pre-wrap break-words">
-                          {session.recording_description}
-                        </div>
-                      ) : (
-                        <div className="text-white/50 italic">
-                          {t("pages.practiceSessions.noStudentNotesAdded")}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                        {/* Teacher Feedback - Integrated within recording container */}
-                        {session.teacher_feedback && (
-                          <div className="border-t border-white/10 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-3 sm:p-4">
-                            <h4 className="text-indigo-300 font-semibold mb-2 sm:mb-3 flex items-center gap-2 text-sm sm:text-base">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 flex-shrink-0"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
+                        {editingId === session.id ? (
+                          <div className="space-y-3">
+                            <textarea
+                              value={editedNotes}
+                              onChange={(e) => setEditedNotes(e.target.value)}
+                              className="w-full resize-none rounded-lg border border-white/20 bg-white/10 p-3 text-sm text-white placeholder-white/50 sm:text-base"
+                              rows="4"
+                              placeholder={t(
+                                "pages.practiceSessions.addStudentNotes"
+                              )}
+                            />
+                            <div className="flex flex-col gap-2 sm:flex-row">
+                              <button
+                                onClick={() => handleSave(session.id)}
+                                disabled={updateNotesMutation.isLoading}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-green-700 disabled:opacity-50 sm:flex-none"
                               >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                                />
-                              </svg>
-                              <span className="truncate">{t("pages.practiceSessions.teacherFeedback")}</span>
-                            </h4>
-                            <div className="bg-white/10 rounded-lg p-3 border border-indigo-400/30">
-                              <div className="text-white text-sm sm:text-base whitespace-pre-wrap leading-relaxed break-words">
-                                {session.teacher_feedback}
-                              </div>
+                                <Save className="h-4 w-4" />
+                                {updateNotesMutation.isLoading
+                                  ? t("common.actions.saving")
+                                  : t("common.actions.save")}
+                              </button>
+                              <button
+                                onClick={() => setEditingId(null)}
+                                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gray-600 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-700 sm:flex-none"
+                              >
+                                <X className="h-4 w-4" />
+                                {t("common.actions.cancel")}
+                              </button>
                             </div>
                           </div>
+                        ) : (
+                          <div className="text-sm text-white/80 sm:text-base">
+                            {session.recording_description ? (
+                              <div className="whitespace-pre-wrap break-words">
+                                {session.recording_description}
+                              </div>
+                            ) : (
+                              <div className="italic text-white/50">
+                                {t(
+                                  "pages.practiceSessions.noStudentNotesAdded"
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )}
+                      </div>
+
+                      {/* Teacher Feedback - Integrated within recording container */}
+                      {session.teacher_feedback && (
+                        <div className="border-t border-white/10 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-3 sm:p-4">
+                          <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-indigo-300 sm:mb-3 sm:text-base">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4 flex-shrink-0 text-indigo-400 sm:h-5 sm:w-5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                              />
+                            </svg>
+                            <span className="truncate">
+                              {t("pages.practiceSessions.teacherFeedback")}
+                            </span>
+                          </h4>
+                          <div className="rounded-lg border border-indigo-400/30 bg-white/10 p-3">
+                            <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-white sm:text-base">
+                              {session.teacher_feedback}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                 </div>

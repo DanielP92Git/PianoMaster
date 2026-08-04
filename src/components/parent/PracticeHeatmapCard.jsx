@@ -15,28 +15,29 @@
  *   Card header, stats, and month navigation respect RTL via flex-row-reverse.
  */
 
-import { useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { Piano, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
+import { Piano, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   practiceLogService,
   computeLongestStreak,
-} from '../../services/practiceLogService';
-import { practiceStreakService } from '../../services/practiceStreakService';
-import { getCalendarDate } from '../../utils/dateUtils';
+} from "../../services/practiceLogService";
+import { practiceStreakService } from "../../services/practiceStreakService";
+import { getCalendarDate } from "../../utils/dateUtils";
+import { useActiveChildId } from "../../hooks/useActiveChildId";
 
 /**
  * PracticeHeatmapCard
  *
- * @param {Object} props
- * @param {string} [props.studentId] - Used only for TanStack Query key.
- *   Supabase queries use session.user.id to enforce RLS.
+ * Resolves the active child id itself via useActiveChildId() — no id prop needed.
+ * RLS still enforces the authenticated session can only reach children it owns.
  */
-export default function PracticeHeatmapCard({ studentId }) {
-  const { t, i18n } = useTranslation('common');
-  const isRTL = i18n.dir() === 'rtl';
-  const locale = i18n.language || 'en';
+export default function PracticeHeatmapCard() {
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
+  const locale = i18n.language || "en";
+  const { childId, ready } = useActiveChildId();
 
   // Month navigation state
   const [displayMonth, setDisplayMonth] = useState(() => {
@@ -62,14 +63,15 @@ export default function PracticeHeatmapCard({ studentId }) {
 
   const now = new Date();
   const isCurrentMonth =
-    displayMonth.year === now.getFullYear() && displayMonth.month === now.getMonth();
+    displayMonth.year === now.getFullYear() &&
+    displayMonth.month === now.getMonth();
 
   // Compute the 52-week date range for stats (363 days ago to today)
   const endDate = getCalendarDate();
   const startDate = useMemo(() => {
-    const end = new Date(endDate + 'T00:00:00');
+    const end = new Date(endDate + "T00:00:00");
     const start = new Date(end.getTime() - 363 * 24 * 60 * 60 * 1000);
-    return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}`;
+    return `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, "0")}-${String(start.getDate()).padStart(2, "0")}`;
   }, [endDate]);
 
   // Query 1: 52 weeks of practice history
@@ -78,17 +80,18 @@ export default function PracticeHeatmapCard({ studentId }) {
     isLoading: historyLoading,
     isError: historyError,
   } = useQuery({
-    queryKey: ['practice-history', studentId],
-    queryFn: () => practiceLogService.getHistoricalLogs(startDate, endDate),
-    enabled: !!studentId,
+    queryKey: ["practice-history", childId],
+    queryFn: () =>
+      practiceLogService.getHistoricalLogs(childId, startDate, endDate),
+    enabled: ready && !!childId,
     staleTime: 5 * 60 * 1000,
   });
 
   // Query 2: current practice streak
   const { data: streakData, isLoading: streakLoading } = useQuery({
-    queryKey: ['practice-streak', studentId],
-    queryFn: () => practiceStreakService.getPracticeStreak(),
-    enabled: !!studentId,
+    queryKey: ["practice-streak", childId],
+    queryFn: () => practiceStreakService.getPracticeStreak(childId),
+    enabled: ready && !!childId,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -112,7 +115,7 @@ export default function PracticeHeatmapCard({ studentId }) {
   const weekdayNames = useMemo(() => {
     // Jan 4, 2026 is a Sunday
     return Array.from({ length: 7 }, (_, i) =>
-      new Intl.DateTimeFormat(locale, { weekday: 'narrow' }).format(
+      new Intl.DateTimeFormat(locale, { weekday: "narrow" }).format(
         new Date(2026, 0, 4 + i)
       )
     );
@@ -121,9 +124,10 @@ export default function PracticeHeatmapCard({ studentId }) {
   // Month/year label for the header
   const monthLabel = useMemo(
     () =>
-      new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' }).format(
-        new Date(displayMonth.year, displayMonth.month, 1)
-      ),
+      new Intl.DateTimeFormat(locale, {
+        month: "long",
+        year: "numeric",
+      }).format(new Date(displayMonth.year, displayMonth.month, 1)),
     [locale, displayMonth]
   );
 
@@ -142,7 +146,7 @@ export default function PracticeHeatmapCard({ studentId }) {
     }
     // Day cells
     for (let d = 1; d <= daysInMonth; d++) {
-      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
       cells.push({
         key: dateStr,
         day: d,
@@ -161,21 +165,27 @@ export default function PracticeHeatmapCard({ studentId }) {
   if (bothLoading) {
     return (
       <section
-        aria-label={t('parentPortal.practiceCalendar.ariaLabel')}
+        aria-label={t("parentPortal.practiceCalendar.ariaLabel")}
         data-section="practice-heatmap"
-        className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6"
+        className="rounded-xl border border-white/20 bg-white/10 p-6 shadow-lg backdrop-blur-md"
       >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="bg-white/10 animate-pulse rounded h-5 w-5" />
-          <div className="bg-white/10 animate-pulse rounded h-5 w-36" />
+        <div className="mb-4 flex items-center gap-2">
+          <div className="h-5 w-5 animate-pulse rounded bg-white/10" />
+          <div className="h-5 w-36 animate-pulse rounded bg-white/10" />
         </div>
-        <div role="status" aria-label={t('parentPortal.practiceCalendar.loadingLabel')}>
-          <div className="grid grid-cols-3 gap-2 mb-4">
+        <div
+          role="status"
+          aria-label={t("parentPortal.practiceCalendar.loadingLabel")}
+        >
+          <div className="mb-4 grid grid-cols-3 gap-2">
             {[0, 1, 2].map((i) => (
-              <div key={i} className="bg-white/10 animate-pulse rounded-lg h-14" />
+              <div
+                key={i}
+                className="h-14 animate-pulse rounded-lg bg-white/10"
+              />
             ))}
           </div>
-          <div className="bg-white/10 animate-pulse rounded h-40 w-full" />
+          <div className="h-40 w-full animate-pulse rounded bg-white/10" />
         </div>
       </section>
     );
@@ -184,46 +194,53 @@ export default function PracticeHeatmapCard({ studentId }) {
   // ── Populated / Empty / Error state ──
   return (
     <section
-      aria-label={t('parentPortal.practiceCalendar.ariaLabel')}
+      aria-label={t("parentPortal.practiceCalendar.ariaLabel")}
       data-section="practice-heatmap"
-      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6"
+      className="rounded-xl border border-white/20 bg-white/10 p-6 shadow-lg backdrop-blur-md"
     >
       {/* Card header */}
-      <div className={`flex items-center gap-2 mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div
+        className={`mb-4 flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
+      >
         <Piano className="h-5 w-5 text-emerald-400" aria-hidden="true" />
         <h2 className="text-lg font-bold text-white">
-          {t('parentPortal.practiceCalendar.title')}
+          {t("parentPortal.practiceCalendar.title")}
         </h2>
       </div>
 
       {/* Summary stats row */}
-      <div className="grid grid-cols-3 gap-2 mb-4" dir={isRTL ? 'rtl' : undefined}>
-        <dl className="bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+      <div
+        className="mb-4 grid grid-cols-3 gap-2"
+        dir={isRTL ? "rtl" : undefined}
+      >
+        <dl className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
           <dd className="text-xl font-bold text-white">{totalDays}</dd>
           <dt className="text-xs text-white/60">
-            {t('parentPortal.practiceCalendar.statTotalLabel')}
+            {t("parentPortal.practiceCalendar.statTotalLabel")}
           </dt>
         </dl>
-        <dl className="bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+        <dl className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
           <dd className="text-xl font-bold text-white">{currentStreak}</dd>
           <dt className="text-xs text-white/60">
-            {t('parentPortal.practiceCalendar.statStreakLabel')}
+            {t("parentPortal.practiceCalendar.statStreakLabel")}
           </dt>
         </dl>
-        <dl className="bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+        <dl className="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
           <dd className="text-xl font-bold text-white">{longestStreak}</dd>
           <dt className="text-xs text-white/60">
-            {t('parentPortal.practiceCalendar.statLongestLabel')}
+            {t("parentPortal.practiceCalendar.statLongestLabel")}
           </dt>
         </dl>
       </div>
 
       {/* Month navigation */}
-      <div className={`flex items-center justify-between mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div
+        className={`mb-3 flex items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
+      >
         <button
           onClick={goToPrevMonth}
-          aria-label={t('parentPortal.practiceCalendar.prevMonth')}
-          className="p-1 rounded hover:bg-white/10 text-white/70 hover:text-white transition-colors"
+          aria-label={t("parentPortal.practiceCalendar.prevMonth")}
+          className="rounded p-1 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
         >
           <PrevIcon className="h-5 w-5" />
         </button>
@@ -231,19 +248,19 @@ export default function PracticeHeatmapCard({ studentId }) {
         <button
           onClick={goToNextMonth}
           disabled={isCurrentMonth}
-          aria-label={t('parentPortal.practiceCalendar.nextMonth')}
-          className="p-1 rounded hover:bg-white/10 text-white/70 hover:text-white transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+          aria-label={t("parentPortal.practiceCalendar.nextMonth")}
+          className="rounded p-1 text-white/70 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
         >
           <NextIcon className="h-5 w-5" />
         </button>
       </div>
 
       {/* Weekday header */}
-      <div className="grid grid-cols-7 gap-1 mb-1" dir="ltr">
+      <div className="mb-1 grid grid-cols-7 gap-1" dir="ltr">
         {weekdayNames.map((name, i) => (
           <div
             key={i}
-            className="text-center text-xs text-white/40 font-medium py-1"
+            className="py-1 text-center text-xs font-medium text-white/40"
           >
             {name}
           </div>
@@ -255,15 +272,15 @@ export default function PracticeHeatmapCard({ studentId }) {
         {calendarCells.map((cell) => (
           <div
             key={cell.key}
-            className={`aspect-square rounded-md flex items-center justify-center text-xs font-medium ${
+            className={`flex aspect-square items-center justify-center rounded-md text-xs font-medium ${
               !cell.day
-                ? ''
+                ? ""
                 : cell.isFuture
-                  ? 'text-white/20'
+                  ? "text-white/20"
                   : cell.practiced
-                    ? 'bg-emerald-400/80 text-white'
-                    : 'bg-white/15 text-white/50'
-            } ${cell.isToday ? 'ring-1 ring-white/40' : ''}`}
+                    ? "bg-emerald-400/80 text-white"
+                    : "bg-white/15 text-white/50"
+            } ${cell.isToday ? "ring-1 ring-white/40" : ""}`}
           >
             {cell.day}
           </div>
@@ -272,20 +289,20 @@ export default function PracticeHeatmapCard({ studentId }) {
 
       {/* Empty state message */}
       {totalDays === 0 && (
-        <div className="text-center mt-4">
+        <div className="mt-4 text-center">
           <p className="text-sm font-medium text-white/70">
-            {t('parentPortal.practiceCalendar.emptyHeading')}
+            {t("parentPortal.practiceCalendar.emptyHeading")}
           </p>
-          <p className="text-sm text-white/60 mt-1">
-            {t('parentPortal.practiceCalendar.emptyBody')}
+          <p className="mt-1 text-sm text-white/60">
+            {t("parentPortal.practiceCalendar.emptyBody")}
           </p>
         </div>
       )}
 
       {/* Error state */}
       {historyError && (
-        <p className="text-sm text-red-300 mt-4 text-center">
-          {t('parentPortal.practiceCalendar.errorMessage')}
+        <p className="mt-4 text-center text-sm text-red-300">
+          {t("parentPortal.practiceCalendar.errorMessage")}
         </p>
       )}
     </section>
