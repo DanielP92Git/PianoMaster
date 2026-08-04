@@ -9,10 +9,11 @@ import { deleteChildProfile } from "../../services/accountDeletionService";
  *
  * Mirrors AccountDeletionModal's structure (warning banner ->
  * what-will-be-deleted summary -> name-confirmation input -> disabled-until
- * -match submit) but is scoped to ONE child and drops all 30-day-grace
- * language: this delete is immediate and permanent. Calls
- * accountDeletionService.deleteChildProfile, which does NOT sign the parent
- * out (unlike the whole-account requestAccountDeletion flow).
+ * -match submit) but is scoped to ONE child: this delete is immediate and
+ * permanent, with no waiting-period copy anywhere (unlike the whole-account
+ * flow). Calls accountDeletionService.deleteChildProfile, which does NOT
+ * sign the parent out (unlike the whole-account requestAccountDeletion
+ * flow).
  */
 export default function DeleteChildModal({
   isOpen,
