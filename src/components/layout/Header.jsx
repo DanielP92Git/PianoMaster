@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, Music2 } from "lucide-react";
+import { Menu, Music2, UserPlus } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -65,19 +65,25 @@ export default function Header({
             {/* Show placeholder while loading */}
             {isLoading ? (
               <div className="h-12 w-12 animate-pulse rounded-full bg-white/10" />
-            ) : avatarUrl ? (
+            ) : (
               <button
                 type="button"
                 onClick={() => setSwitcherOpen(true)}
                 aria-label={activeChild?.nickname || t("switcher.title")}
               >
                 <div className="relative h-12 w-12 cursor-pointer overflow-hidden rounded-full ring-2 ring-white/20 transition-all hover:ring-white">
-                  <img
-                    className="h-full w-full object-cover"
-                    src={avatarUrl}
-                    alt="User avatar"
-                    loading="eager"
-                  />
+                  {avatarUrl ? (
+                    <img
+                      className="h-full w-full object-cover"
+                      src={avatarUrl}
+                      alt="User avatar"
+                      loading="eager"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-white/10">
+                      <UserPlus className="h-6 w-6 text-white/60" />
+                    </div>
+                  )}
                   {layeredAccessories.map((item) => {
                     const slot = item.slot || item.category || "accessory";
                     const slotClass =
@@ -94,7 +100,7 @@ export default function Header({
                   })}
                 </div>
               </button>
-            ) : null}
+            )}
             {!pageTitle && (
               <Link
                 to={"/"}

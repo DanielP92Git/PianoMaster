@@ -9,7 +9,6 @@ import {
   getUserPointTransactions,
   updateAccessoryCustomMetadata,
 } from "../services/apiAccessories";
-import { useUser } from "../features/authentication/useUser";
 import { useActiveChildId } from "./useActiveChildId";
 
 export function useAccessoriesList(options = {}) {
@@ -56,18 +55,18 @@ export function usePointTransactions(limit = 20) {
 }
 
 export function usePurchaseAccessory(options = {}) {
-  const { user } = useUser();
+  const { childId } = useActiveChildId();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ accessoryId, slotOverride, userId = user?.id }) => {
+    mutationFn: ({ accessoryId, slotOverride, userId = childId }) => {
       if (!userId) {
-        throw new Error("User must be authenticated to purchase accessories");
+        throw new Error("No active child to purchase accessories for");
       }
       return purchaseAccessory({ accessoryId, slotOverride, userId });
     },
     onSuccess: (_, variables) => {
-      const targetUserId = variables.userId || user?.id;
+      const targetUserId = variables.userId || childId;
       if (targetUserId) {
         queryClient.invalidateQueries(["user-accessories", targetUserId]);
         queryClient.invalidateQueries(["point-balance", targetUserId]);
@@ -80,18 +79,18 @@ export function usePurchaseAccessory(options = {}) {
 }
 
 export function useEquipAccessory(options = {}) {
-  const { user } = useUser();
+  const { childId } = useActiveChildId();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ accessoryId, slot, userId = user?.id }) => {
+    mutationFn: ({ accessoryId, slot, userId = childId }) => {
       if (!userId) {
-        throw new Error("User must be authenticated to equip accessories");
+        throw new Error("No active child to equip accessories for");
       }
       return equipAccessory({ accessoryId, slot, userId });
     },
     onSuccess: (_, variables) => {
-      const targetUserId = variables.userId || user?.id;
+      const targetUserId = variables.userId || childId;
       if (targetUserId) {
         queryClient.invalidateQueries(["user-accessories", targetUserId]);
         queryClient.invalidateQueries(["point-balance", targetUserId]);
@@ -103,18 +102,18 @@ export function useEquipAccessory(options = {}) {
 }
 
 export function useUnequipAccessory(options = {}) {
-  const { user } = useUser();
+  const { childId } = useActiveChildId();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ accessoryId, userId = user?.id }) => {
+    mutationFn: ({ accessoryId, userId = childId }) => {
       if (!userId) {
-        throw new Error("User must be authenticated to unequip accessories");
+        throw new Error("No active child to unequip accessories for");
       }
       return unequipAccessory({ accessoryId, userId });
     },
     onSuccess: (_, variables) => {
-      const targetUserId = variables.userId || user?.id;
+      const targetUserId = variables.userId || childId;
       if (targetUserId) {
         queryClient.invalidateQueries(["user-accessories", targetUserId]);
         queryClient.invalidateQueries(["point-balance", targetUserId]);
@@ -126,13 +125,13 @@ export function useUnequipAccessory(options = {}) {
 }
 
 export function useUpdateAccessoryMetadata(options = {}) {
-  const { user } = useUser();
+  const { childId } = useActiveChildId();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ accessoryId, customMetadata, userId = user?.id }) => {
+    mutationFn: ({ accessoryId, customMetadata, userId = childId }) => {
       if (!userId) {
-        throw new Error("User must be authenticated");
+        throw new Error("No active child to update accessories for");
       }
       return updateAccessoryCustomMetadata({
         userId,
@@ -141,7 +140,7 @@ export function useUpdateAccessoryMetadata(options = {}) {
       });
     },
     onSuccess: (_, variables) => {
-      const targetUserId = variables.userId || user?.id;
+      const targetUserId = variables.userId || childId;
       if (targetUserId) {
         queryClient.invalidateQueries(["user-accessories", targetUserId]);
       }

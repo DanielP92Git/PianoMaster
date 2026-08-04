@@ -12,27 +12,18 @@ import { useActiveChild } from "./ActiveChildContext";
 // D-05: short auto-closing shared window (~3 min, Claude's discretion 2-5 min).
 const WINDOW_MS = 3 * 60 * 1000;
 
-// The gated (parent-only) surfaces are /parent-portal, /manage-children, /settings,
-// /subscribe, /legal. Every OTHER post-auth surface is a child surface; navigating
-// to one closes the shared window (D-05 trigger 4).
-const CHILD_SURFACE_ROUTES = [
-  "/",
-  "/dashboard",
-  "/trail",
-  "/notes-master-mode",
-  "/rhythm-mode",
-  "/ear-training-mode",
-  "/practice-modes",
-  "/practice-sessions",
-  "/achievements",
-  "/assignments",
-];
+// Only /parent-portal and /manage-children actually consume the shared gate's
+// `passed` state today (ParentGateProtectedRoute wraps /manage-children;
+// /parent-portal reads useParentGate() directly for its gated action rows).
+// Denylist, not allowlist: every OTHER post-auth surface — including ones
+// that are unguarded but not gate-consuming, like /avatars or /settings —
+// is treated as a child surface and closes the shared window on navigation
+// (D-05 trigger 4). This fails closed: a new route added later without being
+// added here loses the gate by default instead of silently inheriting it.
+const GATED_PARENT_ONLY_ROUTES = ["/parent-portal", "/manage-children"];
 
 const isChildSurfaceRoute = (pathname) =>
-  pathname === "/" ||
-  CHILD_SURFACE_ROUTES.some(
-    (route) => route !== "/" && pathname.startsWith(route)
-  );
+  !GATED_PARENT_ONLY_ROUTES.some((route) => pathname.startsWith(route));
 
 const ParentGateContext = createContext();
 
@@ -44,7 +35,7 @@ const ParentGateContext = createContext();
  *   1. timeout      — the ~3-minute window armed in pass()
  *   2. profile-switch — activeChildId change (ActiveChildContext)
  *   3. blur/visibilitychange — app backgrounded
- *   4. route-change — navigating back to a CHILD_SURFACE_ROUTES path
+ *   4. route-change — navigating to any route outside GATED_PARENT_ONLY_ROUTES
  * Follows the SettingsContext provider+co-located-hook triad.
  */
 export const ParentGateProvider = ({ children }) => {

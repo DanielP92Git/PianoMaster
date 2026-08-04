@@ -354,7 +354,7 @@ export default function ParentPortalPage() {
 
           {/* Section 2: Practice Heatmap */}
           <section className="mt-8">
-            <PracticeHeatmapCard studentId={childId} />
+            <PracticeHeatmapCard />
           </section>
 
           {/* Section 3: Subscription Management — GATED action row (D-08) */}
@@ -572,7 +572,7 @@ export default function ParentPortalPage() {
                   {/* Practice reminders push permission */}
                   <NotificationPermissionCard
                     isRTL={isRTL}
-                    studentId={user?.id}
+                    studentId={childId}
                     onPermissionChange={() => {}}
                   />
 

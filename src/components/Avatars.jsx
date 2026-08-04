@@ -19,6 +19,7 @@ import {
 } from "../hooks/useAccessories";
 import { getAvatarImageSource } from "../utils/avatarAssets";
 import { useUserProfile } from "../hooks/useUserProfile";
+import { useActiveChildId } from "../hooks/useActiveChildId";
 import { useGamesPlayed } from "../hooks/useGamesPlayed";
 import { DraggableAccessory } from "./ui/DraggableAccessory";
 import {
@@ -96,6 +97,7 @@ function AvatarPreview({
 function Avatars() {
   const { t } = useTranslation("common");
   const { user } = useUser();
+  const { childId } = useActiveChildId();
   const queryClient = useQueryClient();
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const [currentlyAnimatingId, setCurrentlyAnimatingId] = useState(null);
@@ -163,8 +165,7 @@ function Avatars() {
   const availableXP = pointsBalance?.available ?? 0;
 
   // Fetch games played count from students_score table
-  const { data: gamesPlayedCount } =
-    useGamesPlayed();
+  const { data: gamesPlayedCount } = useGamesPlayed();
 
   // Calculate user progress for unlock requirements
   const userProgress = useMemo(() => {
@@ -250,7 +251,7 @@ function Avatars() {
   const updateAvatarMutation = useMutation({
     mutationFn: ({ userId, avatarId }) => updateUserAvatar(userId, avatarId),
     onSuccess: () => {
-      queryClient.invalidateQueries(["user-profile", user?.id]);
+      queryClient.invalidateQueries(["user-profile", childId]);
     },
     onError: () => {
       toast.error("Failed to update avatar");
@@ -496,9 +497,9 @@ function Avatars() {
 
   const handleAvatarSelect = (avatar) => {
     setSelectedAvatar(avatar);
-    if (user?.id) {
+    if (childId) {
       updateAvatarMutation.mutate({
-        userId: user.id,
+        userId: childId,
         avatarId: avatar.id,
       });
     }
@@ -513,7 +514,6 @@ function Avatars() {
     purchaseAccessoryMutation.mutate({
       accessoryId: accessory.id,
       slotOverride: accessory.category,
-      userId: user.id,
     });
   };
 
@@ -526,7 +526,6 @@ function Avatars() {
     equipAccessoryMutation.mutate({
       accessoryId: ownership.accessory_id,
       slot: ownership.slot || ownership.accessory?.category,
-      userId: user.id,
     });
   };
 
@@ -538,7 +537,6 @@ function Avatars() {
 
     unequipAccessoryMutation.mutate({
       accessoryId: ownership.accessory_id,
-      userId: user.id,
     });
   };
 
@@ -566,9 +564,9 @@ function Avatars() {
   const handleRefreshPoints = async () => {
     setIsRefreshing(true);
     await Promise.all([
-      queryClient.invalidateQueries(["point-balance", user?.id]),
-      queryClient.invalidateQueries(["student-scores", user?.id]),
-      queryClient.invalidateQueries(["earned-achievements", user?.id]),
+      queryClient.invalidateQueries(["point-balance", childId]),
+      queryClient.invalidateQueries(["student-scores", childId]),
+      queryClient.invalidateQueries(["earned-achievements", childId]),
     ]);
     // Small delay for UX
     setTimeout(() => setIsRefreshing(false), 500);
@@ -836,8 +834,7 @@ function Avatars() {
                 </p>
                 <div className="mt-2 flex flex-col gap-0.5 text-xs text-white/60">
                   <span>
-                    {t("avatars.shop.totalEarned")}:{" "}
-                    {formatXP(earnedXP)}
+                    {t("avatars.shop.totalEarned")}: {formatXP(earnedXP)}
                   </span>
                   <span>
                     {t("avatars.shop.totalSpent")}: {formatXP(spentXP)}
@@ -1050,9 +1047,7 @@ function Avatars() {
                               )}
                             </div>
                             <div className="flex items-center justify-between text-xs text-white/80">
-                              <span>
-                                {formatXP(accessory.price_points)} XP
-                              </span>
+                              <span>{formatXP(accessory.price_points)} XP</span>
                               {isOwned && (
                                 <span className="text-emerald-300">
                                   {t("avatars.shop.ownedLabel")}
@@ -1087,9 +1082,7 @@ function Avatars() {
                                   : insufficientXP
                                     ? t("avatars.shop.notEnoughXP")
                                     : t("avatars.shop.purchase", {
-                                        xp: formatXP(
-                                          accessory.price_points
-                                        ),
+                                        xp: formatXP(accessory.price_points),
                                       })}
                             </button>
                           </div>

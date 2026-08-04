@@ -97,7 +97,7 @@ const PracticeLogCard = () => {
           queryClient.invalidateQueries({
             queryKey: ["practice-streak", childId],
           });
-          queryClient.invalidateQueries({ queryKey: ["xp"] }); // refresh XP display
+          queryClient.invalidateQueries({ queryKey: ["student-xp", childId] }); // refresh XP display
 
           // Milestone detection (D-01, D-02, D-07)
           // CRITICAL: use streakResult (fresh return value), NOT streakData (stale cache) — Pitfall 3
