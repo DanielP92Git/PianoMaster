@@ -1,0 +1,11 @@
+# GSD planning artifacts contain executable shell/SQL commands embedded in markdown
+# (inside <verify><automated> blocks). Prettier treats them as prose and rewrites
+# `_..._` emphasis pairs to `*...*`, silently corrupting regexes and identifiers —
+# e.g. `sc2_satisfied` -> `sc2*satisfied`, `[a-zA-Z0-9._%+-]` -> `[a-zA-Z0-9.*%+-]`.
+# Verified 2026-08-05 against .planning/phases/05-subscription-re-pointing/05-09-PLAN.md.
+.planning/
+
+# Build output
+dist/
+build/
+coverage/
