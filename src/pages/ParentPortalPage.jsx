@@ -249,6 +249,29 @@ export default function ParentPortalPage() {
       const { data, error } = await supabase.functions.invoke(
         "cancel-subscription"
       );
+
+      // D-06: the Edge Function returns 409 { code: 'AMBIGUOUS_ACTIVE_SUBSCRIPTIONS' } when the
+      // parent holds more than one active subscription. It deliberately cancels NOTHING in that
+      // case — an arbitrary pick could cancel the wrong one while the other keeps billing. Surface
+      // it distinctly instead of collapsing it into the generic failure toast.
+      let ambiguous = data?.code === "AMBIGUOUS_ACTIVE_SUBSCRIPTIONS";
+      if (!ambiguous && error?.context?.json) {
+        try {
+          const body = await error.context.json();
+          ambiguous = body?.code === "AMBIGUOUS_ACTIVE_SUBSCRIPTIONS";
+        } catch {
+          /* non-JSON error body — fall through to the generic path */
+        }
+      }
+      if (ambiguous) {
+        console.error(
+          "[ParentPortalPage] cancel blocked: multiple active subscriptions"
+        );
+        toast.error(t("parentPortal.cancelAmbiguous"));
+        setShowCancelDialog(false);
+        return;
+      }
+
       if (error || data?.error) {
         throw new Error(data?.error || error?.message || "Unknown error");
       }

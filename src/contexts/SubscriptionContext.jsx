@@ -44,7 +44,9 @@ export function SubscriptionProvider({ children }) {
           event: "*",
           schema: "public",
           table: "parent_subscriptions",
-          filter: `student_id=eq.${userId}`,
+          // Phase 5 D-14: the subscription is family-wide and keyed on parent_id. userId here is already
+          // the parent auth uid — the column it used to name was simply the legacy one.
+          filter: `parent_id=eq.${userId}`,
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ["subscription", userId] });
@@ -95,7 +97,9 @@ export function SubscriptionProvider({ children }) {
 export function useSubscription() {
   const context = useContext(SubscriptionContext);
   if (!context) {
-    throw new Error("useSubscription must be used within a SubscriptionProvider");
+    throw new Error(
+      "useSubscription must be used within a SubscriptionProvider"
+    );
   }
   return context;
 }
