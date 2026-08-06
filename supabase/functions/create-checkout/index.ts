@@ -8,7 +8,9 @@
 //   4. Defense in depth: verify studentId === auth.uid() from JWT
 //   5. Look up lemon_squeezy_variant_id from subscription_plans by planId
 //   6. Call POST https://api.lemonsqueezy.com/v1/checkouts
-//      with embed: true and student_id in checkout_data.custom
+//      with embed: true and BOTH parent_id and student_id in checkout_data.custom
+//      (D-02 — both carry the same verified auth.uid(); the webhook's resolve-chain
+//      prefers parent_id, student_id is dropped in Phase 8)
 //   7. Return { checkoutUrl } on success, { error } on failure
 //
 // Security:
@@ -17,16 +19,22 @@
 //   - LS_API_KEY stays server-side (never exposed to browser)
 //   - CORS restricted to authorization header only
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const ALLOWED_ORIGINS = ['https://my-pianomaster.netlify.app', 'http://localhost:5174'];
+const ALLOWED_ORIGINS = [
+  "https://my-pianomaster.netlify.app",
+  "http://localhost:5174",
+];
 
 function getCorsHeaders(req: Request) {
-  const origin = req.headers.get('origin') || '';
+  const origin = req.headers.get("origin") || "";
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
-    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    "Access-Control-Allow-Origin": ALLOWED_ORIGINS.includes(origin)
+      ? origin
+      : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
   };
 }
 
@@ -36,36 +44,42 @@ Deno.serve(async (req) => {
   function jsonResponse(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), {
       status,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   // Handle OPTIONS preflight for CORS
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   // 1. Only accept POST
-  if (req.method !== 'POST') {
-    return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
+  if (req.method !== "POST") {
+    return new Response("Method Not Allowed", {
+      status: 405,
+      headers: corsHeaders,
+    });
   }
 
   // 2. Get auth.uid() from JWT via user client
-  const authHeader = req.headers.get('Authorization');
+  const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    return jsonResponse({ error: 'Unauthorized' }, 401);
+    return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
   const supabaseUser = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } }
   );
 
-  const { data: { user }, error: authError } = await supabaseUser.auth.getUser();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseUser.auth.getUser();
   if (authError || !user) {
-    console.error('create-checkout: auth error', authError);
-    return jsonResponse({ error: 'Unauthorized' }, 401);
+    console.error("create-checkout: auth error", authError);
+    return jsonResponse({ error: "Unauthorized" }, 401);
   }
 
   // 3. Parse request body
@@ -76,103 +90,116 @@ Deno.serve(async (req) => {
     planId = body.planId;
     studentId = body.studentId;
   } catch {
-    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+    return jsonResponse({ error: "Invalid JSON body" }, 400);
   }
 
   if (!planId || !studentId) {
-    return jsonResponse({ error: 'Missing planId or studentId' }, 400);
+    return jsonResponse({ error: "Missing planId or studentId" }, 400);
   }
 
   // 4. Defense in depth: verify studentId matches authenticated user
   if (user.id !== studentId) {
-    console.error('create-checkout: studentId mismatch', {
+    console.error("create-checkout: studentId mismatch", {
       authUid: user.id,
       requestedStudentId: studentId,
     });
-    return jsonResponse({ error: 'Forbidden: studentId does not match authenticated user' }, 403);
+    return jsonResponse(
+      { error: "Forbidden: studentId does not match authenticated user" },
+      403
+    );
   }
 
   // 5. Look up lemon_squeezy_variant_id from subscription_plans
   //    Using service role client — plan lookup is public (RLS: USING(true)) but
   //    service role is consistent with webhook pattern and avoids any edge cases.
   const supabaseService = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
   const { data: plan, error: planError } = await supabaseService
-    .from('subscription_plans')
-    .select('lemon_squeezy_variant_id')
-    .eq('id', planId)
-    .eq('is_active', true)
+    .from("subscription_plans")
+    .select("lemon_squeezy_variant_id")
+    .eq("id", planId)
+    .eq("is_active", true)
     .maybeSingle();
 
   if (planError || !plan) {
-    console.error('create-checkout: plan not found', { planId, planError });
-    return jsonResponse({ error: 'Plan not found' }, 400);
+    console.error("create-checkout: plan not found", { planId, planError });
+    return jsonResponse({ error: "Plan not found" }, 400);
   }
 
   if (!plan.lemon_squeezy_variant_id) {
-    console.error('create-checkout: plan has no variant ID (pre-flight data step required)', { planId });
-    return jsonResponse({ error: 'Plan variant ID not configured' }, 400);
+    console.error(
+      "create-checkout: plan has no variant ID (pre-flight data step required)",
+      { planId }
+    );
+    return jsonResponse({ error: "Plan variant ID not configured" }, 400);
   }
 
   const variantId = plan.lemon_squeezy_variant_id;
 
   // 6. Call Lemon Squeezy API to create checkout
-  const LS_API_KEY = Deno.env.get('LS_API_KEY');
-  const LS_STORE_ID = Deno.env.get('LS_STORE_ID');
+  const LS_API_KEY = Deno.env.get("LS_API_KEY");
+  const LS_STORE_ID = Deno.env.get("LS_STORE_ID");
 
   if (!LS_API_KEY || !LS_STORE_ID) {
-    console.error('create-checkout: missing LS env vars (LS_API_KEY or LS_STORE_ID)');
-    return jsonResponse({ error: 'Server configuration error' }, 500);
+    console.error(
+      "create-checkout: missing LS env vars (LS_API_KEY or LS_STORE_ID)"
+    );
+    return jsonResponse({ error: "Server configuration error" }, 500);
   }
 
   let lsResponse: Response;
   try {
-    lsResponse = await fetch('https://api.lemonsqueezy.com/v1/checkouts', {
-      method: 'POST',
+    lsResponse = await fetch("https://api.lemonsqueezy.com/v1/checkouts", {
+      method: "POST",
       headers: {
-        'Accept': 'application/vnd.api+json',
-        'Content-Type': 'application/vnd.api+json',
-        'Authorization': `Bearer ${LS_API_KEY}`,
+        Accept: "application/vnd.api+json",
+        "Content-Type": "application/vnd.api+json",
+        Authorization: `Bearer ${LS_API_KEY}`,
       },
       body: JSON.stringify({
         data: {
-          type: 'checkouts',
+          type: "checkouts",
           attributes: {
             checkout_options: {
               embed: true,
             },
             checkout_data: {
               custom: {
+                // D-02: both keys carry the SAME value — the caller's own verified auth.uid(),
+                // which IS the parent uid post-Phase 3/4. Embedding both means a checkout started
+                // before this deploy and completed after it resolves correctly under either code
+                // path. The resolve-chain prefers parent_id. student_id is dropped in Phase 8.
+                parent_id: studentId,
                 student_id: studentId,
               },
             },
           },
           relationships: {
             store: {
-              data: { type: 'stores', id: LS_STORE_ID },
+              data: { type: "stores", id: LS_STORE_ID },
             },
             variant: {
-              data: { type: 'variants', id: variantId },
+              data: { type: "variants", id: variantId },
             },
           },
         },
       }),
     });
   } catch (fetchError) {
-    console.error('create-checkout: LS API fetch failed', fetchError);
-    return jsonResponse({ error: 'Checkout creation failed' }, 500);
+    console.error("create-checkout: LS API fetch failed", fetchError);
+    return jsonResponse({ error: "Checkout creation failed" }, 500);
   }
 
   if (!lsResponse.ok) {
     const lsError = await lsResponse.text();
-    console.error('create-checkout: LS API error', {
+    console.error("create-checkout: LS API error", {
       status: lsResponse.status,
       body: lsError,
     });
-    return jsonResponse({ error: 'Checkout creation failed' }, 500);
+    return jsonResponse({ error: "Checkout creation failed" }, 500);
   }
 
   // 7. Extract checkoutUrl from LS response
@@ -180,8 +207,8 @@ Deno.serve(async (req) => {
   const checkoutUrl = lsJson?.data?.attributes?.url;
 
   if (!checkoutUrl) {
-    console.error('create-checkout: no URL in LS response', lsJson);
-    return jsonResponse({ error: 'Checkout creation failed' }, 500);
+    console.error("create-checkout: no URL in LS response", lsJson);
+    return jsonResponse({ error: "Checkout creation failed" }, 500);
   }
 
   // 8. Return checkout URL to client
