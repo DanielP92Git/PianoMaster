@@ -57,14 +57,25 @@ DROP INDEX IF EXISTS parent_subscriptions_parent_id_idx;
 ALTER TABLE parent_subscriptions DROP CONSTRAINT IF EXISTS parent_subscriptions_parent_id_fkey;
 
 -- -----------------------------------------------------------------------------
--- 5. Drop the parent_id column. No data loss: student_id was never modified and
---    remains the authoritative pre-Phase-5 owner column; parent_id was purely
---    derived from it by the backfill.
+-- 5. Restore student_id NOT NULL (mirrors forward Section 1's relaxation).
+--    Loud failure over silent data loss: if any row was written after the forward
+--    migration with parent_id set and student_id NULL (a real D-02 "new checkout
+--    shape" row), this ALTER fails natively with a NOT NULL violation and aborts
+--    the whole backout transaction — which is correct. A row like that has no
+--    owner column left once parent_id is dropped in the next step; backing out
+--    would silently orphan it. Resolve manually (assign a student_id, or accept
+--    the row must wait for a future migration) before re-attempting backout.
+-- -----------------------------------------------------------------------------
+ALTER TABLE parent_subscriptions ALTER COLUMN student_id SET NOT NULL;
+
+-- -----------------------------------------------------------------------------
+-- 6. Drop the parent_id column. Safe now: step 5 above proved every remaining row
+--    has a non-null student_id, so nothing is orphaned by removing parent_id.
 -- -----------------------------------------------------------------------------
 ALTER TABLE parent_subscriptions DROP COLUMN IF EXISTS parent_id;
 
 -- -----------------------------------------------------------------------------
--- 6. Dead-letter table.
+-- 7. Dead-letter table.
 --    PRE-BACKOUT STEP: if rows exist in unresolved_webhook_log at backout time,
 --    they are unreviewed billing anomalies — SELECT * FROM unresolved_webhook_log
 --    and save the output before running this file. Safe in a backout because the

@@ -15,9 +15,9 @@
 
 -- DISCOVERY FINDING (05-discovery.md §1): unexpected_columns = id, updated_at — both
 -- benign (id is the PK, updated_at is an audit timestamp); neither is disturbed here.
--- notnull_columns_without_default = student_id, ls_subscription_id, status — all
--- already satisfied on every existing row; informational only for parent_id's design
--- (see Section 1's nullability rationale below). Neither finding blocks this migration.
+-- notnull_columns_without_default = student_id, ls_subscription_id, status. student_id's
+-- NOT NULL is relaxed below (Section 1) — see that section's rationale. ls_subscription_id
+-- and status remain required on every row; neither finding otherwise blocks this migration.
 
 BEGIN;
 
@@ -32,6 +32,19 @@ ALTER TABLE parent_subscriptions
 -- never to hard-fail an insert; a NOT NULL column would convert that designed
 -- soft-failure into a payment-time exception. The tightening is deferred to Phase 8
 -- and recorded in the handoff (Task 3 / 02-phase8-handoff.md §5).
+
+-- student_id must become nullable too. D-02's "new checkout shape" is a webhook
+-- payload carrying ONLY parent_id (no legacy custom_data.student_id key at all) —
+-- the shape Phase 8 moves create-checkout to permanently. The webhook's D-01
+-- resolve-chain (plan 05-03, already deployed) and has_active_subscription()'s
+-- OR-based lookup (Section 4 below) are both already written to accept and correctly
+-- serve such a row today, for forward compatibility — but that is physically
+-- impossible while the live student_id column stays NOT NULL. Caught by the D-09
+-- production rehearsal (05-apply-log.md): the SC1-HAS-PARENT test insert failed with
+-- Postgres error 23502 ("null value in column student_id violates not-null
+-- constraint") before this line existed.
+ALTER TABLE parent_subscriptions
+  ALTER COLUMN student_id DROP NOT NULL;
 
 ALTER TABLE parent_subscriptions
   DROP CONSTRAINT IF EXISTS parent_subscriptions_parent_id_fkey;

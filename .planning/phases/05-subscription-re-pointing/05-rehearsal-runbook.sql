@@ -151,6 +151,9 @@ ALTER TABLE parent_subscriptions
   ADD COLUMN IF NOT EXISTS parent_id UUID;
 
 ALTER TABLE parent_subscriptions
+  ALTER COLUMN student_id DROP NOT NULL;
+
+ALTER TABLE parent_subscriptions
   DROP CONSTRAINT IF EXISTS parent_subscriptions_parent_id_fkey;
 
 ALTER TABLE parent_subscriptions
@@ -536,6 +539,8 @@ DROP INDEX IF EXISTS parent_subscriptions_parent_id_idx;
 
 ALTER TABLE parent_subscriptions DROP CONSTRAINT IF EXISTS parent_subscriptions_parent_id_fkey;
 
+ALTER TABLE parent_subscriptions ALTER COLUMN student_id SET NOT NULL;
+
 ALTER TABLE parent_subscriptions DROP COLUMN IF EXISTS parent_id;
 
 DROP POLICY IF EXISTS "deny_all_access" ON public.unresolved_webhook_log;
@@ -591,6 +596,9 @@ END $$;
 
 ALTER TABLE parent_subscriptions
   ADD COLUMN IF NOT EXISTS parent_id UUID;
+
+ALTER TABLE parent_subscriptions
+  ALTER COLUMN student_id DROP NOT NULL;
 
 ALTER TABLE parent_subscriptions
   DROP CONSTRAINT IF EXISTS parent_subscriptions_parent_id_fkey;
