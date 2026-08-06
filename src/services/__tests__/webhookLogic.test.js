@@ -21,6 +21,7 @@ import { createHmac, timingSafeEqual as nodeTSE } from "crypto";
 import { extractPayload } from "../../../supabase/functions/lemon-squeezy-webhook/lib/extractPayload";
 import { resolveParent } from "../../../supabase/functions/lemon-squeezy-webhook/lib/resolveParent";
 import { recordUnresolvedWebhook } from "../../../supabase/functions/lemon-squeezy-webhook/lib/deadLetter";
+import { upsertSubscription } from "../../../supabase/functions/lemon-squeezy-webhook/lib/upsertSubscription";
 
 // ---------------------------------------------------------------------------
 // verifySignature — Node-compatible re-implementation for algorithm testing
@@ -129,11 +130,19 @@ function buildMockPayload(overrides = {}) {
 // ===========================================================================
 
 describe("extractPayload", () => {
-  it("extracts all 8 whitelisted fields from a valid LS payload", () => {
-    const body = buildMockPayload();
+  it("extracts all 9 whitelisted fields from a valid LS payload", () => {
+    const body = buildMockPayload({
+      meta: {
+        custom_data: {
+          parent_id: "parent-uuid-1",
+          student_id: "abc123-student-uuid",
+        },
+      },
+    });
     const result = extractPayload(body);
 
     expect(result.event_name).toBe("subscription_created");
+    expect(result.parent_id).toBe("parent-uuid-1");
     expect(result.student_id).toBe("abc123-student-uuid");
     expect(result.ls_subscription_id).toBe("sub_12345");
     expect(result.ls_customer_id).toBe("98765");
@@ -141,6 +150,25 @@ describe("extractPayload", () => {
     expect(result.status).toBe("active");
     expect(result.parent_email).toBe("parent@example.com");
     expect(result.current_period_end).toBe("2026-03-27T00:00:00.000000Z");
+  });
+
+  it("Test 1: meta.custom_data.parent_id present -> the returned object's parent_id equals it", () => {
+    const body = buildMockPayload({
+      meta: { custom_data: { parent_id: "the-parent-uuid" } },
+    });
+    const result = extractPayload(body);
+
+    expect(result.parent_id).toBe("the-parent-uuid");
+  });
+
+  it("Test 2: meta.custom_data.parent_id absent -> parent_id is undefined and student_id still extracts (no regression on the legacy shape)", () => {
+    const body = buildMockPayload({
+      meta: { custom_data: { student_id: "legacy-student-uuid" } },
+    });
+    const result = extractPayload(body);
+
+    expect(result.parent_id).toBeUndefined();
+    expect(result.student_id).toBe("legacy-student-uuid");
   });
 
   it("returns undefined student_id when meta.custom_data is absent", () => {
@@ -214,7 +242,23 @@ describe("extractPayload", () => {
     expect(result).not.toHaveProperty("created_at");
     expect(result).not.toHaveProperty("cancelled");
     expect(result).not.toHaveProperty("ends_at");
-    expect(Object.keys(result)).toHaveLength(8);
+    expect(Object.keys(result)).toHaveLength(9);
+  });
+
+  it("Test 4: an entirely unrelated custom_data key is discarded (whitelist integrity)", () => {
+    const body = buildMockPayload({
+      meta: {
+        custom_data: {
+          parent_id: "the-parent-uuid",
+          student_id: "the-student-uuid",
+          some_unrelated_key: "should-not-appear-anywhere",
+        },
+      },
+    });
+    const result = extractPayload(body);
+
+    expect(result).not.toHaveProperty("some_unrelated_key");
+    expect(JSON.stringify(result)).not.toContain("should-not-appear-anywhere");
   });
 
   it("handles null/undefined body gracefully without throwing", () => {
@@ -596,5 +640,104 @@ describe("recordUnresolvedWebhook", () => {
     for (const call of consoleErrorSpy.mock.calls) {
       expect(JSON.stringify(call)).not.toContain("should-not-leak");
     }
+  });
+});
+
+// ===========================================================================
+// 6. upsertSubscription — D-14 parent_id-only writer
+// ===========================================================================
+
+/**
+ * Local mock Supabase client for upsertSubscription's two-chain sequence:
+ *   .from('subscription_plans').select().eq().maybeSingle()
+ *   .from('parent_subscriptions').upsert(obj, opts)
+ */
+function createUpsertMockSupabase({ plan, upsertError } = {}) {
+  const calls = {
+    from: [],
+    upsertedObject: undefined,
+    upsertOptions: undefined,
+  };
+  return {
+    calls,
+    from(table) {
+      calls.from.push(table);
+      if (table === "subscription_plans") {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: async () => plan ?? { data: null, error: null },
+            }),
+          }),
+        };
+      }
+      if (table === "parent_subscriptions") {
+        return {
+          upsert: async (obj, opts) => {
+            calls.upsertedObject = obj;
+            calls.upsertOptions = opts;
+            return upsertError
+              ? { data: null, error: upsertError }
+              : { data: null, error: null };
+          },
+        };
+      }
+      throw new Error(`Unexpected table: ${table}`);
+    },
+  };
+}
+
+function buildUpsertPayload(overrides = {}) {
+  return {
+    event_name: "subscription_created",
+    parent_id: undefined,
+    student_id: "legacy-student-uuid",
+    ls_subscription_id: "sub_54321",
+    ls_customer_id: "555",
+    ls_variant_id: "861115",
+    status: "active",
+    parent_email: "parent@example.com",
+    current_period_end: "2026-05-01T00:00:00.000000Z",
+    ...overrides,
+  };
+}
+
+describe("upsertSubscription", () => {
+  it("Test 5: called with a resolved parent id, the upserted object contains parent_id and does NOT contain a student_id key (D-14)", async () => {
+    const supabase = createUpsertMockSupabase({
+      plan: { data: { id: "plan-uuid" }, error: null },
+    });
+    const payload = buildUpsertPayload();
+
+    await upsertSubscription(supabase, payload, "resolved-parent-uuid");
+
+    expect(supabase.calls.upsertedObject.parent_id).toBe(
+      "resolved-parent-uuid"
+    );
+    expect(Object.keys(supabase.calls.upsertedObject)).not.toContain(
+      "student_id"
+    );
+  });
+
+  it("Test 6: onConflict is still exactly 'ls_subscription_id'", async () => {
+    const supabase = createUpsertMockSupabase();
+    const payload = buildUpsertPayload();
+
+    await upsertSubscription(supabase, payload, "resolved-parent-uuid");
+
+    expect(supabase.calls.upsertOptions).toEqual({
+      onConflict: "ls_subscription_id",
+    });
+  });
+
+  it("Test 7: a DB error is still re-thrown so index.ts can return 500 and let LS retry", async () => {
+    const supabase = createUpsertMockSupabase({
+      upsertError: { message: "db error" },
+    });
+    const payload = buildUpsertPayload();
+
+    await expect(
+      upsertSubscription(supabase, payload, "resolved-parent-uuid")
+    ).rejects.toEqual({ message: "db error" });
   });
 });
