@@ -30,7 +30,7 @@
 //   SUPABASE_URL                -- auto-injected by Supabase
 //   SUPABASE_SERVICE_ROLE_KEY   -- auto-injected by Supabase
 
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 // ============================================================
 // Data categories removed during account deletion.
@@ -38,38 +38,38 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 // Also used in the email body for transparency.
 // ============================================================
 const DATA_CATEGORIES_REMOVED = [
-  'students',
-  'students_score',
-  'student_skill_progress',
-  'student_daily_goals',
-  'practice_sessions',
-  'student_achievements',
-  'assignment_submissions',
-  'parental_consent_log',
-  'parental_consent_tokens',
-  'student_point_transactions',
-  'user_accessories',
-  'parent_subscriptions',
-  'push_subscriptions',
-  'student_daily_challenges',
+  "students",
+  "students_score",
+  "student_skill_progress",
+  "student_daily_goals",
+  "practice_sessions",
+  "student_achievements",
+  "assignment_submissions",
+  "parental_consent_log",
+  "parental_consent_tokens",
+  "student_point_transactions",
+  "user_accessories",
+  "parent_subscriptions",
+  "push_subscriptions",
+  "student_daily_challenges",
 ];
 
 // Human-readable descriptions of data categories for the parent email
 const DATA_CATEGORY_LABELS: Record<string, string> = {
-  students: 'Account and profile information',
-  students_score: 'Game scores and performance history',
-  student_skill_progress: 'Skill progress and achievements',
-  student_daily_goals: 'Daily goals and challenge records',
-  practice_sessions: 'Practice session recordings',
-  student_achievements: 'Earned badges and achievements',
-  assignment_submissions: 'Teacher assignment submissions',
-  parental_consent_log: 'Parental consent records',
-  parental_consent_tokens: 'Consent verification tokens',
-  student_point_transactions: 'Point transaction history',
-  user_accessories: 'Avatar and accessory selections',
-  parent_subscriptions: 'Subscription and payment records',
-  push_subscriptions: 'Push notification preferences',
-  student_daily_challenges: 'Daily challenge history',
+  students: "Account and profile information",
+  students_score: "Game scores and performance history",
+  student_skill_progress: "Skill progress and achievements",
+  student_daily_goals: "Daily goals and challenge records",
+  practice_sessions: "Practice session recordings",
+  student_achievements: "Earned badges and achievements",
+  assignment_submissions: "Teacher assignment submissions",
+  parental_consent_log: "Parental consent records",
+  parental_consent_tokens: "Consent verification tokens",
+  student_point_transactions: "Point transaction history",
+  user_accessories: "Avatar and accessory selections",
+  parent_subscriptions: "Subscription and payment records",
+  push_subscriptions: "Push notification preferences",
+  student_daily_challenges: "Daily challenge history",
 };
 
 // ============================================================
@@ -77,16 +77,25 @@ const DATA_CATEGORY_LABELS: Record<string, string> = {
 // Uses Web Crypto API (available in Deno)
 // Pattern reused from send-weekly-report/index.ts
 // ============================================================
-async function hashStudentId(studentId: string, secret: string): Promise<string> {
+async function hashStudentId(
+  studentId: string,
+  secret: string
+): Promise<string> {
   const key = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     new TextEncoder().encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
+    { name: "HMAC", hash: "SHA-256" },
     false,
-    ['sign']
+    ["sign"]
   );
-  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(studentId));
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  const sig = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    new TextEncoder().encode(studentId)
+  );
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 // ============================================================
@@ -99,19 +108,23 @@ interface DeletionConfirmationParams {
   dataCategories: string[];
 }
 
-function generateDeletionConfirmationHTML(params: DeletionConfirmationParams): string {
+function generateDeletionConfirmationHTML(
+  params: DeletionConfirmationParams
+): string {
   const { childName, deletionDate, dataCategories } = params;
 
-  const childRef = childName ? `<strong>${childName}</strong>` : 'your child';
-  const childPossessive = childName ? `<strong>${childName}'s</strong>` : "your child's";
+  const childRef = childName ? `<strong>${childName}</strong>` : "your child";
+  const childPossessive = childName
+    ? `<strong>${childName}'s</strong>`
+    : "your child's";
 
   // Build bullet list of human-readable data category labels
   const categoryItems = dataCategories
-    .map(cat => {
+    .map((cat) => {
       const label = DATA_CATEGORY_LABELS[cat] ?? cat;
       return `<li style="margin-bottom: 8px;">${label}</li>`;
     })
-    .join('\n                ');
+    .join("\n                ");
 
   return `
 <!DOCTYPE html>
@@ -230,94 +243,117 @@ function generateDeletionConfirmationHTML(params: DeletionConfirmationParams): s
 // ============================================================
 Deno.serve(async (req: Request) => {
   // CORS preflight (not needed for cron but harmless)
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     return new Response(null, {
       headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, x-cron-secret',
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, x-cron-secret",
       },
     });
   }
 
   // Only accept POST
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
   // -- Security: verify cron secret --
-  const cronSecret = Deno.env.get('CRON_SECRET');
-  const incomingSecret = req.headers.get('x-cron-secret');
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const incomingSecret = req.headers.get("x-cron-secret");
 
   if (!cronSecret || incomingSecret !== cronSecret) {
-    console.error('process-account-deletions: unauthorized -- cron secret mismatch');
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    console.error(
+      "process-account-deletions: unauthorized -- cron secret mismatch"
+    );
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
   // -- Get and validate required environment variables --
-  const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
+  const BREVO_API_KEY = Deno.env.get("BREVO_API_KEY");
   if (!BREVO_API_KEY) {
-    console.error('process-account-deletions: missing BREVO_API_KEY environment variable');
-    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error(
+      "process-account-deletions: missing BREVO_API_KEY environment variable"
+    );
+    return new Response(
+      JSON.stringify({ error: "Server configuration error" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
-  const LS_API_KEY = Deno.env.get('LS_API_KEY');
+  const LS_API_KEY = Deno.env.get("LS_API_KEY");
   if (!LS_API_KEY) {
-    console.error('process-account-deletions: missing LS_API_KEY environment variable');
-    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error(
+      "process-account-deletions: missing LS_API_KEY environment variable"
+    );
+    return new Response(
+      JSON.stringify({ error: "Server configuration error" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
-  const AUDIT_HMAC_SECRET = Deno.env.get('AUDIT_HMAC_SECRET');
+  const AUDIT_HMAC_SECRET = Deno.env.get("AUDIT_HMAC_SECRET");
   if (!AUDIT_HMAC_SECRET) {
-    console.error('process-account-deletions: missing AUDIT_HMAC_SECRET environment variable');
-    return new Response(JSON.stringify({ error: 'Server configuration error' }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    console.error(
+      "process-account-deletions: missing AUDIT_HMAC_SECRET environment variable"
+    );
+    return new Response(
+      JSON.stringify({ error: "Server configuration error" }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
   }
 
-  const SENDER_EMAIL = Deno.env.get('SENDER_EMAIL') || 'noreply@pianomaster.app';
-  const SENDER_NAME = Deno.env.get('SENDER_NAME') || 'PianoMaster';
+  const SENDER_EMAIL =
+    Deno.env.get("SENDER_EMAIL") || "noreply@pianomaster.app";
+  const SENDER_NAME = Deno.env.get("SENDER_NAME") || "PianoMaster";
 
   // -- Dry-run detection --
   const url = new URL(req.url);
-  const isDryRun = url.searchParams.get('dry_run') === 'true';
+  const isDryRun = url.searchParams.get("dry_run") === "true";
 
   if (isDryRun) {
-    console.log('process-account-deletions: dry-run mode active -- no data will be modified');
+    console.log(
+      "process-account-deletions: dry-run mode active -- no data will be modified"
+    );
   }
 
   // -- Initialize Supabase service role client --
   const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
   // -- Query eligible accounts --
   // CRITICAL: parent_email and first_name are read here, BEFORE any deletion begins
   const { data: eligibleAccounts, error: queryError } = await supabase
-    .from('students')
-    .select('id, parent_email, first_name, deletion_scheduled_at')
-    .eq('account_status', 'suspended_deletion')
-    .lt('deletion_scheduled_at', new Date().toISOString());
+    .from("students")
+    .select("id, parent_email, first_name, deletion_scheduled_at")
+    .eq("account_status", "suspended_deletion")
+    .lt("deletion_scheduled_at", new Date().toISOString());
 
   if (queryError) {
-    console.error('process-account-deletions: failed to query eligible accounts:', queryError);
-    return new Response(JSON.stringify({ error: 'Database query failed' }), {
+    console.error(
+      "process-account-deletions: failed to query eligible accounts:",
+      queryError
+    );
+    return new Response(JSON.stringify({ error: "Database query failed" }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { "Content-Type": "application/json" },
     });
   }
 
@@ -326,7 +362,9 @@ Deno.serve(async (req: Request) => {
   let failed = 0;
   let skipped = 0;
 
-  console.log(`process-account-deletions: found ${total} eligible accounts for deletion`);
+  console.log(
+    `process-account-deletions: found ${total} eligible accounts for deletion`
+  );
 
   // -- Per-account processing loop --
   for (const account of eligibleAccounts ?? []) {
@@ -335,69 +373,99 @@ Deno.serve(async (req: Request) => {
       // CRITICAL: parent_email and first_name captured BEFORE any deletion begins
       const parentEmail: string | null = account.parent_email ?? null;
       const childName: string | null = account.first_name ?? null;
-      const deletionDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const deletionDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
       let lsCancelled = false;
 
       // --- DRY RUN CHECK ---
       if (isDryRun) {
-        console.log(`process-account-deletions: [dry-run] would delete student ${studentId}`);
+        console.log(
+          `process-account-deletions: [dry-run] would delete student ${studentId}`
+        );
         // Write dry-run audit record to show what would happen
         const studentIdHash = await hashStudentId(studentId, AUDIT_HMAC_SECRET);
-        await supabase.from('account_deletion_log').insert({
+        await supabase.from("account_deletion_log").insert({
           student_id_hash: studentIdHash,
           data_categories_removed: DATA_CATEGORIES_REMOVED,
           ls_subscription_cancelled: false,
-          email_status: 'skipped',
+          email_status: "skipped",
           dry_run: true,
         });
         skipped++;
         continue;
       }
 
-      // --- STEP 1: Check and cancel LS subscription (if active) ---
-      const { data: subscription } = await supabase
-        .from('parent_subscriptions')
-        .select('ls_subscription_id, status')
-        .eq('student_id', studentId)
-        .maybeSingle();
+      // --- STEP 1: Check and cancel LS subscription(s) (if active) ---
+      // Match on EITHER ownership column. Post-Phase-5 rows carry parent_id; pre-Phase-5 rows
+      // carry the legacy student_id. Both are the same uid in practice (Phase 1 reused UUIDs).
+      // Simplify to parent_id alone when student_id is dropped in Phase 8.
+      // No .maybeSingle() — a parent can legitimately hold multiple rows (D-06/D-08).
+      const { data: subscriptions } = await supabase
+        .from("parent_subscriptions")
+        .select("ls_subscription_id, status")
+        .or(`parent_id.eq.${studentId},student_id.eq.${studentId}`);
 
-      if (subscription && ['active', 'on_trial', 'paused'].includes(subscription.status)) {
+      // Deliberately keeps the broader status list (including 'paused') rather than reusing
+      // isQualifyingSubscription — this function must terminate a paused LS-side record too,
+      // and it deliberately ignores the grace-window statuses (cancelled/past_due are already
+      // terminating LS-side, nothing to cancel).
+      const cancellable = (subscriptions ?? []).filter(
+        (s) =>
+          s.ls_subscription_id &&
+          ["active", "on_trial", "paused"].includes(s.status)
+      );
+
+      let lsCancelFailed = false;
+      for (const sub of cancellable) {
         // Active subscription — must cancel before deletion to prevent orphan billing
         const lsResponse = await fetch(
-          `https://api.lemonsqueezy.com/v1/subscriptions/${subscription.ls_subscription_id}`,
+          `https://api.lemonsqueezy.com/v1/subscriptions/${sub.ls_subscription_id}`,
           {
-            method: 'DELETE',
+            method: "DELETE",
             headers: {
-              'Accept': 'application/vnd.api+json',
-              'Content-Type': 'application/vnd.api+json',
-              'Authorization': `Bearer ${LS_API_KEY}`,
+              Accept: "application/vnd.api+json",
+              "Content-Type": "application/vnd.api+json",
+              Authorization: `Bearer ${LS_API_KEY}`,
             },
           }
         );
 
         if (!lsResponse.ok) {
-          // LS failure BLOCKS this account's deletion — retry on next cron run
+          // LS failure BLOCKS this account's deletion — retry on next cron run.
+          // Cancelling a partial set and skipping deletion is correct; deleting the
+          // account with a live subscription is not.
           console.error(
             `process-account-deletions: LS cancel failed for ${studentId}, status=${lsResponse.status} -- skipping, will retry next run`
           );
-          failed++;
-          continue;
+          lsCancelFailed = true;
+          break;
         }
 
         lsCancelled = true;
-        console.log(`process-account-deletions: cancelled LS subscription for ${studentId}`);
+        console.log(
+          `process-account-deletions: cancelled LS subscription for ${studentId}`
+        );
       }
-      // If no subscription row, or status is cancelled/expired: proceed silently (free-tier or already cancelled)
+
+      if (lsCancelFailed) {
+        failed++;
+        continue;
+      }
+      // If no subscription rows, or all rows are cancelled/expired: proceed silently (free-tier or already cancelled)
 
       // --- STEP 2: DELETE FROM students (CASCADE removes all child rows) ---
       // CASCADE deletes: students_score, student_skill_progress, student_daily_goals,
       // practice_sessions, student_achievements, assignment_submissions, parental_consent_log,
       // parental_consent_tokens, student_point_transactions, user_accessories,
       // parent_subscriptions, push_subscriptions, student_daily_challenges
+      // NOTE (Phase 5): a parent_subscriptions row that carries parent_id but a NULL legacy
+      // student_id is NOT removed by this students-table CASCADE — it is instead covered by
+      // the new parent_subscriptions_parent_id_fkey ... ON DELETE CASCADE to parents(id)
+      // (plan 05-02). Phase 8 must re-verify this once student_id is dropped entirely
+      // (recorded in 02-phase8-handoff.md).
       const { error: deleteError } = await supabase
-        .from('students')
+        .from("students")
         .delete()
-        .eq('id', studentId);
+        .eq("id", studentId);
 
       if (deleteError) {
         console.error(
@@ -409,9 +477,10 @@ Deno.serve(async (req: Request) => {
       }
 
       // --- STEP 3: Delete auth.users entry ---
-      const { error: authError } = await supabase.auth.admin.deleteUser(studentId);
+      const { error: authError } =
+        await supabase.auth.admin.deleteUser(studentId);
       if (authError) {
-        if (authError.message?.includes('User not found')) {
+        if (authError.message?.includes("User not found")) {
           // Idempotent — already deleted on a previous run; not an error
           console.log(
             `process-account-deletions: auth user already gone for ${studentId} -- treating as success`
@@ -426,7 +495,7 @@ Deno.serve(async (req: Request) => {
       }
 
       // --- STEP 4: Send confirmation email to parent ---
-      let emailStatus: 'sent' | 'failed' | 'skipped' = 'skipped';
+      let emailStatus: "sent" | "failed" | "skipped" = "skipped";
 
       if (parentEmail) {
         try {
@@ -439,30 +508,33 @@ Deno.serve(async (req: Request) => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
 
-          const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'api-key': BREVO_API_KEY,
-            },
-            body: JSON.stringify({
-              sender: { name: SENDER_NAME, email: SENDER_EMAIL },
-              to: [{ email: parentEmail }],
-              subject: 'Account Deletion Confirmation - PianoMaster',
-              htmlContent,
-            }),
-            signal: controller.signal,
-          });
+          const brevoResponse = await fetch(
+            "https://api.brevo.com/v3/smtp/email",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "api-key": BREVO_API_KEY,
+              },
+              body: JSON.stringify({
+                sender: { name: SENDER_NAME, email: SENDER_EMAIL },
+                to: [{ email: parentEmail }],
+                subject: "Account Deletion Confirmation - PianoMaster",
+                htmlContent,
+              }),
+              signal: controller.signal,
+            }
+          );
 
           clearTimeout(timeoutId);
 
           if (brevoResponse.ok) {
-            emailStatus = 'sent';
+            emailStatus = "sent";
             console.log(
               `process-account-deletions: confirmation email sent for ${studentId}`
             );
           } else {
-            emailStatus = 'failed';
+            emailStatus = "failed";
             const errData = await brevoResponse.json().catch(() => ({}));
             console.error(
               `process-account-deletions: Brevo error for ${studentId}:`,
@@ -471,7 +543,7 @@ Deno.serve(async (req: Request) => {
             );
           }
         } catch (emailErr: unknown) {
-          emailStatus = 'failed';
+          emailStatus = "failed";
           console.error(
             `process-account-deletions: email send error for ${studentId}:`,
             emailErr
@@ -486,13 +558,15 @@ Deno.serve(async (req: Request) => {
 
       // --- STEP 5: Write audit record ---
       const studentIdHash = await hashStudentId(studentId, AUDIT_HMAC_SECRET);
-      const { error: auditError } = await supabase.from('account_deletion_log').insert({
-        student_id_hash: studentIdHash,
-        data_categories_removed: DATA_CATEGORIES_REMOVED,
-        ls_subscription_cancelled: lsCancelled,
-        email_status: emailStatus,
-        dry_run: false,
-      });
+      const { error: auditError } = await supabase
+        .from("account_deletion_log")
+        .insert({
+          student_id_hash: studentIdHash,
+          data_categories_removed: DATA_CATEGORIES_REMOVED,
+          ls_subscription_cancelled: lsCancelled,
+          email_status: emailStatus,
+          dry_run: false,
+        });
 
       if (auditError) {
         // Audit failure does not block — deletion already succeeded
@@ -502,7 +576,9 @@ Deno.serve(async (req: Request) => {
         );
       }
 
-      console.log(`process-account-deletions: permanently deleted student ${studentId}`);
+      console.log(
+        `process-account-deletions: permanently deleted student ${studentId}`
+      );
       deleted++;
     } catch (err: unknown) {
       console.error(
@@ -521,10 +597,13 @@ Deno.serve(async (req: Request) => {
     total: eligibleAccounts?.length ?? 0,
   };
 
-  console.log('process-account-deletions: complete --', JSON.stringify(summary));
+  console.log(
+    "process-account-deletions: complete --",
+    JSON.stringify(summary)
+  );
 
   return new Response(JSON.stringify(summary), {
     status: 200,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   });
 });
