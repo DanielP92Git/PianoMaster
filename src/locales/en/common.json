@@ -1637,6 +1637,7 @@
     "cancelling": "Cancelling...",
     "cancelSuccess": "Subscription cancelled. You'll keep access until {{date}}.",
     "cancelError": "Could not cancel subscription. Please try again.",
+    "cancelAmbiguous": "We found more than one active subscription on this account. To avoid cancelling the wrong one, please contact support and we'll sort it out.",
     "resubscribe": "Re-subscribe",
     "noSubscription": "No active subscription",
     "unlockAccess": "Unlock Full Access",
