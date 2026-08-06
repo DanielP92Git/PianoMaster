@@ -28,23 +28,33 @@
 --   - npm run test:run does not depend on live DB state (mocked) -- run it
 --     separately, any time, per CLAUDE.md.
 --
--- VERDICT VISIBILITY: two lessons learned the hard way while building this
--- script, both worth knowing before you run it:
+-- VERDICT VISIBILITY: three lessons learned the hard way while building this
+-- script, all worth knowing before you run it:
 --   1. Supabase's SQL Editor does not reliably surface RAISE NOTICE output in
 --      its results pane. Every assertion instead appends a line to a SESSION-
 --      LEVEL custom setting (`rehearsal.log`, via set_config(..., is_local =>
 --      false)) -- session GUCs are NOT rolled back by ROLLBACK, unlike table
---      rows, so the accumulated log survives past the transaction's end.
+--      rows.
 --   2. When you paste a multi-statement script and run it as one execution,
 --      the Editor shows only the LAST statement's result -- not every SELECT
---      along the way. So this script has exactly ONE meaningful SELECT, at
---      the very end, which reads back the entire accumulated log in one go.
---      A hard ASSERT failure still aborts the transaction early and surfaces
---      as a normal ERROR (proven visible) -- paste that back too if it happens.
+--      along the way.
+--   3. The Editor connects through a pooler. A transaction is guaranteed to
+--      stay on one physical connection for its own duration (that's why
+--      BEGIN...ROLLBACK works correctly), but the pooler can hand the NEXT
+--      statement a different connection the instant the transaction ends --
+--      silently dropping session-level state like the accumulator above.
+--      So the one SELECT that reads the accumulator back MUST run BEFORE
+--      ROLLBACK, and ROLLBACK MUST be the true last statement in the script
+--      with nothing after it. This is why the accumulator's final read
+--      happens where it does below, not after the rollback.
 --
--- After running: paste back the ONE final result (a single text blob -- copy
--- it in full, including line breaks) and any ERROR text, so 05-apply-log.md
--- can be filled with real PASS/FAIL verdicts per assertion.
+-- After running THIS script: paste back the ONE result it produces (a single
+-- text blob -- copy it in full, including line breaks) and any ERROR text,
+-- so 05-apply-log.md can be filled with real PASS/FAIL verdicts per
+-- assertion. Then run the small separate post-rollback sanity check (given
+-- alongside this script, not part of it, precisely because it must run
+-- AFTER rollback and therefore cannot safely share this script's
+-- accumulator) and paste that result too.
 -- ============================================================================
 
 
@@ -732,47 +742,33 @@ BEGIN
   PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'REAPPLY-MIG-BACKFILL: PASS\n', false);
 END $$;
 
-
--- ============================================================================
--- UNDO EVERYTHING. Nothing above this line persists in production.
--- ============================================================================
-
-ROLLBACK;
-
--- Post-rollback sanity check: append its result to the SAME session-level log
--- (session GUCs are unaffected by the ROLLBACK that just happened -- see the
--- VERDICT VISIBILITY note at the top). This runs as its own auto-committed
--- statement, outside any transaction.
-DO $$
-DECLARE
-  c1 INT; c2 INT; c3 INT; c4 INT;
-BEGIN
-  SELECT count(*) INTO c1 FROM pg_attribute WHERE attrelid = 'public.parent_subscriptions'::regclass AND attname = 'parent_id' AND NOT attisdropped;
-  SELECT count(*) INTO c2 FROM pg_policies WHERE schemaname='public' AND tablename='parent_subscriptions' AND policyname = 'parent_subscriptions_select_own_parent';
-  SELECT count(*) INTO c3 FROM pg_class WHERE relname = 'unresolved_webhook_log';
-  SELECT count(*) INTO c4 FROM parent_subscriptions WHERE ls_subscription_id LIKE 'rehearsal_%';
-  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) ||
-    format(E'POST-ROLLBACK-SANITY: parent_id_column_count=%s (expect 0), new_policy_count=%s (expect 0), dead_letter_table_count=%s (expect 0), probe_rows_count=%s (expect 0)\n',
-      c1, c2, c3, c4), false);
-END $$;
-
 DROP TABLE IF EXISTS _r5;
 
 -- ============================================================================
--- THE ONE RESULT THAT MATTERS. This is the ONLY statement whose result you
--- need to copy -- it is deliberately the very last statement in this script,
--- since the SQL Editor only shows the last result when running a pasted
--- script as one execution. Copy the full text value back, including all line
--- breaks, so 05-apply-log.md can be filled with real PASS/FAIL verdicts per
--- assertion.
+-- THE VERDICT. Read while STILL INSIDE the transaction, deliberately BEFORE
+-- ROLLBACK -- a transaction is guaranteed to stay on one physical connection
+-- for its whole duration, but a pooled connection can be swapped out for the
+-- NEXT statement the instant the transaction ends, silently dropping
+-- session-level state (confirmed the hard way earlier in this same
+-- rehearsal: a post-rollback read of this same accumulator came back with
+-- only what was logged after the swap). Copy the full text value back,
+-- including all line breaks, so 05-apply-log.md can be filled with real
+-- PASS/FAIL verdicts per assertion.
 --
--- A clean run: no ERROR appeared anywhere while this ran, every line reads
--- "PASS" (except MIG-BACKFILL-COUNT, D08-AUDIT, and POST-ROLLBACK-SANITY,
--- which are informational), and POST-ROLLBACK-SANITY's four counts are all 0.
+-- A clean run: no ERROR appeared anywhere while this ran, and every line
+-- reads "PASS" (except MIG-BACKFILL-COUNT and D08-AUDIT, which are
+-- informational).
 --
 -- If an ERROR appeared instead: the transaction aborted before reaching this
 -- point, but everything logged before the abort is still in this same
--- accumulator (session GUCs survive the abort same as they survive a clean
--- ROLLBACK) -- paste both this result AND the ERROR text back.
+-- accumulator (session GUCs survive an abort same as a clean ROLLBACK) --
+-- paste both this result AND the ERROR text back.
 -- ============================================================================
 SELECT current_setting('rehearsal.log', true) AS full_rehearsal_output;
+
+-- ============================================================================
+-- UNDO EVERYTHING. Nothing above this line persists in production. This MUST
+-- be the last statement in this script -- do not add anything after it (see
+-- the connection-pooling note above).
+-- ============================================================================
+ROLLBACK;
