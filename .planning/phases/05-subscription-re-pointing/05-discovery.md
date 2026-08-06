@@ -108,7 +108,42 @@ filtered out.
 
 ## 3. Lemon Squeezy test-mode readiness
 
-_pending Task 3_
+```
+test_mode_variant_exists: yes
+test_mode_variant_id: 861115
+test_mode_webhook_registration: pending_verification
+test_mode_signing_secret_available: yes
+test_mode_api_key_available: yes
+sandbox_target: throwaway-project
+```
+
+`test_mode_webhook_registration: pending_verification` — the owner just submitted store ID
+verification/activation and currently cannot toggle Test mode off to compare against the Live webhook
+list, so it is not yet confirmed whether this is a separate Test-mode-only registration or one shared
+entry serving both modes (RESEARCH Assumption A2 still open). What IS confirmed: exactly one webhook
+registration is visible while Test mode is on, URL
+`https://hdltcvgqrtxuxgjdvzzu.supabase.co/functions/v1/lemon-squeezy-webhook` (the production Edge
+Function URL), listening for 4 events, with a signing secret already configured (owner confirmed yes,
+value not disclosed).
+
+The test-mode checkout page was visually confirmed working: navigating the product's Share/Checkout
+Link for "App Payment" (variant note: the product has two variants, "Yearly USD" $79.90/yr and
+"Monthly USD" — the owner did not specify which variant `861115` corresponds to; recorded here as a
+minor open detail, not a blocker) rendered a full checkout form (email, card details placeholder
+`XXXX-XXXX-XXXX-4242`, cardholder name, billing address, tax ID, price selector) — the store is
+checkout-ready in test mode.
+
+### Consequences for plan 05-08
+
+- `test_mode_variant_id: 861115` is the value plan 05-06's seed script must write into the local
+  `subscription_plans.lemon_squeezy_variant_id` column.
+- `NEVER write a test-mode variant id into production subscription_plans (RESEARCH Pitfall 2).`
+- **Plan 05-08 must first re-verify whether the webhook registration is shared or separate** before
+  doing anything with it, since store activation is still pending as of this writing and that
+  re-verification could not be completed now. If the registration turns out to be **shared** (one
+  registration serving both Test and Live), re-pointing it at a sandbox URL for testing would
+  temporarily break the live webhook and require restoring it afterward — plan 05-08 must budget an
+  extra owner step for this restore.
 
 ## 4. Alerting mechanism (D-03 / D-06)
 
