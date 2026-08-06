@@ -67,6 +67,14 @@ migration file `20260404000001_ensure_subscription_rls.sql`. **No drift between 
 and production.** Signature confirmed: `has_active_subscription(p_student_id uuid)`,
 `LANGUAGE sql STABLE SECURITY DEFINER`.
 
+**Addendum (found by plan 05-07's production rehearsal, not by this discovery pass):** `student_id`'s
+pre-existing `NOT NULL` constraint blocks the D-02 "new checkout shape" (a `parent_id`-only row with no
+`student_id` at all) that the already-deployed webhook code (plan 05-03) is written to accept. The
+forward migration (plan 05-02) now additionally relaxes it via
+`ALTER COLUMN student_id DROP NOT NULL`, with the down-migration restoring it immediately before
+dropping `parent_id` so a genuine violation fails loudly instead of silently orphaning a row. See
+`05-apply-log.md`'s Rehearsal (D-09) section and commit `be66f03b` for the full narrative.
+
 ## 2. Live subscription rows (pre-backfill)
 
 **Q6 — D-08 duplicate-active-rows audit:** empty result set (zero rows). Confirms no
