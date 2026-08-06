@@ -180,11 +180,11 @@ feature is removed entirely so no child voice data is collected at all.
    **Plans**: 9 plans in 6 waves
 
    Plans:
-   - [ ] 05-01-PLAN.md — Wave 1: live-schema + Lemon Squeezy test-mode discovery, D-11 pre-backfill capture (owner-gated)
-   - [ ] 05-02-PLAN.md — Wave 2: forward + down migration (parent_id, dual policy, helper swap, dead-letter table) + D-17 Phase 8 handoff
-   - [ ] 05-03-PLAN.md — Wave 2: webhook resolve-chain (D-01) + dead-letter path (D-03)
-   - [ ] 05-04-PLAN.md — Wave 2: cancel-subscription D-06 three-branch, create-checkout D-02, account-deletion lookup fix
-   - [ ] 05-05-PLAN.md — Wave 2: client read paths (D-05 any-active-wins, D-07 detail, Realtime filter swap)
+   - [x] 05-01-PLAN.md — Wave 1: live-schema + Lemon Squeezy test-mode discovery, D-11 pre-backfill capture (owner-gated)
+   - [x] 05-02-PLAN.md — Wave 2: forward + down migration (parent_id, dual policy, helper swap, dead-letter table) + D-17 Phase 8 handoff
+   - [x] 05-03-PLAN.md — Wave 2: webhook resolve-chain (D-01) + dead-letter path (D-03)
+   - [x] 05-04-PLAN.md — Wave 2: cancel-subscription D-06 three-branch, create-checkout D-02, account-deletion lookup fix
+   - [x] 05-05-PLAN.md — Wave 2: client read paths (D-05 any-active-wins, D-07 detail, Realtime filter swap)
    - [ ] 05-06-PLAN.md — Wave 3: verification harnesses (rehearsal runbook, HMAC replay script, sandbox seed + runbook)
    - [ ] 05-07-PLAN.md — Wave 4: production BEGIN...ROLLBACK rehearsal (D-09, owner-gated)
    - [ ] 05-08-PLAN.md — Wave 5: sandbox verification — replay suite + real LS test-mode checkout (D-10, owner-gated, SC-4 gate)
