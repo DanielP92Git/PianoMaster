@@ -28,9 +28,23 @@
 --   - npm run test:run does not depend on live DB state (mocked) -- run it
 --     separately, any time, per CLAUDE.md.
 --
--- After running: paste the FULL output back -- especially every NOTICE and any
--- ERROR -- so 05-apply-log.md can be filled with real PASS/FAIL verdicts per
--- assertion.
+-- VERDICT VISIBILITY: two lessons learned the hard way while building this
+-- script, both worth knowing before you run it:
+--   1. Supabase's SQL Editor does not reliably surface RAISE NOTICE output in
+--      its results pane. Every assertion instead appends a line to a SESSION-
+--      LEVEL custom setting (`rehearsal.log`, via set_config(..., is_local =>
+--      false)) -- session GUCs are NOT rolled back by ROLLBACK, unlike table
+--      rows, so the accumulated log survives past the transaction's end.
+--   2. When you paste a multi-statement script and run it as one execution,
+--      the Editor shows only the LAST statement's result -- not every SELECT
+--      along the way. So this script has exactly ONE meaningful SELECT, at
+--      the very end, which reads back the entire accumulated log in one go.
+--      A hard ASSERT failure still aborts the transaction early and surfaces
+--      as a normal ERROR (proven visible) -- paste that back too if it happens.
+--
+-- After running: paste back the ONE final result (a single text blob -- copy
+-- it in full, including line breaks) and any ERROR text, so 05-apply-log.md
+-- can be filled with real PASS/FAIL verdicts per assertion.
 -- ============================================================================
 
 
@@ -38,6 +52,11 @@
 -- STEP 0 -- pre-migration baseline (read-only, BEFORE the rehearsal transaction
 -- opens; these are ordinary auto-committed reads, completely safe)
 -- ============================================================================
+
+-- Initialize the session-level accumulator. is_local => false means this
+-- survives the later ROLLBACK (custom GUCs are session state, not
+-- transactional state) -- see the VERDICT VISIBILITY note above.
+SELECT set_config('rehearsal.log', '', false);
 
 -- parent_a: a real parent who owns at least one parent_subscriptions row today
 --           (matched via the pre-Phase-5 student_id = parents.id UUID-reuse fact).
@@ -90,10 +109,13 @@ SELECT
 -- users for RLS testing. A temp table is owned by the connecting role (not
 -- `authenticated`), so without this grant every _r5 read after the first
 -- SET ROLE fails with "permission denied for table _r5" (Phase 2 gotcha).
+-- (rehearsal.log needs no GRANT -- custom placeholder GUCs are settable and
+-- readable by any role in the session without special privileges.)
 GRANT SELECT ON _r5 TO authenticated;
 
 -- Fail loudly now if any lookup came back NULL, rather than a confusing
--- failure deep inside a later assertion block.
+-- failure deep inside a later assertion block. Also logs the real IDs used
+-- throughout the rehearsal, for cross-reference against 05-subscription-signoff.md.
 DO $$
 DECLARE r record;
 BEGIN
@@ -102,10 +124,10 @@ BEGIN
      OR r.linked_child IS NULL OR r.linked_child_parent IS NULL THEN
     RAISE EXCEPTION 'Rehearsal variable lookup failed -- one or more required rows do not exist: %', r;
   END IF;
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) ||
+    format(E'REHEARSAL-IDS: parent_a=%s parent_b=%s null_parent_child=%s linked_child=%s linked_child_parent=%s\n',
+      r.parent_a, r.parent_b, r.null_parent_child, r.linked_child, r.linked_child_parent), false);
 END $$;
-
--- NOTE THIS OUTPUT -- these are the real IDs used throughout the rehearsal:
-SELECT * FROM _r5;
 
 -- Pre-state baseline: confirm parent_id does NOT exist yet (pg_attribute, NOT
 -- information_schema -- Phase 1's 01-fk-checklist.md DEVIATION precedent:
@@ -121,14 +143,10 @@ BEGIN
     WHERE attrelid = 'public.parent_subscriptions'::regclass
       AND attname = 'parent_id' AND NOT attisdropped
   ) INTO col_exists;
-  RAISE NOTICE 'PRE-STATE: % total row(s) in parent_subscriptions (05-discovery.md SC-2 correction: expect 9, not 3)', total_rows;
   ASSERT col_exists = false, 'PRE-STATE FAIL: parent_id column already exists -- this migration may already be applied';
-  RAISE NOTICE 'PRE-STATE PASS: parent_id column does not yet exist';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) ||
+    format(E'PRE-STATE: PASS (%s total row(s) in parent_subscriptions -- 05-discovery.md SC-2 correction: expect 9, not 3 -- parent_id column absent)\n', total_rows), false);
 END $$;
-
--- Pre-state row dump -- every live row's identity keys, for the operator's own
--- before/after comparison alongside 05-subscription-signoff.md:
-SELECT ls_subscription_id, student_id, status FROM parent_subscriptions ORDER BY created_at;
 
 
 -- ============================================================================
@@ -183,7 +201,8 @@ DECLARE unresolved_count INT;
 BEGIN
   SELECT COUNT(*) INTO unresolved_count
   FROM parent_subscriptions WHERE parent_id IS NULL;
-  RAISE NOTICE 'BACKFILL: % row(s) left with parent_id IS NULL (expected 0)', unresolved_count;
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) ||
+    format(E'MIG-BACKFILL-COUNT: INFO (%s row(s) left with parent_id IS NULL, expected 0)\n', unresolved_count), false);
 END $$;
 
 DROP POLICY IF EXISTS "parent_subscriptions_select_own_parent" ON parent_subscriptions;
@@ -250,7 +269,7 @@ COMMENT ON TABLE unresolved_webhook_log IS
 
 
 -- ----------------------------------------------------------------------------
--- Section B -- assertions. One DO $$ ... ASSERT ... RAISE NOTICE '<ID> PASS';
+-- Section B -- assertions. One DO $$ ... ASSERT ... PERFORM set_config(...)
 -- END $$; block per must_have. pg_catalog only -- information_schema returns
 -- [] under Supabase's non-owner query role (Phase 1 01-fk-checklist.md
 -- DEVIATION precedent).
@@ -265,7 +284,7 @@ BEGIN
   WHERE attrelid = 'public.parent_subscriptions'::regclass
     AND attname = 'parent_id' AND NOT attisdropped;
   ASSERT col_type = 'uuid', format('SC1-COL FAIL: parent_id type is %s, expected uuid', col_type);
-  RAISE NOTICE 'SC1-COL PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-COL: PASS\n', false);
 END $$;
 
 -- SC1-FK: a pg_constraint row of contype='f' on parent_id referencing parents.
@@ -278,7 +297,7 @@ BEGIN
       AND confrelid = 'public.parents'::regclass
       AND conname = 'parent_subscriptions_parent_id_fkey'
   ), 'SC1-FK FAIL: no FK constraint parent_subscriptions_parent_id_fkey -> parents found';
-  RAISE NOTICE 'SC1-FK PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-FK: PASS\n', false);
 END $$;
 
 -- SC1-IDX: parent_subscriptions_parent_id_idx exists.
@@ -289,7 +308,7 @@ BEGIN
     WHERE schemaname = 'public' AND tablename = 'parent_subscriptions'
       AND indexname = 'parent_subscriptions_parent_id_idx'
   ), 'SC1-IDX FAIL: parent_subscriptions_parent_id_idx does not exist';
-  RAISE NOTICE 'SC1-IDX PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-IDX: PASS\n', false);
 END $$;
 
 -- SC1-POL-NEW: the new sibling SELECT policy exists, correct shape.
@@ -303,7 +322,7 @@ BEGIN
   ASSERT pol.cmd = 'SELECT', format('SC1-POL-NEW FAIL: cmd is %s, expected SELECT', pol.cmd);
   ASSERT pol.permissive = 'PERMISSIVE', format('SC1-POL-NEW FAIL: permissive is %s, expected PERMISSIVE', pol.permissive);
   ASSERT pol.qual ILIKE '%parent_id%', format('SC1-POL-NEW FAIL: qual does not reference parent_id: %s', pol.qual);
-  RAISE NOTICE 'SC1-POL-NEW PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-POL-NEW: PASS\n', false);
 END $$;
 
 -- SC1-POL-LEGACY: the pre-existing legacy policy still exists (D-15 additive
@@ -316,7 +335,7 @@ BEGIN
     WHERE schemaname = 'public' AND tablename = 'parent_subscriptions'
       AND policyname = 'parent_subscriptions_select_own'
   ), 'SC1-POL-LEGACY FAIL: legacy parent_subscriptions_select_own policy was dropped -- D-15 requires additive-only';
-  RAISE NOTICE 'SC1-POL-LEGACY PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-POL-LEGACY: PASS\n', false);
 END $$;
 
 -- SC1-POL-PLAIN: no policy on parent_subscriptions references owned_child_ids
@@ -328,7 +347,7 @@ BEGIN
     WHERE schemaname = 'public' AND tablename = 'parent_subscriptions'
       AND (qual ILIKE '%owned_child_ids%' OR with_check ILIKE '%owned_child_ids%')
   ) = 0, 'SC1-POL-PLAIN FAIL: a parent_subscriptions policy references owned_child_ids';
-  RAISE NOTICE 'SC1-POL-PLAIN PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-POL-PLAIN: PASS\n', false);
 END $$;
 
 -- SC1-NOWRITE: zero non-SELECT policies on parent_subscriptions for
@@ -341,7 +360,7 @@ BEGIN
       AND cmd <> 'SELECT'
       AND 'authenticated' = ANY(roles)
   ) = 0, 'SC1-NOWRITE FAIL: a non-SELECT policy for authenticated exists on parent_subscriptions';
-  RAISE NOTICE 'SC1-NOWRITE PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-NOWRITE: PASS\n', false);
 END $$;
 
 -- MIG-BACKFILL: zero rows left with parent_id IS NULL after both backfill
@@ -351,7 +370,7 @@ DECLARE n INT;
 BEGIN
   SELECT COUNT(*) INTO n FROM parent_subscriptions WHERE parent_id IS NULL;
   ASSERT n = 0, format('MIG-BACKFILL FAIL: %s row(s) still have parent_id IS NULL', n);
-  RAISE NOTICE 'MIG-BACKFILL PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'MIG-BACKFILL: PASS\n', false);
 END $$;
 
 -- MIG-BACKFILL-MATCH: every row's parent_id is explained by the D-01
@@ -367,7 +386,7 @@ BEGIN
     OR ps.parent_id = (SELECT cp.parent_id FROM child_profiles cp WHERE cp.id = ps.student_id)
   );
   ASSERT n = 0, format('MIG-BACKFILL-MATCH FAIL: %s row(s) have a parent_id not explained by the resolve-chain', n);
-  RAISE NOTICE 'MIG-BACKFILL-MATCH PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'MIG-BACKFILL-MATCH: PASS\n', false);
 END $$;
 
 -- SC1-HAS-PARENT: a parent_id-only row (D-02 new checkout shape) qualifies.
@@ -378,7 +397,7 @@ DO $$
 BEGIN
   ASSERT has_active_subscription((SELECT parent_a FROM _r5)) = true,
     'SC1-HAS-PARENT FAIL: has_active_subscription() is false for a parent_id-only active row';
-  RAISE NOTICE 'SC1-HAS-PARENT PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-HAS-PARENT: PASS\n', false);
 END $$;
 
 DELETE FROM parent_subscriptions WHERE ls_subscription_id = 'rehearsal_parentonly';
@@ -392,7 +411,7 @@ DO $$
 BEGIN
   ASSERT has_active_subscription((SELECT parent_b FROM _r5)) = true,
     'SC1-HAS-LEGACY FAIL: has_active_subscription() is false for a legacy student_id-only active row';
-  RAISE NOTICE 'SC1-HAS-LEGACY PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-HAS-LEGACY: PASS\n', false);
 END $$;
 
 DELETE FROM parent_subscriptions WHERE ls_subscription_id = 'rehearsal_legacyonly';
@@ -402,7 +421,7 @@ DO $$
 BEGIN
   ASSERT has_active_subscription(gen_random_uuid()) = false,
     'SC1-HAS-NEG FAIL: has_active_subscription() is true for a random uuid with no rows';
-  RAISE NOTICE 'SC1-HAS-NEG PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-HAS-NEG: PASS\n', false);
 END $$;
 
 -- SC1-RLS-SELF / SC1-RLS-CROSS: impersonating parent_a, they see exactly their
@@ -424,9 +443,9 @@ BEGIN
   SELECT COUNT(*) INTO own_count FROM parent_subscriptions WHERE ls_subscription_id = 'rehearsal_rls_a';
   SELECT COUNT(*) INTO cross_count FROM parent_subscriptions WHERE ls_subscription_id = 'rehearsal_rls_b';
   ASSERT own_count = 1, format('SC1-RLS-SELF FAIL: parent_a could not see own probe row (count=%s)', own_count);
-  RAISE NOTICE 'SC1-RLS-SELF PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-RLS-SELF: PASS\n', false);
   ASSERT cross_count = 0, format('SC1-RLS-CROSS FAIL: parent_a could see parent_b probe row (count=%s)', cross_count);
-  RAISE NOTICE 'SC1-RLS-CROSS PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'SC1-RLS-CROSS: PASS\n', false);
 END $$;
 
 RESET ROLE;
@@ -447,7 +466,7 @@ BEGIN
     WHERE schemaname = 'public' AND tablename = 'unresolved_webhook_log'
       AND policyname = 'deny_all_access' AND permissive = 'RESTRICTIVE'
   ), 'D03-TABLE FAIL: deny_all_access RESTRICTIVE policy missing on unresolved_webhook_log';
-  RAISE NOTICE 'D03-TABLE PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'D03-TABLE: PASS\n', false);
 END $$;
 
 -- D03-DENY: impersonating parent_a, SELECT COUNT(*) on unresolved_webhook_log
@@ -465,7 +484,7 @@ DECLARE n INT;
 BEGIN
   SELECT COUNT(*) INTO n FROM unresolved_webhook_log;
   ASSERT n = 0, format('D03-DENY FAIL: authenticated role could read %s row(s) from unresolved_webhook_log', n);
-  RAISE NOTICE 'D03-DENY PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'D03-DENY: PASS\n', false);
 END $$;
 
 RESET ROLE;
@@ -482,11 +501,11 @@ BEGIN
       AND c.contype = 'u'
       AND a.attname = 'parent_id'
   ) = 0, 'D08-NOCONSTRAINT FAIL: a unique constraint on parent_id exists -- D-08 requires none';
-  RAISE NOTICE 'D08-NOCONSTRAINT PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'D08-NOCONSTRAINT: PASS\n', false);
 END $$;
 
--- D08-AUDIT: informational only (RAISE NOTICE, not ASSERT) -- count of parents
--- with more than one currently-qualifying subscription row.
+-- D08-AUDIT: informational only (not an ASSERT) -- count of parents with more
+-- than one currently-qualifying subscription row.
 DO $$
 DECLARE n INT;
 BEGIN
@@ -498,7 +517,8 @@ BEGIN
            OR (status = 'past_due' AND current_period_end > NOW() - INTERVAL '3 days'))
     GROUP BY parent_id HAVING COUNT(*) > 1
   ) dupes;
-  RAISE NOTICE 'D08-AUDIT: % parent(s) currently have more than one qualifying subscription row', n;
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) ||
+    format(E'D08-AUDIT: INFO (%s parent(s) currently have more than one qualifying subscription row)\n', n), false);
 END $$;
 
 
@@ -554,7 +574,7 @@ BEGIN
     WHERE attrelid = 'public.parent_subscriptions'::regclass
       AND attname = 'parent_id' AND NOT attisdropped
   ), 'DOWN-COL FAIL: parent_id column still exists after down-migration';
-  RAISE NOTICE 'DOWN-COL PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'DOWN-COL: PASS\n', false);
 END $$;
 
 DO $$
@@ -569,14 +589,14 @@ BEGIN
     WHERE schemaname = 'public' AND tablename = 'parent_subscriptions'
       AND policyname = 'parent_subscriptions_select_own'
   ), 'DOWN-POL FAIL: legacy parent_subscriptions_select_own policy is missing after down-migration -- it must never be touched';
-  RAISE NOTICE 'DOWN-POL PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'DOWN-POL: PASS\n', false);
 END $$;
 
 DO $$
 BEGIN
   ASSERT NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'unresolved_webhook_log' AND relkind = 'r'),
     'DOWN-TABLE FAIL: unresolved_webhook_log still exists after down-migration';
-  RAISE NOTICE 'DOWN-TABLE PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'DOWN-TABLE: PASS\n', false);
 END $$;
 
 DO $$
@@ -585,7 +605,7 @@ BEGIN
   SELECT prosrc INTO fn_src FROM pg_proc WHERE proname = 'has_active_subscription';
   ASSERT fn_src NOT ILIKE '%parent_id%',
     'DOWN-FUNC FAIL: has_active_subscription() prosrc still references parent_id after down-migration';
-  RAISE NOTICE 'DOWN-FUNC PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'DOWN-FUNC: PASS\n', false);
 END $$;
 
 
@@ -691,7 +711,7 @@ BEGIN
   WHERE attrelid = 'public.parent_subscriptions'::regclass
     AND attname = 'parent_id' AND NOT attisdropped;
   ASSERT col_type = 'uuid', 'REAPPLY-SC1-COL FAIL: parent_id column was not recreated correctly';
-  RAISE NOTICE 'REAPPLY-SC1-COL PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'REAPPLY-SC1-COL: PASS\n', false);
 END $$;
 
 DO $$
@@ -701,7 +721,7 @@ BEGIN
     WHERE schemaname = 'public' AND tablename = 'parent_subscriptions'
       AND policyname = 'parent_subscriptions_select_own_parent'
   ), 'REAPPLY-SC1-POL-NEW FAIL: sibling policy missing after re-apply';
-  RAISE NOTICE 'REAPPLY-SC1-POL-NEW PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'REAPPLY-SC1-POL-NEW: PASS\n', false);
 END $$;
 
 DO $$
@@ -709,7 +729,7 @@ DECLARE n INT;
 BEGIN
   SELECT COUNT(*) INTO n FROM parent_subscriptions WHERE parent_id IS NULL;
   ASSERT n = 0, format('REAPPLY-MIG-BACKFILL FAIL: %s row(s) still have parent_id IS NULL after re-apply', n);
-  RAISE NOTICE 'REAPPLY-MIG-BACKFILL PASS';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) || E'REAPPLY-MIG-BACKFILL: PASS\n', false);
 END $$;
 
 
@@ -719,19 +739,40 @@ END $$;
 
 ROLLBACK;
 
--- Post-rollback sanity check (separate implicit read, confirms nothing survived):
-SELECT
-  (SELECT count(*) FROM pg_attribute WHERE attrelid = 'public.parent_subscriptions'::regclass AND attname = 'parent_id' AND NOT attisdropped) AS parent_id_column_count_should_be_0,
-  (SELECT count(*) FROM pg_policies WHERE schemaname='public' AND tablename='parent_subscriptions' AND policyname = 'parent_subscriptions_select_own_parent') AS new_policy_count_should_be_0,
-  (SELECT count(*) FROM pg_class WHERE relname = 'unresolved_webhook_log') AS dead_letter_table_count_should_be_0,
-  (SELECT count(*) FROM parent_subscriptions WHERE ls_subscription_id LIKE 'rehearsal_%') AS probe_rows_should_be_0;
+-- Post-rollback sanity check: append its result to the SAME session-level log
+-- (session GUCs are unaffected by the ROLLBACK that just happened -- see the
+-- VERDICT VISIBILITY note at the top). This runs as its own auto-committed
+-- statement, outside any transaction.
+DO $$
+DECLARE
+  c1 INT; c2 INT; c3 INT; c4 INT;
+BEGIN
+  SELECT count(*) INTO c1 FROM pg_attribute WHERE attrelid = 'public.parent_subscriptions'::regclass AND attname = 'parent_id' AND NOT attisdropped;
+  SELECT count(*) INTO c2 FROM pg_policies WHERE schemaname='public' AND tablename='parent_subscriptions' AND policyname = 'parent_subscriptions_select_own_parent';
+  SELECT count(*) INTO c3 FROM pg_class WHERE relname = 'unresolved_webhook_log';
+  SELECT count(*) INTO c4 FROM parent_subscriptions WHERE ls_subscription_id LIKE 'rehearsal_%';
+  PERFORM set_config('rehearsal.log', current_setting('rehearsal.log', true) ||
+    format(E'POST-ROLLBACK-SANITY: parent_id_column_count=%s (expect 0), new_policy_count=%s (expect 0), dead_letter_table_count=%s (expect 0), probe_rows_count=%s (expect 0)\n',
+      c1, c2, c3, c4), false);
+END $$;
 
 DROP TABLE IF EXISTS _r5;
 
 -- ============================================================================
--- AFTER RUNNING: paste the FULL output back -- especially every NOTICE and any
--- ERROR -- so 05-apply-log.md can be filled with real PASS/FAIL verdicts per
--- assertion. A clean run shows: no ERROR anywhere above, every RAISE NOTICE
--- reads "... PASS" (except D08-AUDIT, which is informational only), and the
--- final sanity-check SELECT returns all zeros.
+-- THE ONE RESULT THAT MATTERS. This is the ONLY statement whose result you
+-- need to copy -- it is deliberately the very last statement in this script,
+-- since the SQL Editor only shows the last result when running a pasted
+-- script as one execution. Copy the full text value back, including all line
+-- breaks, so 05-apply-log.md can be filled with real PASS/FAIL verdicts per
+-- assertion.
+--
+-- A clean run: no ERROR appeared anywhere while this ran, every line reads
+-- "PASS" (except MIG-BACKFILL-COUNT, D08-AUDIT, and POST-ROLLBACK-SANITY,
+-- which are informational), and POST-ROLLBACK-SANITY's four counts are all 0.
+--
+-- If an ERROR appeared instead: the transaction aborted before reaching this
+-- point, but everything logged before the abort is still in this same
+-- accumulator (session GUCs survive the abort same as they survive a clean
+-- ROLLBACK) -- paste both this result AND the ERROR text back.
 -- ============================================================================
+SELECT current_setting('rehearsal.log', true) AS full_rehearsal_output;
