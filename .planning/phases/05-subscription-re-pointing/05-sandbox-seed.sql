@@ -16,10 +16,22 @@
 --              orphaned), and one subscription_plans row carrying the
 --              confirmed test-mode variant id (861115, product "App Payment",
 --              per 05-discovery.md §3).
--- Predecessor: supabase/migrations/20260805120000_add_parent_subscriptions_parent_id.sql
+-- Predecessor: 05-sandbox-bootstrap.sql, then
+--              supabase/migrations/20260805120000_add_parent_subscriptions_parent_id.sql
 --              must already be applied to the sandbox target before this runs
 --              (parent_subscriptions.parent_id, parents, child_profiles must
 --              all exist).
+-- =============================================================================
+--
+-- CORRECTION (found only by cross-checking against confirmed real schema,
+-- not by running this file -- 05-06's original version had two real bugs):
+--   1. `parents` has NO email column ("D-08 minimal, no email" -- the real
+--      tracked migration's own comment). Step 2 below uses `display_name` as
+--      the lookup marker instead.
+--   2. `subscription_plans.id` is TEXT (parent_subscriptions.plan_id is
+--      confirmed `text`, FK-referencing it -- 05-discovery.md §1), and the
+--      real column is `amount_cents`, not `price_cents` (confirmed from
+--      subscriptionService.js's actual SELECT list). Step 3 below fixed.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
@@ -67,10 +79,10 @@
 -- placeholder literal in a pasted SQL Editor run).
 -- -----------------------------------------------------------------------------
 
-INSERT INTO parents (id, email, created_at, updated_at)
+INSERT INTO parents (id, display_name, created_at, updated_at)
 VALUES (
   :'sandbox_parent_id',
-  'sim-verify@example.invalid',
+  'sim-verify-sandbox',
   NOW(), NOW()
 );
 
@@ -96,15 +108,15 @@ VALUES (
 -- -----------------------------------------------------------------------------
 
 INSERT INTO subscription_plans (
-  id, name, lemon_squeezy_variant_id, currency, price_cents, is_active,
+  id, name, billing_period, currency, amount_cents, lemon_squeezy_variant_id,
   created_at, updated_at
 ) VALUES (
-  gen_random_uuid(),
+  'sandbox-monthly-usd',
   'SANDBOX Monthly (test mode)',
-  '861115',
+  'monthly',
   'USD',
   999,
-  true,
+  '861115',
   NOW(), NOW()
 );
 
@@ -129,7 +141,7 @@ SELECT
     WHERE sp.name = 'SANDBOX Monthly (test mode)' ORDER BY sp.created_at DESC LIMIT 1
   ) AS export_plan_id
 FROM parents p
-WHERE p.email = 'sim-verify@example.invalid'
+WHERE p.display_name = 'sim-verify-sandbox'
 ORDER BY p.created_at DESC
 LIMIT 1;
 
@@ -141,5 +153,5 @@ LIMIT 1;
 -- -----------------------------------------------------------------------------
 
 -- DELETE FROM subscription_plans WHERE name = 'SANDBOX Monthly (test mode)';
--- DELETE FROM parents WHERE email = 'sim-verify@example.invalid';
+-- DELETE FROM parents WHERE display_name = 'sim-verify-sandbox';
 -- -- (local-stack only) DELETE FROM auth.users WHERE email = 'sim-verify@example.invalid';
