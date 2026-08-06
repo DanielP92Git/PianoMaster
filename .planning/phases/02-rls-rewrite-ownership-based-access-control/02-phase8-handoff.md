@@ -100,6 +100,26 @@ locked — **not touched in Phase 2** and not a Phase 8 action item; noted here
 only for completeness in case Phase 8's broader cleanup scope wants to
 reconsider it.
 
+## 5. Phase 5 — Subscription Re-Pointing handoff items
+
+Phase 5 re-pointed `parent_subscriptions` from `student_id` to a new `parent_id`
+column using the same additive, dual-policy expand pattern as this phase (D-14
+through D-17). Nothing legacy was dropped — `student_id`, the legacy SELECT
+policy, and the helper function's `OR student_id` fallback branch all stay live
+until the items below are verified and closed out here in Phase 8. The webhook
+compatibility shim (D-01/D-02) and the checkout payload's legacy `student_id`
+key are the same expand/contract story on the Edge Function side.
+
+| Item | Type | Action needed in Phase 8 |
+|---|---|---|
+| `parent_subscriptions.student_id` column | Legacy column, frozen historical record (D-14) | `ALTER TABLE parent_subscriptions DROP COLUMN student_id;` — only after verified zero reads. Note the column is CASCADE-FK'd to `students(id)`; confirm that FK's removal does not orphan billing rows |
+| `parent_subscriptions_select_own` policy | Legacy dual-policy sibling (D-15) | `DROP POLICY "parent_subscriptions_select_own" ON parent_subscriptions;` after verified zero traffic — same evidence bar as the Phase 2 legacy-drop candidate set in section 2 above |
+| `has_active_subscription()`'s `OR student_id = p_student_id` branch | Deploy-window insurance (D-16) | `CREATE OR REPLACE` the body back to a single `parent_id = p_student_id` predicate. Signature `(p_student_id UUID)` must stay unchanged — 3 call sites in `20260801120000_rls_ownership_rewrite.sql` pass positionally |
+| Webhook compatibility shim (`resolveParent`'s `child_profiles` probe) + `student_id` key in `create-checkout`'s `checkout_data.custom` | Compatibility shim (D-02 / D-04) | Remove probe 2 from `supabase/functions/lemon-squeezy-webhook/lib/resolveParent.ts` and the `student_id` key from `create-checkout/index.ts`. Evidence bar: zero rows in `unresolved_webhook_log` AND zero `probe2` resolutions observed over the window |
+| `parent_subscriptions.parent_id` nullability | Deferred tightening (Claude's Discretion, Phase 5) | Left nullable in Phase 5 so an unresolvable webhook dead-letters rather than throwing (D-03). Once the shim is gone and `unresolved_webhook_log` is empty, consider `ALTER COLUMN parent_id SET NOT NULL` |
+| `unresolved_webhook_log` retention | New audit table (D-03) | Not dropped in Phase 8. Decide a retention/rotation policy; the table is deny-all RLS, service-role write only |
+| `process-account-deletions` LS-cancel lookup | Consequence of D-14 | Phase 5 changed the lookup to match on either column. When `student_id` is dropped, simplify it to `parent_id` only and re-verify the `students`-CASCADE assumption in that function's step-2 comment still holds for parent-owned billing rows |
+
 ## Summary for Phase 8
 
 | Item                                    | Type                                               | Action needed in Phase 8                                                                                        |
@@ -108,3 +128,4 @@ reconsider it.
 | Legacy-drop candidate set               | Contract-step cleanup                              | Drop legacy policies via the query above (exclude `child_profiles_select_teacher`), after verified zero traffic |
 | A2 (`students_total_score`)             | Closed finding                                     | None — informational only                                                                                       |
 | `teacher_student_connections` dead code | Pre-existing, D-30 locked                          | None required; optional future cleanup                                                                          |
+| Phase 5 subscription re-pointing legacy set (7 items) | Contract-step cleanup | See section 5 — drop legacy column/policy/OR-branch/shim after verified zero traffic |
