@@ -187,7 +187,7 @@ feature is removed entirely so no child voice data is collected at all.
    - [x] 05-05-PLAN.md — Wave 2: client read paths (D-05 any-active-wins, D-07 detail, Realtime filter swap)
    - [x] 05-06-PLAN.md — Wave 3: verification harnesses (rehearsal runbook, HMAC replay script, sandbox seed + runbook)
    - [x] 05-07-PLAN.md — Wave 4: production BEGIN...ROLLBACK rehearsal (D-09, owner-gated)
-   - [ ] 05-08-PLAN.md — Wave 5: sandbox verification — replay suite + real LS test-mode checkout (D-10, owner-gated, SC-4 gate)
+   - [x] 05-08-PLAN.md — Wave 5: sandbox verification — replay suite + real LS test-mode checkout (D-10, owner-gated, SC-4 gate)
    - [ ] 05-09-PLAN.md — Wave 6: [BLOCKING] production apply + D-11 per-row sign-off + Edge Function deploy (owner-gated)
    **Pitfalls to avoid**: Pitfall 13 (billing ownership mismatch — a broken webhook silently failing to renew access on a real paying customer is a support/refund incident, not just a bug).
    **Research flag**: Needs the parent-scoped-vs-child-scoped decision recorded before implementation (already decided as parent-scoped per owner decision D-05) and dedicated Lemon Squeezy sandbox verification before any of the 3 live subscriptions are touched.
