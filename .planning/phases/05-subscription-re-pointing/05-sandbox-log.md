@@ -59,8 +59,95 @@ access).
 
 ## SC-4 — real test-mode checkout
 
-_Pending — Task 2 (owner-run checkpoint). Not started yet._
+Run 2026-08-07, ~00:54–01:20 UTC. Verified throughout directly against the sandbox via Supabase MCP
+(`execute_sql` + `get_logs`), not from console-output paste.
+
+### 4. create-checkout (happy path)
+
+HTTP 200. `checkoutUrl` returned:
+`https://pianomaster.lemonsqueezy.com/checkout/custom/c54e7201-2b79-40c1-aa0e-f081bf2341d1?signature=31510b54c949f2d95bbdcc14974d4eefc89e70c7c8556e17e6739b56bbc01b2e`
+
+### 4b. create-checkout (IDOR negative, T-5-04)
+
+HTTP **403**. Body: `{"error":"Forbidden: studentId does not match authenticated user"}`. Confirmed via
+function logs: `create-checkout: studentId mismatch { authUid: "82160962-...", requestedStudentId:
+"00000000-0000-0000-0000-000000000fff" }`.
+
+### 5. Checkout completion
+
+Paid with Lemon Squeezy test card `4242 4242 4242 4242` (test mode). Resulting row:
+
+| ls_subscription_id | parent_id | student_id | status | plan_id |
+| --- | --- | --- | --- | --- |
+| `2413013` | `82160962-491c-49ae-8908-1a1114027d77` | `null` | `active` | `sandbox-monthly-usd` |
+
+`parent_id_non_null: yes`
+`student_id_null: yes`
+`ui_premium_reads_true: yes` — verified via `SELECT has_active_subscription('82160962-...')` returning
+`true` directly against the sandbox DB (substituted for a live browser check: the deployed app's env
+points at production Supabase, not this throwaway sandbox project, so loading the actual UI against
+sandbox data isn't practical — `has_active_subscription()` is the same function the UI's query reads).
+
+Informational, not a defect: `parent_email` on the row is `pagis.daniel@gmail.com` (the real email
+typed at the LS test-mode checkout), not `sim-verify@example.invalid` (the sandbox auth account's
+email) — harmless, since the resolve-chain uses `custom_data.parent_id`, never email.
+
+### 6. cancel-subscription (single active)
+
+**Deviation found here, not anticipated by plan 05-08 or the runbook:** the D-10a replay suite (Task 1)
+left the sandbox parent with **6** lingering `status: active` rows (B1, B2, B3, B4, B10a, B10b — every
+branch that reaches the DB writes `active`, not just B10's two), so the very first cancel attempt after
+checkout hit the ambiguous-multiple-subscriptions path immediately (see section 7) instead of the
+clean single-row path the runbook's step 6 assumes. `05-08-PLAN.md`'s "B10 leaves exactly two
+qualifying rows" assumption undercounted by 4. Resolved by deleting the leftover `sim_verify_%` rows
+for this parent (keeping only the real `2413013` row), then retrying.
+
+After cleanup, HTTP 200: `{ ok: true, endsAt: "2026-09-07T00:59:28.000000Z" }`. Post-webhook row status
+confirmed `cancelled` — landed automatically with no manual resend needed, confirming the earlier
+signing-secret fix (section 8 below) held for the whole session, not just one retry.
+
+### 7. cancel-subscription (D-06 ambiguity)
+
+Encountered naturally (see section 6's deviation) rather than via a deliberate B10 re-run — same code
+path, stronger evidence (7 qualifying rows instead of 2). HTTP **409**. Body:
+`{"error":"Multiple active subscriptions found — cancellation needs manual review",
+"code":"AMBIGUOUS_ACTIVE_SUBSCRIPTIONS","count":7}`. Function log:
+`CANCEL_AMBIGUOUS: { parentId: "82160962-...", count: 7, ls_subscription_ids: ["sim_verify_2026-08-06_1",
+"sim_verify_2026-08-06_2", "sim_verify_2026-08-06_3", "sim_verify_2026-08-06_4",
+"sim_verify_2026-08-06_10", "sim_verify_2026-08-06_11", "2413013"] }`.
+
+`ls_dashboard_unchanged: yes — owner-observed` (subscription `2413013` still showed active/unchanged in
+the Lemon Squeezy test-mode dashboard at that point) — also structurally guaranteed: the `ambiguous`
+branch in `cancel-subscription/index.ts` returns 409 before the code ever reaches the Lemon Squeezy
+`DELETE` fetch call, so no LS-side mutation was possible regardless of observation.
+
+### 8. Cleanup
+
+- Sandbox teardown (`DELETE FROM parents WHERE display_name = 'sim-verify-sandbox'`, cascading to
+  `child_profiles` and the remaining `parent_subscriptions` row; `subscription_plans` sandbox row
+  deleted): done.
+- Lemon Squeezy test-mode webhook URL restored from the sandbox function back to production
+  (`https://hdltcvgqrtxuxgjdvzzu.supabase.co/functions/v1/lemon-squeezy-webhook`): done.
+- Test-mode subscription `2413013` confirmed cancelled in the LS dashboard (from section 6's real
+  cancellation): yes.
+- Production safety queries (run by the owner against `hdltcvgqrtxuxgjdvzzu`, not automated — production
+  access stays owner-run per this phase's established precedent):
+  - `SELECT COUNT(*) FROM parent_subscriptions WHERE ls_subscription_id LIKE 'sim_verify_%'` → **0**
+  - `SELECT id, name, lemon_squeezy_variant_id FROM subscription_plans` → `monthly-ils` (null),
+    `yearly-ils` (null), `monthly-usd` (`1356600`), `yearly-usd` (`1356603`) — no `sandbox-monthly-usd`
+    row present. **Correction to RESEARCH Pitfall 2's assumption:** `1356600`/`1356603` are production's
+    own real, pre-existing live variant ids, not sandbox-injected ones — empirically, Lemon Squeezy does
+    not keep separate test-mode-only variant records for this product; test mode is a payment-processing
+    flag on the same catalog, not a separate one. The actual thing that mattered — no foreign
+    `sandbox-monthly-usd` row — held true.
+
+`production_clean: yes`
 
 ## Sandbox verdict
 
-_Pending SC-4._
+**SANDBOX PASS — cleared to touch live subscriptions (SC-4 satisfied)**
+
+All required conditions met: SC-3 verdict PASS; step 4b = 403; step 5 `parent_id_non_null: yes` and
+`student_id_null: yes`; step 6 = 200 (`ok: true`); step 7 = 409 with `AMBIGUOUS_ACTIVE_SUBSCRIPTIONS`
+and `ls_dashboard_unchanged: yes`; step 8 `production_clean: yes`. No Lemon Squeezy API key or signing
+secret appears anywhere in this file.
