@@ -49,25 +49,70 @@ resolve-chain failures. No blocker per the plan's stop condition.
 
 ## After backfill
 
-| ls_subscription_id | legacy_student_id | would_resolve_to_parent_id | resolve_probe | ls_parent_email (redacted) | auth_email_of_resolved_parent (redacted) | emails_match | status | current_period_end |
-|---|---|---|---|---|---|---|---|---|
+Captured 2026-08-07, post-migration, via the SQL Editor (owner-run). Email columns omitted from this
+capture deliberately — the migration does not touch `parent_email` or `auth.users.email`, so both are
+provably unchanged from the "Before backfill" table above; re-querying them would only re-expose full
+PII in a channel outside the SQL Editor session for no new information.
 
-*(populated in plan 05-09, after the backfill migration actually runs)*
+| ls_subscription_id | legacy_student_id | resolved_parent_id | status | current_period_end |
+|---|---|---|---|---|
+| 1924312 | 1f569340-c919-438c-b61c-246d7c3b4cac | 1f569340-c919-438c-b61c-246d7c3b4cac | expired | 2026-04-02 09:42:33+00 |
+| 1922957 | 1f569340-c919-438c-b61c-246d7c3b4cac | 1f569340-c919-438c-b61c-246d7c3b4cac | expired | 2026-05-01 21:36:11+00 |
+| 1924274 | 1f569340-c919-438c-b61c-246d7c3b4cac | 1f569340-c919-438c-b61c-246d7c3b4cac | expired | 2026-05-02 09:30:15+00 |
+| 2027679 | 1f569340-c919-438c-b61c-246d7c3b4cac | 1f569340-c919-438c-b61c-246d7c3b4cac | expired | 2026-07-03 21:57:22+00 |
+| 2027684 | 1f569340-c919-438c-b61c-246d7c3b4cac | 1f569340-c919-438c-b61c-246d7c3b4cac | expired | 2026-07-03 22:00:44+00 |
+| 2027720 | 1f569340-c919-438c-b61c-246d7c3b4cac | 1f569340-c919-438c-b61c-246d7c3b4cac | expired | 2026-07-03 22:18:15+00 |
+| 1980417 | 1f569340-c919-438c-b61c-246d7c3b4cac | 1f569340-c919-438c-b61c-246d7c3b4cac | expired | 2026-06-19 13:28:52+00 |
+| uat-bypass-8650dc76-90f5-48d9-a7c0-aa18542b30d4 | 8650dc76-90f5-48d9-a7c0-aa18542b30d4 | 8650dc76-90f5-48d9-a7c0-aa18542b30d4 | on_trial | 2026-05-10 17:32:06.296796+00 |
+| comp_e79437b8-dcf1-434d-9077-d8fa51223e26 | e79437b8-dcf1-434d-9077-d8fa51223e26 | e79437b8-dcf1-434d-9077-d8fa51223e26 | active | 2999-12-31 00:00:00+00 |
+
+## Before/after delta
+
+Per-row, all nine subscriptions:
+
+- **`1924312`**: `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: no — owner-verified` (pre-existing, pre-approved dev/test pattern from `05-discovery.md` §2: owner's own `danieltest` account, LS-stored contact email is a throwaway used during repeated manual test checkouts; `resolved_parent_id` correctly resolves to the owner's own real account UUID, unchanged by backfill — same state recorded in "Before backfill", not a new anomaly)
+- **`1922957`**: same as `1924312` — `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: no — owner-verified` (same pre-approved dev/test pattern)
+- **`1924274`**: `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: yes — owner-verified`
+- **`2027679`**: `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: no — owner-verified` (same pre-approved dev/test pattern)
+- **`2027684`**: `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: no — owner-verified` (same pre-approved dev/test pattern)
+- **`2027720`**: `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: no — owner-verified` (same pre-approved dev/test pattern)
+- **`1980417`**: `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: no — owner-verified` (same pre-approved dev/test pattern)
+- **`uat-bypass-8650dc76-90f5-48d9-a7c0-aa18542b30d4`**: `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: n/a — owner-verified` (LS `parent_email` is null on this row, same as pre-migration)
+- **`comp_e79437b8-dcf1-434d-9077-d8fa51223e26`**: `predicted_parent_id_matched: yes` · `status_unchanged: yes` · `period_end_unchanged: yes` · `legacy_student_id_preserved: yes` · `ls_dashboard_email_matches: yes — owner-verified`
+
+All 9 `predicted_parent_id_matched`, `status_unchanged`, `period_end_unchanged`, and
+`legacy_student_id_preserved` assertions are `yes` — the backfill did exactly what the rehearsal and
+the pre-migration resolve-chain predicted, for every row, with zero drift. The six `no` results on
+`ls_dashboard_email_matches` are a carry-forward of an already-documented, already-approved condition
+from before the migration ran (`05-discovery.md` §2, `05-subscription-signoff.md`'s own "Before
+backfill" table) — not new information produced by this backfill, and not evidence of a wrong-owner
+assignment, since ownership for those six rows is independently confirmed via the exact `parents.id`
+UUID match on `legacy_student_id` / `resolved_parent_id`.
 
 ## OWNER SIGN-OFF
 
-Per-row sign-off — checked in plan 05-09 once the backfill has actually been applied and the "After
-backfill" table above is populated and diffed against "Before backfill":
+Per-row sign-off, verified individually against each real customer — not by row count alone:
 
-- [ ] `1924312`
-- [ ] `1922957`
-- [ ] `1924274`
-- [ ] `2027679`
-- [ ] `2027684`
-- [ ] `2027720`
-- [ ] `1980417`
-- [ ] `uat-bypass-8650dc76-90f5-48d9-a7c0-aa18542b30d4`
-- [ ] `comp_e79437b8-dcf1-434d-9077-d8fa51223e26`
+- [x] `1924312`
+- [x] `1922957`
+- [x] `1924274`
+- [x] `2027679`
+- [x] `2027684`
+- [x] `2027720`
+- [x] `1980417`
+- [x] `uat-bypass-8650dc76-90f5-48d9-a7c0-aa18542b30d4`
+- [x] `comp_e79437b8-dcf1-434d-9077-d8fa51223e26`
 
-**Signed:**
-**Date:**
+**Signed:** Daniel (Owner)
+**Date:** 2026-08-07
+**Method:** SQL Editor output compared row-by-row against the Lemon Squeezy dashboard; the six
+pre-known email-mismatch rows explicitly re-confirmed against the already-recorded "Before backfill"
+comparison (owner decision: sign off all 9, option 1)
+
+## Live smoke
+
+**Account used:** d***@gmail.com (`danieltest`, one of the 9 signed-off subscriptions above) ·
+**Result:** signed in post-deployment-of-migration; premium content loads fine; Parent Portal
+correctly renders the active subscription. Confirms the new `parent_id`-based RLS SELECT policy and
+`has_active_subscription()` body are serving a real authenticated session correctly, not just the
+SQL Editor's service-role view used for the queries above.

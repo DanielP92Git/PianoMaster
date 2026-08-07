@@ -154,3 +154,16 @@ both files (see `05-discovery.md` §1 addendum).
 ### Backout readiness
 
 Run `supabase/migrations/20260805120000_add_parent_subscriptions_parent_id.down.sql` in the SQL Editor, then redeploy the previous Edge Function versions (see Task 3).
+
+### D-11 sign-off
+
+See `05-subscription-signoff.md` — all 9 live `parent_subscriptions` rows (not 3; SC-2 correction,
+`05-discovery.md` §2) individually verified after the backfill against the pre-migration "Before
+backfill" predictions. `predicted_parent_id_matched`, `status_unchanged`, `period_end_unchanged`, and
+`legacy_student_id_preserved` are `yes` for all 9 rows with zero drift. Six rows carry a pre-existing,
+pre-approved `ls_dashboard_email_matches: no` (owner's own dev/test account, explained in
+`05-discovery.md` §2, unchanged by this backfill — not new information). Live smoke test (real
+authenticated session, not the SQL Editor's service-role view) confirms premium content and Parent
+Portal both render correctly post-apply.
+
+`sc2_satisfied: yes`
