@@ -104,19 +104,24 @@ VALUES (
 
 -- -----------------------------------------------------------------------------
 -- 3. `subscription_plans` row carrying the TEST-MODE variant id (D-10, per
---    05-discovery.md §3: test_mode_variant_id = 861115, product "App Payment").
+--    05-discovery.md §3: test_mode_variant_id = 1356600, "Monthly USD" under
+--    product "App Payment", store 301493 "PianoMaster"). CORRECTION: the
+--    originally recorded `861115` did not correspond to any real variant —
+--    found only when plan 05-08's actual create-checkout call 404'd against
+--    the live Lemon Squeezy API. See 05-discovery.md §3 addendum.
 -- -----------------------------------------------------------------------------
 
 INSERT INTO subscription_plans (
   id, name, billing_period, currency, amount_cents, lemon_squeezy_variant_id,
-  created_at, updated_at
+  is_active, created_at, updated_at
 ) VALUES (
   'sandbox-monthly-usd',
   'SANDBOX Monthly (test mode)',
   'monthly',
   'USD',
   999,
-  '861115',
+  '1356600',
+  true,
   NOW(), NOW()
 );
 

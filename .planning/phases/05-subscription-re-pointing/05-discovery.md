@@ -141,10 +141,29 @@ minor open detail, not a blocker) rendered a full checkout form (email, card det
 `XXXX-XXXX-XXXX-4242`, cardholder name, billing address, tax ID, price selector) — the store is
 checkout-ready in test mode.
 
+**Addendum (found by plan 05-08's real checkout attempt, not by this discovery pass):**
+`test_mode_variant_id: 861115` was wrong. This section already flagged the ambiguity at the time
+("the owner did not specify which variant `861115` corresponds to") but recorded it as a non-blocker;
+it turned out to not correspond to any real variant at all. Queried live via the Lemon Squeezy API
+(`GET /v1/products?filter[store_id]=301493`, `GET /v1/variants?filter[product_id]=<id>`) against store
+`301493` ("PianoMaster") — the "App Payment" product actually has **three** variants, not two:
+
+```
+1356603: Yearly USD  — price 7990 (cents, i.e. $79.90)
+1356600: Monthly USD — price 790  (cents, i.e. $7.90)
+1356608: Default     — price 24990 (cents, i.e. $249.90)
+```
+
+The correct id for this phase's sandbox monthly plan is **`1356600`** (Monthly USD). The sandbox
+`subscription_plans.lemon_squeezy_variant_id` was corrected in place via `UPDATE`. `861115` never
+existed as a real variant — likely a transcription error from the original discovery screenshot, not a
+stale-but-valid id.
+
 ### Consequences for plan 05-08
 
-- `test_mode_variant_id: 861115` is the value plan 05-06's seed script must write into the local
-  `subscription_plans.lemon_squeezy_variant_id` column.
+- `test_mode_variant_id: 1356600` (Monthly USD) is the value plan 05-06's seed script must write into
+  the local `subscription_plans.lemon_squeezy_variant_id` column — corrected from the originally
+  recorded (and wrong) `861115`.
 - `NEVER write a test-mode variant id into production subscription_plans (RESEARCH Pitfall 2).`
 - **Plan 05-08 must first re-verify whether the webhook registration is shared or separate** before
   doing anything with it, since store activation is still pending as of this writing and that

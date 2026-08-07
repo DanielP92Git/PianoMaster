@@ -84,6 +84,15 @@ ALTER TABLE child_profiles ENABLE ROW LEVEL SECURITY;
 --    uuids -- the pre-existing 05-sandbox-seed.sql assumed a uuid id and a
 --    price_cents column; both were wrong against the real schema, fixed here
 --    and in that file.
+--
+--    CORRECTION 2 (found only when preparing plan 05-08 Task 2's create-checkout
+--    call, not by running this file): the original version of this table omitted
+--    `is_active`. create-checkout/index.ts filters
+--    `.eq("is_active", true).maybeSingle()` -- without this column every
+--    create-checkout call 400s with "Plan not found" before ever reaching Lemon
+--    Squeezy. Real production column, confirmed in
+--    .planning/milestones/v1.8-phases/12-database-schema-and-rls/12-01-PLAN.md:
+--    `is_active BOOLEAN DEFAULT true NOT NULL`.
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS subscription_plans (
   id                       TEXT PRIMARY KEY,
@@ -92,6 +101,7 @@ CREATE TABLE IF NOT EXISTS subscription_plans (
   currency                 TEXT,
   amount_cents             INTEGER,
   lemon_squeezy_variant_id TEXT,
+  is_active                BOOLEAN NOT NULL DEFAULT TRUE,
   created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at               TIMESTAMPTZ DEFAULT NOW()
 );
