@@ -127,3 +127,30 @@ both files (see `05-discovery.md` §1 addendum).
 ### Verdict
 
 **REHEARSAL PASS — cleared to proceed to plan 05-08.**
+
+---
+
+## Production apply (D-13)
+
+**Applied:** 2026-08-07 · **Applied by:** Owner (Daniel) via the Supabase SQL Editor · **Target project:** `hdltcvgqrtxuxgjdvzzu` · **Method:** Supabase SQL Editor, owner-run — CLI `db push` and MCP `apply_migration` are both blocked by design for this project (same precedent as the Phase 2 apply, `02-05-SUMMARY.md`).
+
+**Migration:** `supabase/migrations/20260805120000_add_parent_subscriptions_parent_id.sql`, run as a single paste (self-contained `BEGIN;`/`COMMIT;`). Owner reported "success, no errors."
+
+**Backfill NOTICE:** not directly visible in the SQL Editor output this run — the same known limitation the D-09 rehearsal hit twice (Supabase's SQL Editor does not reliably surface `RAISE NOTICE`). Substituted with an equivalent direct-query confirmation, run immediately after the apply:
+`SELECT COUNT(*) AS unresolved FROM parent_subscriptions WHERE parent_id IS NULL;` → **`unresolved: 0`**, matching the migration's own `BACKFILL: 0 row(s) left with parent_id IS NULL (expected 0)` NOTICE text and independently reconfirmed by V6 below (`total_rows = with_parent_id = 9`).
+
+### Post-apply verification
+
+| Check | What it proves | Expected | Actual | Verdict |
+| --- | --- | --- | --- | --- |
+| V1 column + FK | SC-1 | `parent_id` uuid, nullable; FK to `parents(id)` ON DELETE CASCADE | `{"attname":"parent_id","type":"uuid","attnotnull":false}`; `parent_subscriptions_parent_id_fkey: FOREIGN KEY (parent_id) REFERENCES parents(id) ON DELETE CASCADE` (pre-existing `plan_id`/`student_id` FKs unaffected) | PASS |
+| V2 dual policy, plain equality | SC-1, D-15 | exactly 2 SELECT policies, neither `qual` referencing `owned_child_ids` | `parent_subscriptions_select_own` (`student_id = auth.uid()`) and `parent_subscriptions_select_own_parent` (`parent_id = auth.uid()`), both PERMISSIVE/SELECT, both plain equality, `with_check: null` on both | PASS |
+| V3 helper body | D-16 | body contains `parent_id = p_student_id OR student_id = p_student_id` | `pg_get_functiondef` confirms verbatim: `WHERE (parent_id = p_student_id OR student_id = p_student_id) AND (...)`, signature unchanged (`p_student_id uuid`) | PASS |
+| V4 dead-letter RLS | D-03, T-5-02 | `relrowsecurity = true`; one RESTRICTIVE deny-all policy | `{"relname":"unresolved_webhook_log","relrowsecurity":true}`; `deny_all_access` / RESTRICTIVE / ALL / `qual: false` | PASS |
+| V5 duplicate-active audit | D-08 | zero rows | empty result set — no parent currently has more than one qualifying active row | PASS |
+| V6 row integrity | D-14 | `total_rows = with_parent_id = with_student_id` — plan's literal "= 3" is stale wording predating the SC-2 correction (`05-discovery.md`); rehearsal already established the real count is 9 | `{"total_rows":9,"with_parent_id":9,"with_student_id":9}` | PASS |
+| Advisors | no new ERROR / 42P17 | 0 ERROR, 0 `42P17` | `errors: 0, warnings: 120` — WARNs are the expected `multiple_permissive_policies` consequence of the D-15 additive dual-policy design (same pattern as Phase 2's ~460 WARNs), not a regression | PASS |
+
+### Backout readiness
+
+Run `supabase/migrations/20260805120000_add_parent_subscriptions_parent_id.down.sql` in the SQL Editor, then redeploy the previous Edge Function versions (see Task 3).
