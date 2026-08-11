@@ -167,3 +167,54 @@ authenticated session, not the SQL Editor's service-role view) confirms premium 
 Portal both render correctly post-apply.
 
 `sc2_satisfied: yes`
+
+### Edge Function deployment (D-12)
+
+**Deployed:** 2026-08-11 · **Deployed by:** Owner (Daniel) via `npx supabase functions deploy`, CLI
+re-linked from the Wave 5 sandbox (`bfzdqhsdbqkhznwjfghk`) back to production (`hdltcvgqrtxuxgjdvzzu`)
+before this task. Deploy order followed the plan exactly: webhook first (only function that writes,
+worst failure mode is a lost renewal), then `create-checkout`, `cancel-subscription`,
+`process-account-deletions` last.
+
+| Function | Version before | Version after | Deployed at |
+| --- | --- | --- | --- |
+| lemon-squeezy-webhook | 35 | 36 | 2026-08-11 |
+| create-checkout | 39 | 40 | 2026-08-11 |
+| cancel-subscription | 39 | 40 | 2026-08-11 |
+| process-account-deletions | 14 | 15 | 2026-08-11 |
+
+All four `verify_jwt` settings confirmed unchanged pre- and post-deploy (`lemon-squeezy-webhook:
+false`, `create-checkout: true`, `cancel-subscription: true`, `process-account-deletions: false`) — no
+prompt appeared during any of the four deploys.
+
+`rollback_commit_sha:` `5b07bc067c3b597b16f8246c553c19a8ad6d809c`
+
+`rollback_procedure:` 1. Run
+`supabase/migrations/20260805120000_add_parent_subscriptions_parent_id.down.sql` in the SQL Editor. 2.
+`git revert` the Phase 5 commits back to `5b07bc067c3b597b16f8246c553c19a8ad6d809c`'s parent. 3.
+Redeploy all four functions from the reverted tree. No data loss: `student_id` was never modified and
+`parent_id` was purely derived.
+
+### Post-deploy smoke
+
+Live app (not SQL Editor / service-role), real authenticated session, reloaded after all four
+deployments completed: premium content loads fine, Parent Portal correctly renders the active
+subscription. Confirms the newly-deployed `create-checkout`/`cancel-subscription` code and RLS/helper
+changes from Task 1 are being served correctly together under real client traffic.
+
+`unresolved_webhook_log_count: 0` (read 2026-08-11, immediately after the post-deploy smoke).
+
+### 24h watch
+
+- [ ] Re-read `SELECT COUNT(*) FROM unresolved_webhook_log;` after 24h of real Lemon Squeezy traffic
+  (target: 2026-08-12). Any non-zero count is real signal — the resolve-chain was expected to always
+  succeed on all 9 known live subscriptions; a row means the webhook met a payload shape the phase did
+  not anticipate. Triage via `raw_payload` in that row before dismissing.
+
+### Frontend deploy gate
+
+`frontend_deploy_gate: RELEASED — 2026-08-11`
+
+Migration applied (Task 1) and all four Edge Functions deployed (Task 3). Plan 05-05's client changes
+may now be merged to `main` / deployed to Netlify production. Before this line existed, merging would
+have driven `fetchSubscriptionStatus` fail-closed for all 9 live paying-or-trial customers at once.

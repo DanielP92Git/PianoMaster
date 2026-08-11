@@ -115,4 +115,7 @@ comparison (owner decision: sign off all 9, option 1)
 **Result:** signed in post-deployment-of-migration; premium content loads fine; Parent Portal
 correctly renders the active subscription. Confirms the new `parent_id`-based RLS SELECT policy and
 `has_active_subscription()` body are serving a real authenticated session correctly, not just the
-SQL Editor's service-role view used for the queries above.
+SQL Editor's service-role view used for the queries above. Re-confirmed a second time after all four
+Edge Functions were deployed (Task 3) — same result.
+
+Deployment completed: 2026-08-11
