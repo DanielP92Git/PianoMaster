@@ -131,11 +131,14 @@ export function FeedbackSummary({
 
   return (
     <div className="w-full">
-      <div className="relative w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 shadow-2xl backdrop-blur-md sm:px-5 sm:py-3.5">
-        <div className="flex flex-col items-center gap-2 text-center sm:gap-2.5">
+      {/* short-landscape: this card becomes an 18rem side column next to the notation
+          (see SightReadingLayout), so it tightens up and drops the max-w-xs caps below,
+          which never bind at that width anyway. */}
+      <div className="relative w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 shadow-2xl backdrop-blur-md short-landscape:px-3 short-landscape:py-2.5 sm:px-5 sm:py-3.5">
+        <div className="flex flex-col items-center gap-2 text-center short-landscape:gap-1.5 sm:gap-2.5">
           {/* Rating Title */}
           <h2
-            className="text-xl font-extrabold italic text-white sm:text-2xl"
+            className="text-xl font-extrabold italic text-white short-landscape:text-base sm:text-2xl"
             style={{
               textShadow:
                 "0 0 20px rgba(236, 72, 153, 0.6), 0 2px 4px rgba(0,0,0,0.3)",
@@ -151,7 +154,7 @@ export function FeedbackSummary({
             {[...Array(3)].map((_, index) => (
               <Star
                 key={index}
-                className={`h-7 w-7 sm:h-8 sm:w-8 ${
+                className={`h-7 w-7 short-landscape:h-6 short-landscape:w-6 sm:h-8 sm:w-8 ${
                   index < rating.stars
                     ? "fill-yellow-400 text-yellow-400"
                     : "fill-white/10 text-white/30"
@@ -174,7 +177,7 @@ export function FeedbackSummary({
           )}
 
           {/* Pitch / Rhythm accuracy bars */}
-          <div className="flex w-full max-w-xs flex-col gap-2">
+          <div className="flex w-full max-w-xs flex-col gap-2 short-landscape:max-w-none short-landscape:gap-1.5">
             <AccuracyBar
               label={t("sightReading.summary.pitch")}
               value={pitchAccuracy}
@@ -222,7 +225,7 @@ export function FeedbackSummary({
           {/* Row 1 (learn, D-23) — lighter-weight than the primary CTAs below; collapses to
               nothing when neither handler is provided. */}
           {(showCompare || (onReview && hasMistakes)) && (
-            <div className="flex w-full max-w-xs items-center justify-center gap-x-4 gap-y-1">
+            <div className="flex w-full max-w-xs items-center justify-center gap-x-4 gap-y-1 short-landscape:max-w-none">
               {showCompare && (
                 <button
                   type="button"
@@ -247,7 +250,7 @@ export function FeedbackSummary({
           )}
 
           {/* Row 2 (navigate) — shared GameActionButton (single source of truth) */}
-          <div className="flex w-full max-w-xs gap-2.5">
+          <div className="flex w-full max-w-xs gap-2.5 short-landscape:max-w-none short-landscape:gap-2">
             <GameActionButton
               tone="retry"
               onClick={onTryAgain}

@@ -1,3 +1,5 @@
+const plugin = require("tailwindcss/plugin");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
@@ -441,5 +443,30 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // Short-landscape phones (Pixel 7 915x412, iPhone SE 667x375). The sight-reading game
+    // locks Android PWA to fullscreen landscape (useLandscapeLock), so this is a primary
+    // layout, not an edge case.
+    //
+    // Height-keyed, NOT width-keyed: the constraint is vertical room. `max-lg:landscape:`
+    // would wrongly match a 1000x800 landscape tablet, which has ample height and should
+    // keep the stacked layout.
+    //
+    // CSS-driven rather than JS orientation state (cf. the migration documented in
+    // games/rhythm-games/renderers/*.jsx): no first-paint flash, no resize listeners.
+    //
+    // The `&&` doubles the class in the emitted selector
+    // (`.short-landscape\:h-6.short-landscape\:h-6`), raising specificity to (0,2,0).
+    // This is deliberate and load-bearing: Tailwind sorts this variant's block BEFORE the
+    // `sm:`/`md:`/`lg:` blocks, so at equal specificity `sm:text-2xl` would beat
+    // `short-landscape:text-base` on a 915px-wide phone (which matches both). The bump
+    // makes short-landscape win by construction, so utilities added here later don't each
+    // need an `!` important modifier. Verified against dist CSS — see the sort-order note.
+    plugin(({ addVariant }) => {
+      addVariant(
+        "short-landscape",
+        "@media (orientation: landscape) and (max-height: 500px) { && }"
+      );
+    }),
+  ],
 };
