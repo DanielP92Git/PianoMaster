@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: Parent-First Account Architecture (COPPA)
 status: executing
-stopped_at: Phase 5 context gathered
-last_updated: "2026-08-05T09:52:35.505Z"
-last_activity: 2026-08-05 -- Phase 05 execution started
+stopped_at: Phase 5 complete — all 9 plans across 6 waves done, frontend_deploy_gate RELEASED
+last_updated: "2026-08-11T00:00:00.000Z"
+last_activity: 2026-08-11 -- Phase 05 (subscription-re-pointing) completed, production apply live
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 39
-  completed_plans: 30
-  percent: 77
+  completed_plans: 39
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-21 with v4.0 owner decisions)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 05 — subscription-re-pointing
+**Current focus:** Phase 05 — subscription-re-pointing (complete). Next: Phase 6 (Live Migration & Re-Consent) needs planning.
 
 ## Current Position
 
-Phase: 05 (subscription-re-pointing) — EXECUTING
-Plan: 1 of 9
-Status: Executing Phase 05
-Last activity: 2026-08-05 -- Phase 05 execution started
+Phase: 05 (subscription-re-pointing) — COMPLETE
+Plan: 9 of 9
+Status: All 6 waves done — production apply (D-13), D-11 per-row sign-off (all 9 live rows), D-12 Edge Function deploy, frontend_deploy_gate: RELEASED
+Last activity: 2026-08-11 -- Phase 05 execution completed
 
 Progress: [██████████] 100%
 
@@ -151,8 +151,9 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Stopped at:** Phase 5 context gathered
-**Next action:** Begin Phase 5 (Subscription Re-Pointing). Plans are TBD — run `/gsd-plan-phase 5` (research + planning) before executing. Depends on Phase 1/2 (both done); no blockers.
+**Stopped at:** Phase 5 (subscription-re-pointing) complete — all 9 plans / 6 waves done, `frontend_deploy_gate: RELEASED` recorded in `05-apply-log.md` (2026-08-11).
+**Next action:** Phase 5's client changes (plan 05-05) can now be merged to `main` / pushed to `origin/main` for Netlify deploy whenever the owner is ready — the gate that blocked this until the production migration + Edge Function deploy landed is now released. A 24h re-check of `unresolved_webhook_log` (target 2026-08-12) is an open follow-up in `05-apply-log.md`'s `### 24h watch`. Phase 6 (Live Migration & Re-Consent) has not been planned yet — run `/gsd-plan-phase 6` when ready to continue the milestone. Formal phase-level code review / `gsd-verifier` goal check was not run for Phase 5 in this session (offered as optional — this phase's final plan was ops/docs only, no application source changed).
+**Resume note (Phase 5 close, 2026-08-11):** Wave 6 (05-09) was the highest-blast-radius step in the milestone so far — the first point anything touched the live `parent_subscriptions` table. Production migration applied via owner-run SQL Editor (CLI `db push`/MCP `apply_migration` both blocked by design, same as Phase 1/2 precedent); all six post-apply verification queries + Advisors PASS; row integrity came back `9/9/9` (not `3/3/3` — SC-2's already-established correction, not new). All 9 live subscription rows individually signed off against pre-migration predictions — six carry a pre-existing, pre-approved LS-dashboard-email mismatch (owner's own dev/test account, documented before the migration ran, not new drift). All four Edge Functions deployed in the required order (webhook first) with before/after versions and a rollback commit SHA recorded; `unresolved_webhook_log_count: 0` post-deploy. See `05-09-SUMMARY.md` for full detail.
 **Resume note (Phase 4 close):** All 11 plans executed across 3 waves, merged clean, full suite green throughout (2303/2303 passing, 0 failures, build succeeds, lint clean). `04-REVIEW.md` code review found 4 Critical + 5 Warning + 2 Info findings; all 4 Critical + 2 trivial Warnings (WR-03/WR-04) fixed in commit `82ca1e75` and independently re-verified against the actual diff (not just SUMMARY.md claims) by `04-VERIFICATION.md` (status: passed, 12/12 must-haves). Deferred, non-blocking: WR-02 (boss-unlock/level-up celebration dedup keyed on parent id, not child — soft cosmetic bleed), WR-05 (apiChildProfiles.js relies on RLS only, no client-side ownership backstop — inconsistent pattern, not a demonstrated bug), IN-01/IN-02 (missing error-state UI, pre-existing NODE_ENV vs import.meta.env inconsistency). **`src/components/layout/Dashboard.jsx` was never in any of the 11 plans' scope** and still gates most of its data fetching/UI sections on `isStudent`, which is false for all parent-role sessions post-migration — flagged by both the code reviewer and verifier as a real but out-of-scope gap; recommend a follow-up gap-closure phase before this milestone ships to real users, since it's the main post-login landing page.
 **Incident during Wave 1 worktree cleanup:** the merge-back script (adapted ad hoc from the execute-phase workflow spec, missing the spec's `WAS_DELETED` resurrection guard) copied `*SUMMARY.md` files from several ancient, already-archived, orphaned worktrees (v2.9/v3.0 milestone phases 07-09/12-15, long since moved to `.planning/milestones/`) back onto disk, and clobbered two tracked files (`.planning/research/SUMMARY.md`, `21-01-SUMMARY.md`) with stale v2.9-era content. Caught during phase-completion review (STATE.md's `next_phase` came back as "07" instead of "05" — the giveaway), both tracked files reverted via `git checkout HEAD --`, the 7 untracked resurrected directories deleted (diff-verified as pure duplicates of the proper archive first). No commit ever included the corrupted content. See [[feedback_worktree_collateral_damage]] memory.
 
