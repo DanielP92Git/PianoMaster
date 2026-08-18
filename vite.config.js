@@ -68,7 +68,7 @@ export default defineConfig({
   ].filter(Boolean),
   server: {
     port: 5174,
-    host: "localhost",
+    host: true, // Bind to all interfaces so other devices on the LAN (e.g. phone) can connect
     strictPort: true, // This will fail if port 5174 is not available
     https: false, // Enable HTTPS for PWA install prompts on mobile devices
     fs: {
