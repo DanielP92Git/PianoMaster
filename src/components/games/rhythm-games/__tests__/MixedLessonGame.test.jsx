@@ -164,6 +164,7 @@ vi.mock("../utils/durationInfo", () => ({
     ];
   }),
   ALL_DURATION_CODES: ["q", "h", "w", "8", "16"],
+  DURATION_INFO: { q: {}, h: {}, w: {}, 8: {}, 16: {} },
 }));
 
 // Mock RhythmTapQuestion — exposes onComplete callback via data-testid button

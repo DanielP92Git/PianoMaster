@@ -15,6 +15,7 @@ import {
   generateQuestions,
   generateCountSubdivisionQuestion,
   ALL_DURATION_CODES,
+  DURATION_INFO,
 } from "./utils/durationInfo";
 import VisualRecognitionQuestion from "./renderers/VisualRecognitionQuestion";
 import SyllableMatchingQuestion from "./renderers/SyllableMatchingQuestion";
@@ -294,6 +295,11 @@ export default function MixedLessonGame() {
       return;
     }
 
+    // Pool may hold meter concept IDs (e.g. "3_4", "6_8") that have no
+    // DURATION_INFO entry; recognition-style questions need real durations.
+    const recognitionPool = pool.filter((c) => DURATION_INFO[c]);
+    const questionPool = recognitionPool.length > 0 ? recognitionPool : ["q"];
+
     // Generate one question per authored entry — 1:1 mapping (D-09: pre-structured, not random)
     const allQuestions = questionSequence.map((entry) => {
       if (entry.type === "rhythm_tap") {
@@ -372,12 +378,12 @@ export default function MixedLessonGame() {
       }
       // CODE-03: Guard generateQuestions result against empty/undefined
       const dedupSyllables = entry.type === "syllable_matching";
-      const generated = generateQuestions(pool, ALL_DURATION_CODES, 1, {
+      const generated = generateQuestions(questionPool, ALL_DURATION_CODES, 1, {
         dedupSyllables,
       });
       if (!generated || generated.length === 0 || !generated[0]) {
         // Fallback: use pool[0] as correct with shuffled distractors
-        const correct = pool[0];
+        const correct = questionPool[0];
         const distractors = ALL_DURATION_CODES.filter(
           (c) => c !== correct
         ).slice(0, 3);
