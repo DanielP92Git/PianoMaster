@@ -2028,6 +2028,18 @@ export function NotesRecognitionGame() {
     [handleAnswerSelect, micTiming]
   );
 
+  // Voice rejection: a wrong note costs a life, so require it to hold a steady
+  // pitch longer than the correct note does. Speech/mumbling rarely holds a
+  // pitch that long; a struck piano key always does. Reads the ref (stable cb).
+  const getMicMinStableMs = useCallback((note) => {
+    const cur = currentNoteRef.current;
+    const { correctMinStableMs, wrongMinStableMs } =
+      MIC_INPUT_PRESETS.notesRecognition;
+    return cur && (note === cur.pitch || note === cur.englishName)
+      ? correctMinStableMs
+      : wrongMinStableMs;
+  }, []);
+
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {
     isListening,
@@ -2040,6 +2052,9 @@ export function NotesRecognitionGame() {
     // Tuned RMS gate so ambient/room noise can't be scored as a wrong answer
     // (a false hit here costs a life). Spread micTiming after — it has no rmsThreshold.
     rmsThreshold: MIC_INPUT_PRESETS.notesRecognition.rmsThreshold,
+    // Reject gliding pitch (speech/humming) — piano notes hold steady.
+    maxCentsDrift: MIC_INPUT_PRESETS.notesRecognition.maxCentsDrift,
+    getMinStableMs: getMicMinStableMs,
     ...micTiming,
     // NOTE: analyserNode/sampleRate NOT passed here at render time.
     // They are null until requestMic() completes. Pass at call time instead (ARCH-04 race fix).

@@ -14,15 +14,15 @@
  * calcMicTimingFromBpm(120, '8')
  * // => { onFrames: 2, offMs: 50, changeFrames: 3, minInterOnMs: 63 }
  */
-export function calcMicTimingFromBpm(bpm, shortestNoteDuration = 'q') {
+export function calcMicTimingFromBpm(bpm, shortestNoteDuration = "q") {
   const beatMs = 60000 / bpm;
 
   const durationMultipliers = {
     w: 4,
     h: 2,
     q: 1,
-    '8': 0.5,
-    '16': 0.25,
+    8: 0.5,
+    16: 0.25,
   };
   const multiplier = durationMultipliers[shortestNoteDuration] ?? 1;
   const noteMs = beatMs * multiplier;
@@ -30,7 +30,7 @@ export function calcMicTimingFromBpm(bpm, shortestNoteDuration = 'q') {
   // ~60fps → 1 frame ≈ 16.7ms
   const FRAME_MS = 16.7;
 
-  const onFrames = Math.max(2, Math.round(noteMs * 0.15 / FRAME_MS));
+  const onFrames = Math.max(2, Math.round((noteMs * 0.15) / FRAME_MS));
   // Scale offMs aggressively at high BPM: at 120 BPM 8th notes (250ms),
   // offMs=100 (40%) means 162ms min gap between same-pitch detections (65% of note).
   // Use 0.2 multiplier → offMs=50 → min gap ~112ms (45% of note), allowing faster re-detection.
@@ -63,7 +63,12 @@ export const MIC_INPUT_PRESETS = {
     changeFrames: 5,
     offMs: 160,
     minInterOnMs: 90,
+    // Voice rejection: a piano string holds its pitch within a few cents, while
+    // speech/humming glides. Candidates drifting more than this are restarted.
+    maxCentsDrift: 25,
+    // Asymmetric evidence: crediting the right note can be quick, but a wrong
+    // note costs a life, so it must hold a steady pitch for longer first.
+    correctMinStableMs: 90,
+    wrongMinStableMs: 220,
   },
 };
-
-

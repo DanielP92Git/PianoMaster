@@ -14,6 +14,20 @@ import { usePitchDetection } from "./usePitchDetection";
  */
 const FSM = { IDLE: "IDLE", ARMED: "ARMED", ACTIVE: "ACTIVE" };
 
+/** Frequency (Hz) → fractional MIDI number; 1.0 = one semitone = 100 cents. */
+function frequencyToMidiFloat(hz) {
+  return 12 * Math.log2(hz / 440) + 69;
+}
+
+/** Start a fresh candidate at the current frame (mutates FSM state `s`). */
+function startCandidate(s, note, midi, now) {
+  s.candidateNote = note;
+  s.candidateFrames = 1;
+  s.candidateStartedAt = now;
+  s.candidateMinMidi = midi;
+  s.candidateMaxMidi = midi;
+}
+
 /**
  * Mic note event model (JS shape):
  * {
@@ -71,6 +85,20 @@ export function useMicNoteInput({
    * Forwarded to usePitchDetection for McLeod Pitch Method (pitchy).
    */
   clarityThreshold,
+  /**
+   * Max pitch drift (cents) allowed across a candidate's frames before it is
+   * restarted. A piano string holds a fixed pitch (a few cents of jitter);
+   * speech/humming glides continuously, so it never stays inside this window
+   * long enough to emit. null = disabled (legacy behaviour).
+   */
+  maxCentsDrift = null,
+  /**
+   * Optional (note) => ms. When set, a candidate must also stay stable for at
+   * least this long before noteOn is emitted. Time-based, so it behaves the
+   * same at 60Hz and 120Hz. Lets callers demand more evidence for some notes
+   * (e.g. wrong answers that cost a life). null = disabled.
+   */
+  getMinStableMs = null,
 } = {}) {
   const stateRef = useRef({
     // FSM
@@ -79,6 +107,9 @@ export function useMicNoteInput({
     candidateNote: null,
     candidateFrames: 0,
     candidateStartedAt: -Infinity,
+    // Fractional-MIDI pitch range seen during the candidate (drift gate)
+    candidateMinMidi: Infinity,
+    candidateMaxMidi: -Infinity,
     // Currently held note (set when ACTIVE)
     currentNote: null,
     // Timing bookkeeping
@@ -96,6 +127,8 @@ export function useMicNoteInput({
     s.candidateNote = null;
     s.candidateFrames = 0;
     s.candidateStartedAt = -Infinity;
+    s.candidateMinMidi = Infinity;
+    s.candidateMaxMidi = -Infinity;
     s.lastPitchAt = -Infinity;
     s.prevPitchAt = -Infinity;
     s.lastEmitAt = -Infinity;
@@ -113,6 +146,44 @@ export function useMicNoteInput({
   );
 
   // ---------------------------------------------------------------------------
+  // Candidate helpers (drift gate + per-note stable time)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Add a frame to the current candidate. If its pitch range now exceeds
+   * maxCentsDrift (gliding voice, not a struck string), restart the candidate
+   * from this frame instead of counting it.
+   */
+  const extendCandidate = useCallback(
+    (s, midi, now) => {
+      const min = Math.min(s.candidateMinMidi, midi);
+      const max = Math.max(s.candidateMaxMidi, midi);
+      if (maxCentsDrift != null && (max - min) * 100 > maxCentsDrift) {
+        startCandidate(s, s.candidateNote, midi, now);
+        return;
+      }
+      s.candidateMinMidi = min;
+      s.candidateMaxMidi = max;
+      s.candidateFrames += 1;
+    },
+    [maxCentsDrift]
+  );
+
+  /** True when the candidate has met every gate required to emit noteOn. */
+  const isCandidateReady = useCallback(
+    (s, note, now, requiredFrames) => {
+      if (s.candidateFrames < requiredFrames) return false;
+      if (now - s.lastEmitAt < minInterOnMs) return false;
+      if (typeof getMinStableMs === "function") {
+        const minMs = getMinStableMs(note) || 0;
+        if (now - s.candidateStartedAt < minMs) return false;
+      }
+      return true;
+    },
+    [getMinStableMs, minInterOnMs]
+  );
+
+  // ---------------------------------------------------------------------------
   // FSM transitions — called on every pitch detection frame
   // ---------------------------------------------------------------------------
 
@@ -120,6 +191,7 @@ export function useMicNoteInput({
     (note, frequency) => {
       const now = performance.now();
       const s = stateRef.current;
+      const midi = frequencyToMidiFloat(frequency);
 
       // Update timing bookkeeping
       s.prevPitchAt = s.lastPitchAt;
@@ -131,20 +203,15 @@ export function useMicNoteInput({
         // IDLE: no note held, no candidate — first pitch detected → arm it
         // -----------------------------------------------------------------------
         s.fsmState = FSM.ARMED;
-        s.candidateNote = note;
-        s.candidateFrames = 1;
-        s.candidateStartedAt = now;
+        startCandidate(s, note, midi, now);
       } else if (s.fsmState === FSM.ARMED) {
         // -----------------------------------------------------------------------
         // ARMED: accumulating onset confidence for a candidate note
         // -----------------------------------------------------------------------
         if (note === s.candidateNote) {
-          s.candidateFrames += 1;
+          extendCandidate(s, midi, now);
 
-          if (
-            s.candidateFrames >= onFrames &&
-            now - s.lastEmitAt >= minInterOnMs
-          ) {
+          if (isCandidateReady(s, note, now, onFrames)) {
             // Threshold met → emit noteOn, transition to ACTIVE
             const latencyMs = Number.isFinite(s.candidateStartedAt)
               ? Math.round(now - s.candidateStartedAt)
@@ -164,9 +231,7 @@ export function useMicNoteInput({
           }
         } else {
           // Different note detected → reset candidate (stay ARMED)
-          s.candidateNote = note;
-          s.candidateFrames = 1;
-          s.candidateStartedAt = now;
+          startCandidate(s, note, midi, now);
         }
       } else if (s.fsmState === FSM.ACTIVE) {
         // -----------------------------------------------------------------------
@@ -179,12 +244,9 @@ export function useMicNoteInput({
 
         // Different note — track as candidate for note-change
         if (s.candidateNote === note) {
-          s.candidateFrames += 1;
+          extendCandidate(s, midi, now);
 
-          if (
-            s.candidateFrames >= changeFrames &&
-            now - s.lastEmitAt >= minInterOnMs
-          ) {
+          if (isCandidateReady(s, note, now, changeFrames)) {
             const latencyMs = Number.isFinite(s.candidateStartedAt)
               ? Math.round(now - s.candidateStartedAt)
               : null;
@@ -216,13 +278,11 @@ export function useMicNoteInput({
           }
         } else {
           // New different note — reset candidate tracking (stay ACTIVE)
-          s.candidateNote = note;
-          s.candidateFrames = 1;
-          s.candidateStartedAt = now;
+          startCandidate(s, note, midi, now);
         }
       }
     },
-    [changeFrames, emit, minInterOnMs, onFrames]
+    [changeFrames, emit, extendCandidate, isCandidateReady, onFrames]
   );
 
   // ---------------------------------------------------------------------------
@@ -316,6 +376,12 @@ export function useMicNoteInput({
       currentNote: s.currentNote,
       candidateNote: s.candidateNote,
       candidateFrames: s.candidateFrames,
+      candidateDriftCents: Number.isFinite(s.candidateMinMidi)
+        ? Math.round((s.candidateMaxMidi - s.candidateMinMidi) * 100)
+        : null,
+      candidateStableMs: Number.isFinite(s.candidateStartedAt)
+        ? Math.round(performance.now() - s.candidateStartedAt)
+        : null,
       lastPitchAt: s.lastPitchAt,
       lastEmitAt: s.lastEmitAt,
       lastFrequency: s.lastFrequency,
