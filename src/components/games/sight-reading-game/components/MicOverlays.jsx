@@ -71,6 +71,19 @@ export function MicDebugPanel({ subscribe, getDebug, isListening }) {
             {fsm?.candidateFrames ? `(${fsm.candidateFrames})` : ""}
           </span>
         </div>
+        <div className="flex justify-between">
+          <span className="text-white/70">drift / held</span>
+          <span>
+            {fsm?.candidateDriftCents ?? "—"}c / {fsm?.candidateStableMs ?? "—"}
+            ms
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-white/70">outliers / restarts</span>
+          <span>
+            {fsm?.candidateOutliers ?? 0} / {fsm?.driftRestarts ?? 0}
+          </span>
+        </div>
       </div>
     </div>
   );

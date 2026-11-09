@@ -26,6 +26,7 @@ import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
 import { useMicSignal } from "../../../hooks/useMicSignal";
+import { MicDebugPanel } from "../sight-reading-game/components/MicOverlays";
 import {
   calcMicTimingFromBpm,
   MIC_INPUT_PRESETS,
@@ -2040,12 +2041,20 @@ export function NotesRecognitionGame() {
       : wrongMinStableMs;
   }, []);
 
+  // Dev-only mic debug overlay toggle (same flag as SightReading):
+  // In console: localStorage.setItem("debug-mic", "1") then refresh.
+  const showMicDebug = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage?.getItem("debug-mic") === "1";
+  }, []);
+
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {
     isListening,
     startListening: startMicListening,
     stopListening: stopMicListening,
     subscribe: micSubscribe,
+    getDebug: getMicDebug,
   } = useMicNoteInput({
     isActive: false, // Manual control via startAudioInput / stopAudioInput
     onNoteEvent: handleMicNoteEvent,
@@ -2177,6 +2186,13 @@ export function NotesRecognitionGame() {
       }}
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+      {showMicDebug && (
+        <MicDebugPanel
+          subscribe={micSubscribe}
+          getDebug={getMicDebug}
+          isListening={isListening}
+        />
+      )}
       {/* Stage background accents */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/15 blur-3xl" />
