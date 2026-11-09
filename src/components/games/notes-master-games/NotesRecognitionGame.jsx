@@ -27,6 +27,7 @@ import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
 import { useMicSignal } from "../../../hooks/useMicSignal";
 import { MicDebugPanel } from "../sight-reading-game/components/MicOverlays";
+import { isMicDebugEnabled } from "../../../utils/micDebug";
 import {
   calcMicTimingFromBpm,
   MIC_INPUT_PRESETS,
@@ -2042,11 +2043,8 @@ export function NotesRecognitionGame() {
   }, []);
 
   // Dev-only mic debug overlay toggle (same flag as SightReading):
-  // In console: localStorage.setItem("debug-mic", "1") then refresh.
-  const showMicDebug = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage?.getItem("debug-mic") === "1";
-  }, []);
+  // Toggle: ?debug-mic=1 in the URL (or localStorage "debug-mic" = "1").
+  const showMicDebug = useMemo(() => isMicDebugEnabled(), []);
 
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {

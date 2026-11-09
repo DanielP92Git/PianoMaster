@@ -24,13 +24,13 @@ export function MicVolumeMeter({ subscribe }) {
 }
 
 /**
- * Dev-only mic debug overlay (localStorage `debug-mic=1`). Polls the live FSM
+ * Dev-only mic debug overlay (see `isMicDebugEnabled`). Polls the live FSM
  * snapshot via `getDebug()` on each throttled signal tick and reads detected
  * note/frequency/level from the subscription — all isolated to this leaf so the
  * dev panel never forces a game re-render (PERF-1).
  */
 export function MicDebugPanel({ subscribe, getDebug, isListening }) {
-  const { level, note, frequency } = useMicSignal(subscribe);
+  const { level, note, frequency, rmsGate } = useMicSignal(subscribe);
   const [fsm, setFsm] = useState(() =>
     typeof getDebug === "function" ? getDebug() : {}
   );
@@ -51,8 +51,10 @@ export function MicDebugPanel({ subscribe, getDebug, isListening }) {
       </div>
       <div className="space-y-1 text-white/90">
         <div className="flex justify-between">
-          <span className="text-white/70">audioLevel</span>
-          <span>{Number(level || 0).toFixed(4)}</span>
+          <span className="text-white/70">level / gate</span>
+          <span>
+            {Number(level || 0).toFixed(4)} / {Number(rmsGate || 0).toFixed(4)}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-white/70">detected</span>

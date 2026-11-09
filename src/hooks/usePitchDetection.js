@@ -20,6 +20,14 @@ const __PERF_MARKS =
 /** Minimum McLeod clarity score required to emit a pitch detection (ALGO-02). */
 export const PITCH_CLARITY_THRESHOLD = 0.9;
 
+// Adaptive RMS gate (detect loop): emit only when the level is this many times
+// above the tracked noise floor (~10 dB), and never below MIN_RMS_GATE.
+const NOISE_FLOOR_RATIO = 3;
+const MIN_RMS_GATE = 0.002;
+// Per-frame smoothing toward the current level: fast down, slow up (~8s at 60Hz).
+const NOISE_FLOOR_FALL = 0.2;
+const NOISE_FLOOR_RISE = 0.002;
+
 /** Chromatic note names (index 0 = C). */
 export const NOTE_NAMES = [
   "C",
@@ -133,6 +141,9 @@ export function usePitchDetection({
   // and re-render themselves in isolation; game logic already reads the live
   // values through the onPitchDetected / onLevelChange callbacks below.
   const audioLevelRef = useRef(0);
+  // Tracked mic noise floor (RMS) for the adaptive volume gate — see detectLoop.
+  const noiseFloorRef = useRef(0);
+  const rmsGateRef = useRef(0);
   const detectedNoteRef = useRef(null);
   const detectedFrequencyRef = useRef(-1);
 
@@ -154,6 +165,7 @@ export function usePitchDetection({
       level: audioLevelRef.current,
       note: detectedNoteRef.current,
       frequency: detectedFrequencyRef.current,
+      rmsGate: rmsGateRef.current,
     });
     return () => {
       subscribersRef.current.delete(cb);
@@ -168,6 +180,7 @@ export function usePitchDetection({
       level: audioLevelRef.current,
       note: detectedNoteRef.current,
       frequency: detectedFrequencyRef.current,
+      rmsGate: rmsGateRef.current,
     };
     subs.forEach((cb) => {
       try {
@@ -346,6 +359,8 @@ export function usePitchDetection({
         // ---------------------------------------------------------------
         const currentAnalyser = currentAnalyserRef.current;
         const currentSampleRate = currentSampleRateRef.current;
+        // Start at the configured gate; quiet frames pull the floor down fast.
+        noiseFloorRef.current = rmsThreshold / NOISE_FLOOR_RATIO;
 
         const detectLoop = () => {
           if (
@@ -374,6 +389,24 @@ export function usePitchDetection({
           }
           const level = Math.sqrt(sum / len);
           audioLevelRef.current = level;
+
+          // Adaptive RMS gate. Mic gain differs a lot between devices: with
+          // autoGainControl off, iOS delivers a far quieter raw signal than
+          // Android, so a loud piano note can sit under a fixed threshold.
+          // Gate on NOISE_FLOOR_RATIO x the tracked noise floor instead,
+          // capped at rmsThreshold (never stricter than configured) and
+          // floored at MIN_RMS_GATE. The floor falls fast in quiet frames and
+          // rises slowly, so a sustained note doesn't raise its own gate.
+          const floor = noiseFloorRef.current;
+          const rmsGate = Math.min(
+            rmsThreshold,
+            Math.max(MIN_RMS_GATE, floor * NOISE_FLOOR_RATIO)
+          );
+          rmsGateRef.current = rmsGate;
+          noiseFloorRef.current =
+            floor +
+            (level - floor) *
+              (level < floor ? NOISE_FLOOR_FALL : NOISE_FLOOR_RISE);
           if (onLevelChange) onLevelChange(level);
 
           // McLeod Pitch Method via pitchy (ALGO-01)
@@ -394,11 +427,7 @@ export function usePitchDetection({
           // RMS gate — reject silence/low-volume noise that incidentally scores high
           // clarity. Without this, ambient room noise (fan, talking, typing) can emit a
           // false pitch and be scored as a wrong answer in the games.
-          if (
-            clarity >= clarityThreshold &&
-            pitch > 0 &&
-            level >= rmsThreshold
-          ) {
+          if (clarity >= clarityThreshold && pitch > 0 && level >= rmsGate) {
             const note = frequencyToNote(pitch);
             detectedFrequencyRef.current = pitch;
             detectedNoteRef.current = note;
