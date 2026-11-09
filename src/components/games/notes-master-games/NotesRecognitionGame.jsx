@@ -26,7 +26,12 @@ import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
 import { useMicSignal } from "../../../hooks/useMicSignal";
-import { calcMicTimingFromBpm } from "../../../hooks/micInputPresets";
+import { MicDebugPanel } from "../sight-reading-game/components/MicOverlays";
+import { isMicDebugEnabled } from "../../../utils/micDebug";
+import {
+  calcMicTimingFromBpm,
+  MIC_INPUT_PRESETS,
+} from "../../../hooks/micInputPresets";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { ProgressBar } from "../shared/hud/ProgressBar";
@@ -1990,6 +1995,10 @@ export function NotesRecognitionGame() {
     (event) => {
       if (event.type !== "noteOn") return;
 
+      // Don't score once the game is ending (ref, not state — the mic callback
+      // chain lags React renders and a stray note could otherwise slip through).
+      if (isGameEndingRef.current) return;
+
       const now = performance.now();
       const last = lastScoredRef.current;
       const minScoreInterval = micTiming.minInterOnMs || 80;
@@ -2021,15 +2030,38 @@ export function NotesRecognitionGame() {
     [handleAnswerSelect, micTiming]
   );
 
+  // Voice rejection: a wrong note costs a life, so require it to hold a steady
+  // pitch longer than the correct note does. Speech/mumbling rarely holds a
+  // pitch that long; a struck piano key always does. Reads the ref (stable cb).
+  const getMicMinStableMs = useCallback((note) => {
+    const cur = currentNoteRef.current;
+    const { correctMinStableMs, wrongMinStableMs } =
+      MIC_INPUT_PRESETS.notesRecognition;
+    return cur && (note === cur.pitch || note === cur.englishName)
+      ? correctMinStableMs
+      : wrongMinStableMs;
+  }, []);
+
+  // Dev-only mic debug overlay toggle (same flag as SightReading):
+  // Toggle: ?debug-mic=1 in the URL (or localStorage "debug-mic" = "1").
+  const showMicDebug = useMemo(() => isMicDebugEnabled(), []);
+
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {
     isListening,
     startListening: startMicListening,
     stopListening: stopMicListening,
     subscribe: micSubscribe,
+    getDebug: getMicDebug,
   } = useMicNoteInput({
     isActive: false, // Manual control via startAudioInput / stopAudioInput
     onNoteEvent: handleMicNoteEvent,
+    // Tuned RMS gate so ambient/room noise can't be scored as a wrong answer
+    // (a false hit here costs a life). Spread micTiming after — it has no rmsThreshold.
+    rmsThreshold: MIC_INPUT_PRESETS.notesRecognition.rmsThreshold,
+    // Reject gliding pitch (speech/humming) — piano notes hold steady.
+    maxCentsDrift: MIC_INPUT_PRESETS.notesRecognition.maxCentsDrift,
+    getMinStableMs: getMicMinStableMs,
     ...micTiming,
     // NOTE: analyserNode/sampleRate NOT passed here at render time.
     // They are null until requestMic() completes. Pass at call time instead (ARCH-04 race fix).
@@ -2152,6 +2184,13 @@ export function NotesRecognitionGame() {
       }}
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+      {showMicDebug && (
+        <MicDebugPanel
+          subscribe={micSubscribe}
+          getDebug={getMicDebug}
+          isListening={isListening}
+        />
+      )}
       {/* Stage background accents */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/15 blur-3xl" />

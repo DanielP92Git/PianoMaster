@@ -37,7 +37,12 @@ export function useMicSignal(subscribe, { throttleMs = 66 } = {}) {
       // on stop; otherwise gate to the throttle interval.
       if (s.level > 0 && t - lastEmitRef.current < throttleMs) return;
       lastEmitRef.current = t;
-      setSignal({ level: s.level, note: s.note, frequency: s.frequency });
+      setSignal({
+        level: s.level,
+        note: s.note,
+        frequency: s.frequency,
+        rmsGate: s.rmsGate,
+      });
     });
 
     return unsubscribe;

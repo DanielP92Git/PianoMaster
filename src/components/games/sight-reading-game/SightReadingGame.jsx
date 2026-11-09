@@ -18,6 +18,7 @@ import { FeedbackSummary } from "./components/FeedbackSummary";
 import { SightReadingLayout } from "./components/SightReadingLayout";
 import { MicErrorOverlay } from "./components/MicErrorOverlay";
 import { MicVolumeMeter, MicDebugPanel } from "./components/MicOverlays";
+import { isMicDebugEnabled } from "../../../utils/micDebug";
 import { ReviewDrillPanel } from "./components/ReviewDrillPanel";
 import { MetronomeDisplay } from "../rhythm-games/components/MetronomeDisplay";
 import { usePatternGeneration } from "./hooks/usePatternGeneration";
@@ -1214,11 +1215,8 @@ export function SightReadingGame() {
   );
 
   // Dev-only mic debug overlay toggle:
-  // In console: localStorage.setItem("debug-mic", "1") then refresh.
-  const showMicDebug = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage?.getItem("debug-mic") === "1";
-  }, []);
+  // Toggle: ?debug-mic=1 in the URL (or localStorage "debug-mic" = "1").
+  const showMicDebug = useMemo(() => isMicDebugEnabled(), []);
 
   const {
     isListening,
